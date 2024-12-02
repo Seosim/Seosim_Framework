@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "GameObject.h"
 #include "Transform.h"
 
 XMMATRIX Transform::GetLocalTransform() const
@@ -11,8 +12,23 @@ XMMATRIX Transform::GetLocalTransform() const
 		mPosition.x, mPosition.y, mPosition.z, 1.0f,
 	};
 
-	XMMATRIX localTransform = XMLoadFloat4x4(&rotationTranslation);
+	XMMATRIX localTransform = XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMLoadFloat4x4(&rotationTranslation);
 	return localTransform;
+}
+
+XMMATRIX Transform::GetWorldTransform() const
+{
+	XMMATRIX global = XMMatrixIdentity();
+
+	GameObject* parent = mParent;
+
+	while (parent != nullptr)
+	{
+		global *= parent->GetTransform().GetLocalTransform();
+		parent = parent->GetTransform().GetParent();
+	}
+
+	return global * GetLocalTransform();
 }
 
 void Transform::SetPosition(XMFLOAT3 position)
@@ -57,6 +73,53 @@ void Transform::Rotate(const float angleX, const float angleY, const float angle
 	XMStoreFloat3(&mUp, up);
 }
 
+void Transform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
+{
+	XMVECTOR right = XMLoadFloat3(&mRight);
+	XMVECTOR up = XMLoadFloat3(&mUp);
+	XMVECTOR forward = XMLoadFloat3(&mForward);
+	XMVECTOR position = XMLoadFloat3(&mPosition);
+
+	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(XMConvertToRadians(angleX), XMConvertToRadians(angleY), XMConvertToRadians(angleZ));
+	right = XMVector3TransformNormal(right, rotation);
+	up = XMVector3TransformNormal(up, rotation);
+	forward = XMVector3TransformNormal(forward, rotation);
+	position = XMVector3TransformCoord(position, rotation);
+
+	forward = XMVector3Normalize(forward);
+	XMStoreFloat3(&mForward, forward);
+
+	right = XMVector3Normalize(XMVector3Cross(up, forward));
+	XMStoreFloat3(&mRight, right);
+
+	up = XMVector3Normalize(XMVector3Cross(forward, right));
+	XMStoreFloat3(&mUp, up);
+
+	XMStoreFloat3(&mPosition, position);
+}
+
+
+//void Transform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
+//{
+//	XMVECTOR right = XMLoadFloat3(&mRight);
+//	XMVECTOR up = XMLoadFloat3(&mUp);
+//	XMVECTOR forward = XMLoadFloat3(&mForward);
+//
+//	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(XMConvertToRadians(angleX), XMConvertToRadians(angleY), XMConvertToRadians(angleZ));
+//	right = XMVector3TransformNormal(right, rotation);
+//	up = XMVector3TransformNormal(up, rotation);
+//	forward = XMVector3TransformNormal(forward, rotation);
+//
+//	forward = XMVector3Normalize(forward);
+//	XMStoreFloat3(&mForward, forward);
+//
+//	right = XMVector3Normalize(XMVector3Cross(up, forward));
+//	XMStoreFloat3(&mRight, right);
+//
+//	up = XMVector3Normalize(XMVector3Cross(forward, right));
+//	XMStoreFloat3(&mUp, up);
+//}
+
 void Transform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward)
 {
 	mRight = right;
@@ -80,4 +143,14 @@ void Transform::SetRotationByQuat(const XMVECTOR quat)
 	mForward.x = rotation._31;
 	mForward.y = rotation._32;
 	mForward.z = rotation._33;
+}
+
+GameObject* Transform::GetParent() const
+{
+	return mParent;
+}
+
+void Transform::SetParent(GameObject* parent)
+{
+	mParent = parent;
 }

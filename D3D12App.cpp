@@ -383,9 +383,16 @@ void D3D12App::BuildObjects()
 	mGameObjects.push_back(GameObject());
 	mGameObjects.push_back(GameObject());
 
+	int size = 0;
 	for (GameObject& gameObject : mGameObjects)
 	{
 		gameObject.LoadGameObjectData(md3dDevice, md3dCommandList, mRootSignature, "Assets/Hierarchies/Box.bin");
+
+		if (size > 0)
+			gameObject.GetTransform().SetParent(&mGameObjects[size - 1]);
+
+		gameObject.GetTransform().SetPosition({ 2.0f * size++, 0.0f, 0.0f });
+		
 	}
 }
 
@@ -703,8 +710,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	int index = 0;
 	for (GameObject& gameObject : mGameObjects)
 	{
-		gameObject.GetTransform().Rotate(0, 1, 0);
-		auto xmf4x4world = gameObject.GetTransform().GetLocalTransform();
+		gameObject.GetTransform().RotateByWorldAxis(0, gameTimer.DeltaTime() * 33.0f, 0);
+		auto xmf4x4world = gameObject.GetTransform().GetWorldTransform();
 
 		XMFLOAT4X4 test;
 		XMStoreFloat4x4(&test, xmf4x4world);
