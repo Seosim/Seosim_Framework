@@ -5,10 +5,17 @@ class GameObject;
 
 class Transform final {
 public:
+	enum class Space
+	{
+		World,
+		Local
+	};
+
 	XMMATRIX GetLocalTransform() const;
 	XMMATRIX GetWorldTransform() const;
 
-	void SetPosition(XMFLOAT3 position);
+	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
+	void SetScale(const XMFLOAT3& scale);
 
 	void Rotate(const float angleX, const float angleY, const float angleZ);
 	void RotateByWorldAxis(const float angleX, const float angleY, const float angleZ);
@@ -18,13 +25,16 @@ public:
 
 	GameObject* GetParent() const;
 	void SetParent(GameObject* parent);
+	XMMATRIX getLocalToWorldTransform() const;
 private:
+
 	XMFLOAT4X4 mLocalTransform = MATRIX::Identify4x4();
 
 	XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
 	XMFLOAT3 mUp = { 0.0f, 1.0f, 0.0f };
 	XMFLOAT3 mForward = { 0.0f, 0.0f, 1.0f };
 	XMFLOAT3 mPosition = { 0.0f, 0.0f, 0.0f };
+	XMFLOAT3 mScale = { 1.0f, 1.0f, 1.0f };
 
 	GameObject* mParent = nullptr;
 };

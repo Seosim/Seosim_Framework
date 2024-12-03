@@ -45,3 +45,10 @@
 *.opendb
 *.db-shm
 *.db-wal
+*.idb
+*.idb
+*.pdb
+*.tlog
+*.pdb
+*.ilk
+*.tlog
