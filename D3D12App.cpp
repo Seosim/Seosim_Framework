@@ -377,26 +377,83 @@ void D3D12App::BuildPipelineStateObject()
 	//HR(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
 
+void D3D12App::LoadHierarchyData(const std::string& filePath)
+{
+	std::ifstream loader{ filePath, std::ios::binary };
+
+	if (not loader)
+	{
+		exit(-1);
+	}
+
+	LoadGameObjectData(loader);
+}
+
+void D3D12App::LoadGameObjectData(std::ifstream& loader)
+{
+	GameObject* gameObject = new GameObject();
+	mGameObjects.push_back(gameObject);
+
+	XMFLOAT3 position;
+	loader.read(reinterpret_cast<char*>(&position), sizeof(XMFLOAT3));
+
+	XMFLOAT4 rotation;
+	loader.read(reinterpret_cast<char*>(&rotation), sizeof(XMFLOAT4));
+
+	XMFLOAT3 scale;
+	loader.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
+
+	gameObject->SetTransformData(position, rotation, scale);
+
+	bool bHasMesh;
+	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
+
+	if (bHasMesh)
+	{
+		int meshLength = 0;
+		char meshName[64] = {};
+
+		loader.read(reinterpret_cast<char*>(&meshLength), sizeof(int));
+		loader.read(reinterpret_cast<char*>(meshName), meshLength);
+		meshName[meshLength] = '\0';
+		std::string meshPath = "Assets/Models/";
+		meshPath += meshName;
+		meshPath += ".bin";
+
+		gameObject->mMesh.LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+		//mMesh.LoadMeshData(pDevice, pCommandList, meshPath);
+	}
+
+	int childCount;
+	loader.read(reinterpret_cast<char*>(&childCount), sizeof(int));
+
+	for (int i = 0; i < childCount; ++i)
+	{
+		LoadGameObjectData(loader);
+	}
+
+	gameObject->mShader.Initialize(md3dDevice, mRootSignature);
+	//mShader.Initialize(pDevice, pRootSignature);
+}
+
 void D3D12App::BuildObjects()
 {
-	mGameObjects.push_back(GameObject());
-	mGameObjects.push_back(GameObject());
-	mGameObjects.push_back(GameObject());
-	mGameObjects.push_back(GameObject());
+	LoadHierarchyData("Assets/Hierarchies/Dummy.bin");
 
-	int size = 0;
-	for (GameObject& gameObject : mGameObjects)
-	{
-		gameObject.LoadGameObjectData(md3dDevice, md3dCommandList, mRootSignature, "Assets/Hierarchies/Box.bin");
+	//int size = 0;
+	//for (GameObject& gameObject : mGameObjects)
+	//{
+	//	gameObject.LoadGameObjectData(md3dDevice, md3dCommandList, mRootSignature, "Assets/Hierarchies/Box.bin");
 
-		if (size > 0)
-		{
-			gameObject.GetTransform().SetParent(&mGameObjects[size - 1]);
-			gameObject.GetTransform().SetPosition({ 2.0f, 0.0f, 0.0f }, Transform::Space::Local);
-		}
-		size++;
-		
-	}
+	//	if (size > 0)
+	//	{
+	//		gameObject.GetTransform().SetParent(&mGameObjects[size - 1]);
+	//		gameObject.GetTransform().SetPosition({ 2.0f * size, 0.0f, 0.0f }, Transform::Space::World);
+	//		//gameObject.GetTransform().SetPosition({ 2.0f, 0.0f, 0.0f }, Transform::Space::Local);	//Same
+	//	}
+	//	size++;
+	//	
+	//}
 }
 
 void D3D12App::OnResize()
@@ -711,13 +768,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	XMStoreFloat4x4(&mView, view);
 
 	int index = 0;
-	for (GameObject& gameObject : mGameObjects)
+	for (GameObject* gameObject : mGameObjects)
 	{
 		//if(index == 0)
 		//gameObject.GetTransform().RotateByWorldAxis(0, gameTimer.DeltaTime() * 33.0f, 0);
-		gameObject.GetTransform().Rotate(0, gameTimer.DeltaTime() * 33.0f, 0);
+		//gameObject->GetTransform().Rotate(0, gameTimer.DeltaTime() * 33.0f, 0);
 
-		auto xmf4x4world = gameObject.GetTransform().GetWorldTransform();
+		auto xmf4x4world = gameObject->GetTransform().GetWorldTransform();
 
 		XMFLOAT4X4 test;
 		XMStoreFloat4x4(&test, xmf4x4world);
@@ -733,7 +790,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
 		//md3dCommandList->SetGraphicsRootDescriptorTable(0, cbv);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
-		gameObject.Render(md3dDevice, md3dCommandList, mCbvHeap);
+		gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
 	}
 
 
@@ -776,6 +833,11 @@ void D3D12App::Finalize()
 {
 	mBoxGeo->Finalize();
 
+	for (auto gameObject : mGameObjects)
+	{
+		delete gameObject;
+	}
+
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{
 		RELEASE_COM(mSwapChainBuffer[i]);
@@ -786,7 +848,7 @@ void D3D12App::Finalize()
 	RELEASE_COM(md3dCommandQueue);
 	RELEASE_COM(md3dCommandAllocator);
 	RELEASE_COM(md3dCommandList);
-	RELEASE_COM(mRtvHeap);
+	RELEASE_COM(mRtvHeap); 
 	RELEASE_COM(mDsvHeap);
 	RELEASE_COM(mCbvHeap);
 	RELEASE_COM(mRootSignature);

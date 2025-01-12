@@ -21,12 +21,16 @@ public:
 
 	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature);
 
+	void SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale);
+	void SetMesh();
+
 	void Render(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pCbvHeap);
 
 	Transform& GetTransform();
-private:
+
 	Mesh mMesh = {};
 	Shader mShader = {};
+private:
 
 	Transform mTransform;
 

@@ -39,6 +39,14 @@ void GameObject::LoadGameObjectData(ID3D12Device* pDevice, ID3D12GraphicsCommand
 		mMesh.LoadMeshData(pDevice, pCommandList, meshPath);
 	}
 
+	int childCount;
+	loader.read(reinterpret_cast<char*>(&childCount), sizeof(int));
+
+	for (int i = 0; i < childCount; ++i)
+	{
+
+	}
+
 	mShader.Initialize(pDevice, pRootSignature);
 }
 
@@ -46,6 +54,12 @@ void GameObject::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pC
 {
 	mMesh.Initialize(pDevice, pCommandList);
 	mShader.Initialize(pDevice, pRootSignature);
+}
+
+void GameObject::SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale)
+{
+	mTransform.SetPosition(position);
+	mTransform.SetRotationByQuat(XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 }
 
 void GameObject::Render(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pCbvHeap)

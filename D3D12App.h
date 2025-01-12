@@ -31,6 +31,8 @@ public:
 	void BuildBox();
 	void BuildPipelineStateObject();
 
+	void LoadHierarchyData(const std::string& filePath);
+	void LoadGameObjectData(std::ifstream& loader);
 	void BuildObjects();
 
 
@@ -123,5 +125,5 @@ private:
 
 	//GameObject
 	GameObject mGameObject;
-	std::vector<GameObject> mGameObjects;
+	std::vector<GameObject*> mGameObjects;
 };
