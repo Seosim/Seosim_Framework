@@ -22,11 +22,35 @@ public:
 
 		if (componentID == -1)
 		{
-			componentID = mGlobalID++;
+			componentID = GetID<Component>(mGlobalID++);
+
 		}
 
 		mComponents[objectID][componentID] = new Component();
 	};
+
+	template<class Component>
+	int GetID(int id = -1)
+	{
+		static int componentID = -1;
+
+		if (componentID == -1)
+		{
+			componentID = id;
+		}
+
+		return componentID;
+	}
+
+	template<class Component>
+	Component& GetComponent(int objectID)
+	{
+		static unsigned int componentID = -1;
+
+		Component& component = *(Component*)(mComponents[objectID][GetID<Component>()]);
+
+		return component;
+	}
 private:
 	unsigned int mGlobalID = 0;
 

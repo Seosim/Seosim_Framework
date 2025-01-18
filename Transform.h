@@ -10,6 +10,7 @@ public:
 	~CTransform() {}
 
 	virtual void Awake() {}
+	int value = 10;
 private:
 };
 

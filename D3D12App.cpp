@@ -394,7 +394,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader)
 	GameObject* gameObject = new GameObject();
 
 	gameObject->AddComponent<CTransform>();
-
+    CTransform& cTransform = gameObject->GetComponent<CTransform>();
 
 	mGameObjects.push_back(gameObject);
 

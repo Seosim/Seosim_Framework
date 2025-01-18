@@ -37,6 +37,12 @@ public:
 	{
 		ComponentManager::Instance().AddComponent<Component>(ID);
 	}
+
+	template<class Component>
+	Component& GetComponent()
+	{
+		return ComponentManager::Instance().GetComponent<Component>(ID);
+	}
 private:
 	static unsigned int globalID;
 
