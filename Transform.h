@@ -1,5 +1,17 @@
 #pragma once
+
 #include "pch.h"
+
+#include "IComponent.h"
+
+class CTransform : public IComponent {
+public:
+	CTransform() = default;
+	~CTransform() {}
+
+	virtual void Awake() {}
+private:
+};
 
 class GameObject;
 

@@ -1,6 +1,13 @@
 #include "pch.h"
 #include "GameObject.h"
 
+unsigned int GameObject::globalID = 0;
+
+GameObject::GameObject()
+{
+	ID = globalID++;
+}
+
 void GameObject::LoadGameObjectData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, const std::string& filePath)
 {
 	std::ifstream loader{ filePath, std::ios::binary };

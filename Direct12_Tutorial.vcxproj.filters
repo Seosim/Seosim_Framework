@@ -16,6 +16,12 @@
     <Filter Include="소스 파일\Shader">
       <UniqueIdentifier>{c4f10657-0831-40dd-9ec0-f30006e41f8a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Component">
+      <UniqueIdentifier>{2a0ba8ff-6086-4a5e-9bc7-c8285184e32f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Component">
+      <UniqueIdentifier>{9684c70a-a442-4316-9452-74845da00b00}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -77,8 +83,14 @@
     <ClInclude Include="Shader.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="IComponent.h">
+      <Filter>헤더 파일\Component</Filter>
+    </ClInclude>
     <ClInclude Include="Transform.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>헤더 파일\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="ComponentManager.h">
+      <Filter>헤더 파일\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

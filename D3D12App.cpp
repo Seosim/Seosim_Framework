@@ -392,6 +392,10 @@ void D3D12App::LoadHierarchyData(const std::string& filePath)
 void D3D12App::LoadGameObjectData(std::ifstream& loader)
 {
 	GameObject* gameObject = new GameObject();
+
+	gameObject->AddComponent<CTransform>();
+
+
 	mGameObjects.push_back(gameObject);
 
 	XMFLOAT3 position;

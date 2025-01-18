@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Transform.h"
 #include "d3dUtil.h"
+#include "ComponentManager.h"
 
 class GameObject {
 public:
@@ -12,7 +13,7 @@ public:
 		XMFLOAT4X4 WorldViewProj = {};
 	};
 
-	GameObject() = default;
+	GameObject();
 	~GameObject() {}
 
 	//GameObject(const GameObject& rhs) = delete;
@@ -30,9 +31,18 @@ public:
 
 	Mesh mMesh = {};
 	Shader mShader = {};
+
+	template <class Component>
+	void AddComponent()
+	{
+		ComponentManager::Instance().AddComponent<Component>(ID);
+	}
 private:
+	static unsigned int globalID;
 
 	Transform mTransform;
 
 	float speed = 0.0f;
+
+	unsigned int ID = 0;
 };
