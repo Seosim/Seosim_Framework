@@ -7,7 +7,15 @@
 class ComponentManager final {
 public:
 	ComponentManager() = default;
-	~ComponentManager() {}
+	~ComponentManager() {
+		for (auto object : mComponents)
+		{
+			for (auto component : object.second)
+			{
+				delete component.second;
+			}
+		}
+	}
 
 	ComponentManager(const ComponentManager&) = delete;
 
@@ -54,7 +62,7 @@ public:
 private:
 	unsigned int mGlobalID = 0;
 
-	std::unordered_map<unsigned int, std::unordered_map<unsigned int, IComponent*>> mComponents;
+	std::unordered_map<unsigned int, std::unordered_map<unsigned int, IComponent*>> mComponents;	// ObjectID , ComponentID, Pointer
 };
 
 

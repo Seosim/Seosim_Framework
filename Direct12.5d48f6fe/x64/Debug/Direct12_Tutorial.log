@@ -1,12 +1,2 @@
-﻿  D3D12App.cpp
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(2,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
-  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
-  
-  GameObject.cpp
-  Transform.cpp
-  main.cpp
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(2,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
-  (소스 파일 '/main.cpp'을(를) 컴파일하는 중)
-  
-  코드를 생성하고 있습니다...
+﻿  Transform.cpp
   Direct12_Tutorial.vcxproj -> D:\문서\GitHub\Direct12_Tutorial\x64\Debug\Direct12_Tutorial.exe

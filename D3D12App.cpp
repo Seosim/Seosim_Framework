@@ -389,7 +389,7 @@ void D3D12App::LoadHierarchyData(const std::string& filePath)
 	LoadGameObjectData(loader);
 }
 
-void D3D12App::LoadGameObjectData(std::ifstream& loader)
+void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
 
@@ -407,7 +407,8 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader)
 	XMFLOAT3 scale;
 	loader.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
 
-	gameObject->SetTransformData(position, rotation, scale);
+	cTransform.SetParent(parent);
+	cTransform.SetTransformData(position, rotation, scale);
 
 	bool bHasMesh;
 	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
@@ -433,7 +434,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader)
 
 	for (int i = 0; i < childCount; ++i)
 	{
-		LoadGameObjectData(loader);
+		LoadGameObjectData(loader, gameObject);
 	}
 
 	gameObject->mShader.Initialize(md3dDevice, mRootSignature);
@@ -778,7 +779,11 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		//gameObject.GetTransform().RotateByWorldAxis(0, gameTimer.DeltaTime() * 33.0f, 0);
 		//gameObject->GetTransform().Rotate(0, gameTimer.DeltaTime() * 33.0f, 0);
 
-		auto xmf4x4world = gameObject->GetTransform().GetWorldTransform();
+		CTransform& cTransform = gameObject->GetComponent<CTransform>();
+		cTransform.Rotate(0, 1, 0);
+		//cTransform.RotateByWorldAxis(0, 1, 0);
+
+		auto xmf4x4world = cTransform.GetWorldTransform();
 
 		XMFLOAT4X4 test;
 		XMStoreFloat4x4(&test, xmf4x4world);
