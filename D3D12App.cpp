@@ -425,7 +425,10 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 		meshPath += meshName;
 		meshPath += ".bin";
 
-		gameObject->mMesh.LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+		gameObject->AddComponent<Mesh>();
+		Mesh& mesh = gameObject->GetComponent<Mesh>();
+
+		mesh.LoadMeshData(md3dDevice, md3dCommandList, meshPath);
 		//mMesh.LoadMeshData(pDevice, pCommandList, meshPath);
 	}
 
@@ -443,7 +446,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/Dummy.bin");
+	LoadHierarchyData("Assets/Hierarchies/graph.bin");
 
 	//int size = 0;
 	//for (GameObject& gameObject : mGameObjects)
@@ -780,7 +783,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		//gameObject->GetTransform().Rotate(0, gameTimer.DeltaTime() * 33.0f, 0);
 
 		CTransform& cTransform = gameObject->GetComponent<CTransform>();
-		cTransform.Rotate(0, 1, 0);
+		//cTransform.Rotate(0, 1, 0);
 		//cTransform.RotateByWorldAxis(0, 1, 0);
 
 		auto xmf4x4world = cTransform.GetWorldTransform();
@@ -799,7 +802,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
 		//md3dCommandList->SetGraphicsRootDescriptorTable(0, cbv);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
-		gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
+
+		if (gameObject->HasComponent<Mesh>())
+		{
+			Mesh& mesh = gameObject->GetComponent<Mesh>();
+			gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
+			mesh.Render(md3dCommandList, mCbvHeap, md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+		}
 	}
 
 

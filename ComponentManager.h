@@ -55,10 +55,19 @@ public:
 	{
 		static unsigned int componentID = -1;
 
+		ASSERT(mComponents[objectID][GetID<Component>()] != nullptr);
+
 		Component& component = *(Component*)(mComponents[objectID][GetID<Component>()]);
 
 		return component;
 	}
+
+	template<class Component>
+	bool HasComponent(int objectID)
+	{
+		return (mComponents[objectID][GetID<Component>()] != nullptr);
+	}
+
 private:
 	unsigned int mGlobalID = 0;
 

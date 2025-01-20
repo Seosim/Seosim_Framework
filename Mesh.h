@@ -1,7 +1,9 @@
 #pragma once
 #include "pch.h"
+#include "IComponent.h"
 
-class Mesh {
+
+class Mesh : public IComponent {
 public:
 	struct SubmeshGeometry
 	{
@@ -15,7 +17,8 @@ public:
 	Mesh() = default;
 	~Mesh();
 
-	//Mesh(const Mesh& rhs) = delete;
+	Mesh(const Mesh& rhs) = delete;
+	virtual void Awake() {}
 
 	void LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::string& filePath);
 
@@ -45,7 +48,7 @@ protected:
 
 	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 private:
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferView()const
+	D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
 	{
 		D3D12_VERTEX_BUFFER_VIEW vbv;
 		vbv.BufferLocation = mPositionBufferGPU->GetGPUVirtualAddress();
@@ -55,7 +58,7 @@ private:
 		return vbv;
 	}
 
-	D3D12_INDEX_BUFFER_VIEW IndexBufferView()const
+	D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
 	{
 		D3D12_INDEX_BUFFER_VIEW ibv;
 		ibv.BufferLocation = mIndexBufferGPU->GetGPUVirtualAddress();
