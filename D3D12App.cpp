@@ -223,7 +223,6 @@ void D3D12App::BuildConstantBuffers()
 
 void D3D12App::BuildRootSignature()
 {
-	D3D12_ROOT_PARAMETER rootParamater[1];
 
 	D3D12_DESCRIPTOR_RANGE descriptorRange[1];
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
@@ -232,12 +231,21 @@ void D3D12App::BuildRootSignature()
 	descriptorRange[0].RegisterSpace = 0;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
+	D3D12_ROOT_PARAMETER rootParamater[2];
+
 	rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParamater[0].Descriptor = {
 		.ShaderRegister = 0,
 		.RegisterSpace = 0
 	};
 	rootParamater[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	rootParamater[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[1].Descriptor = {
+		.ShaderRegister = 1,
+		.RegisterSpace = 0
+	};
+	rootParamater[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	//rootParamater[0].DescriptorTable.NumDescriptorRanges = 1;
@@ -247,7 +255,7 @@ void D3D12App::BuildRootSignature()
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	rootSignatureDesc.NumParameters = 1;
+	rootSignatureDesc.NumParameters = 2;
 	rootSignatureDesc.pParameters = rootParamater;
 	rootSignatureDesc.NumStaticSamplers = 0;
 	rootSignatureDesc.pStaticSamplers = nullptr;

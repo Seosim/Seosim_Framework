@@ -51,6 +51,9 @@
     <ClCompile Include="Transform.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Action.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -94,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="Material.h">
       <Filter>헤더 파일\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Action.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

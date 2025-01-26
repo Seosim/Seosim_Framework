@@ -143,6 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Action.cpp" />
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
     <ClInclude Include="ComponentManager.h" />
     <ClInclude Include="D3D12App.h" />
     <ClInclude Include="d3dUtil.h" />

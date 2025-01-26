@@ -6,7 +6,7 @@ public:
 	Shader() = default;
 	~Shader();
 
-	//Shader(const Shader& rhs) = delete;
+	Shader(const Shader& rhs) = delete;
 
 	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature);
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);

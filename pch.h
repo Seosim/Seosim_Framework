@@ -10,6 +10,8 @@
 #include <unordered_map>
 #include <memory>
 #include <fstream>
+#include <functional>
+
 
 #include <d3d12.h>
 #include <dxgi1_4.h>

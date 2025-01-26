@@ -9,6 +9,11 @@ cbuffer cbPerObject : register(b0)
 	float4x4 gWorldViewProj; 
 };
 
+cbuffer cbPerMaterial : register(b1)
+{
+    float speed;
+};
+
 struct VertexIn
 {
 	float3 PosL  : POSITION;
