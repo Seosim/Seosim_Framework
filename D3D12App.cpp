@@ -200,7 +200,7 @@ void D3D12App::CreateCbvSrvUavDescriptorHeap()
 void D3D12App::BuildConstantBuffers()
 {
 	constexpr int MAX_OBJECT_COUNT = 100000;
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice, MAX_OBJECT_COUNT, true);
+	mObjectCB = std::make_unique<UploadBuffer>(md3dDevice, MAX_OBJECT_COUNT, true, sizeof(ObjectConstants));
 
 	UINT objCBByteSize = (sizeof(ObjectConstants) + 255) & ~255;
 
@@ -401,9 +401,9 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
 
-	gameObject->AddComponent<Material<float>>();
-	Material<float>& cMaterial = gameObject->GetComponent<Material<float>>();
-	cMaterial.Initialize(md3dDevice, mCbvHeap);
+	gameObject->AddComponent<Material>();
+	Material& cMaterial = gameObject->GetComponent<Material>();
+	cMaterial.Initialize(md3dDevice, mCbvHeap, 0.5f);
 
 	gameObject->AddComponent<CTransform>();
     CTransform& cTransform = gameObject->GetComponent<CTransform>();
@@ -788,6 +788,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	XMStoreFloat4x4(&mView, view);
 
 	int index = 0;
+	static float testVal = 0.0f;
+	testVal += gameTimer.DeltaTime();
 	for (GameObject* gameObject : mGameObjects)
 	{
 		//if(index == 0)
@@ -820,8 +822,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 			Mesh& mesh = gameObject->GetComponent<Mesh>();
 			gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
 			
-			Material<float>& mat = gameObject->GetComponent<Material<float>>();
-			mat.UpdateConstantBuffer(md3dCommandList, 0.0f);
+			Material& mat = gameObject->GetComponent<Material>();
+			mat.UpdateConstantBuffer(md3dCommandList, sinf(testVal));
 			mesh.Render(md3dCommandList, mCbvHeap, md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 		}
 	}

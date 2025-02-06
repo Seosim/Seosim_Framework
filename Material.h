@@ -6,16 +6,16 @@
 #include "Shader.h"
 #include "UploadBuffer.h"
 
-template<typename T>
 class Material : public IComponent {
 public:
 	virtual void Awake() {}
 
-	void Initialize(ID3D12Device* pDevice, ID3D12DescriptorHeap* cbvHeap)
+	template<typename T>
+	void Initialize(ID3D12Device* pDevice, ID3D12DescriptorHeap* cbvHeap, const T& data)
 	{
 		mCbvHeap = cbvHeap;
 		constexpr int MAX_OBJECT_COUNT = 100000;
-		mMaterialCB = std::make_unique<UploadBuffer<T>>(pDevice, MAX_OBJECT_COUNT, true);
+		mMaterialCB = std::make_unique<UploadBuffer>(pDevice, MAX_OBJECT_COUNT, true, sizeof(T));
 
 		//constexpr int MAX_OBJECT_COUNT = 100000;
 
@@ -35,6 +35,7 @@ public:
 		//pDevice->CreateConstantBufferView(&cbvDesc, handle);
 	}
 
+	template<typename T>
 	void UpdateConstantBuffer(ID3D12GraphicsCommandList* pCommandList, const T& data)
 	{
 		auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -45,6 +46,6 @@ public:
 	}
 private:
 	Shader* mpShader = nullptr;
-	std::unique_ptr<UploadBuffer<T>> mMaterialCB = nullptr;
+	std::unique_ptr<UploadBuffer> mMaterialCB = nullptr;
 	ID3D12DescriptorHeap* mCbvHeap = nullptr;
 };

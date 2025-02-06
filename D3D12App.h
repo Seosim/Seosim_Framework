@@ -96,7 +96,7 @@ private:
 	static constexpr DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	static constexpr DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
-	std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+	std::unique_ptr<UploadBuffer> mObjectCB = nullptr;
 	ID3D12RootSignature* mRootSignature = nullptr;
 
 	D3D12_VIEWPORT mViewport;

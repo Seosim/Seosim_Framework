@@ -1,17 +1,16 @@
 #pragma once
 #include "pch.h"
 
-template<typename T>
 class UploadBuffer
 {
 public:
-    UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer) :
+    UploadBuffer(ID3D12Device* device, UINT elementCount, bool isConstantBuffer, UINT elementByteSize) :
         mIsConstantBuffer(isConstantBuffer)
     {
-        mElementByteSize = sizeof(T);
+        mElementByteSize = elementByteSize;
 
         if (isConstantBuffer)
-            mElementByteSize = (sizeof(T) + 255) & ~255;
+            mElementByteSize = (elementByteSize + 255) & ~255;
         
         D3D12_HEAP_PROPERTIES heapProps = {};
         heapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -61,6 +60,7 @@ public:
         return mUploadBuffer;
     }
 
+    template<typename T>
     void CopyData(int elementIndex, const T& data)
     {
         memcpy(&mMappedData[elementIndex * mElementByteSize], &data, sizeof(T));
