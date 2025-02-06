@@ -206,18 +206,18 @@ void D3D12App::BuildConstantBuffers()
 
 	//for (int i = 0; i < 3; ++i)
 	//{
-		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
-		int boxCBufIndex = 0;
-		cbAddress += boxCBufIndex * objCBByteSize;
+		//D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+		//int boxCBufIndex = 0;
+		//cbAddress += boxCBufIndex * objCBByteSize;
 
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		cbvDesc.BufferLocation = cbAddress;
-		cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
+		//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+		//cbvDesc.BufferLocation = cbAddress;
+		//cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
 
-		auto handle = mCbvHeap->GetCPUDescriptorHandleForHeapStart();
-		handle.ptr += mCbvSrvUavDescriptorSize * boxCBufIndex;
+		//auto handle = mCbvHeap->GetCPUDescriptorHandleForHeapStart();
+		//handle.ptr += mCbvSrvUavDescriptorSize * boxCBufIndex;
 
-		md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
+		//md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
 	//}
 }
 
@@ -400,6 +400,10 @@ void D3D12App::LoadHierarchyData(const std::string& filePath)
 void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
+
+	gameObject->AddComponent<Material<float>>();
+	Material<float>& cMaterial = gameObject->GetComponent<Material<float>>();
+	cMaterial.Initialize(md3dDevice, mCbvHeap);
 
 	gameObject->AddComponent<CTransform>();
     CTransform& cTransform = gameObject->GetComponent<CTransform>();
@@ -815,6 +819,9 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		{
 			Mesh& mesh = gameObject->GetComponent<Mesh>();
 			gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
+			
+			Material<float>& mat = gameObject->GetComponent<Material<float>>();
+			mat.UpdateConstantBuffer(md3dCommandList, 0.0f);
 			mesh.Render(md3dCommandList, mCbvHeap, md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 		}
 	}

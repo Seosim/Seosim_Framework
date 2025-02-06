@@ -43,7 +43,7 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
-    return float4(pin.UV.x, pin.UV.y, 0, 1);
+    return float4(pin.UV.x, pin.UV.y, speed, 1);
 }
 
 
