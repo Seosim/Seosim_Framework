@@ -7,12 +7,15 @@ Shader::~Shader()
 	RELEASE_COM(mPSO);
 }
 
-void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature)
+void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName)
 {
 	HRESULT hr = S_OK;
 
-	mVertexBlob = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_1");
-	mPixelBlob = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
+	std::wstring vsPath = L"Shaders\\" + std::wstring(shaderName.begin(), shaderName.end()) + L".hlsl";
+	std::wstring psPath = L"Shaders\\" + std::wstring(shaderName.begin(), shaderName.end()) + L".hlsl";
+
+	mVertexBlob = d3dUtil::CompileShader(vsPath, nullptr, "VS", "vs_5_1");
+	mPixelBlob = d3dUtil::CompileShader(psPath, nullptr, "PS", "ps_5_1");
 
 	mInputLayout =
 	{

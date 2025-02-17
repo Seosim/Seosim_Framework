@@ -17,13 +17,11 @@ public:
 	GameObject();
 	~GameObject() {}
 
-	//GameObject(const GameObject& rhs) = delete;
+	GameObject(const GameObject& rhs) = delete;
 
 	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature);
 
 	void Render(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pCbvHeap);
-
-	Shader mShader = {};
 
 	template <class Component>
 	void AddComponent()
@@ -44,8 +42,6 @@ public:
 	}
 private:
 	static unsigned int globalID;
-
-	float speed = 0.0f;
 
 	unsigned int ID = 0;
 };

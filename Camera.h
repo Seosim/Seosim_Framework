@@ -1,0 +1,25 @@
+#pragma once
+#include "pch.h"
+#include "UploadBuffer.h"
+
+class Camera final {
+public:
+	struct CameraBuffer {
+		XMFLOAT3 CameraPos;
+	};
+
+	Camera() = default;
+	~Camera() {}
+	Camera(const Camera&) = delete;
+
+	void Initialize(ID3D12Device* pDevice);
+
+	void Update(ID3D12GraphicsCommandList* pCommandList);
+
+	void SetPosition(const XMFLOAT3& position);
+
+private:
+	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
+
+	CameraBuffer mCameraBuffer;
+};

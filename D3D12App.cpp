@@ -116,6 +116,8 @@ bool D3D12App::InitDirect3D()
 	BuildBox();
 	BuildPipelineStateObject();
 	BuildObjects();
+	BuildLight();
+	BuildCamera();
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -231,8 +233,10 @@ void D3D12App::BuildRootSignature()
 	descriptorRange[0].RegisterSpace = 0;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	D3D12_ROOT_PARAMETER rootParamater[2];
+	constexpr int ROOT_PARAMATER_COUNT = 4;
+	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
 
+	//Per Object
 	rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParamater[0].Descriptor = {
 		.ShaderRegister = 0,
@@ -240,12 +244,29 @@ void D3D12App::BuildRootSignature()
 	};
 	rootParamater[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+	//Per Material
 	rootParamater[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParamater[1].Descriptor = {
 		.ShaderRegister = 1,
 		.RegisterSpace = 0
 	};
 	rootParamater[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	//Per Light
+	rootParamater[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[2].Descriptor = {
+		.ShaderRegister = 2,
+		.RegisterSpace = 0
+	};
+	rootParamater[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	//Per Camera
+	rootParamater[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[3].Descriptor = {
+		.ShaderRegister = 3,
+		.RegisterSpace = 0
+	};
+	rootParamater[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	//rootParamater[0].DescriptorTable.NumDescriptorRanges = 1;
@@ -255,7 +276,7 @@ void D3D12App::BuildRootSignature()
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	rootSignatureDesc.NumParameters = 2;
+	rootSignatureDesc.NumParameters = ROOT_PARAMATER_COUNT;
 	rootSignatureDesc.pParameters = rootParamater;
 	rootSignatureDesc.NumStaticSamplers = 0;
 	rootSignatureDesc.pStaticSamplers = nullptr;
@@ -286,74 +307,91 @@ void D3D12App::BuildShaderAndInputLayout()
 
 void D3D12App::BuildBox()
 {
-	std::array<Vertex, 8> vertices =
-	{
-		Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
-		Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
-		Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
-		Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
-		Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
-		Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
-		Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
-		Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
-	};
+	//std::array<Vertex, 8> vertices =
+	//{
+	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
+	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
+	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
+	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
+	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
+	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
+	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
+	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
+	//};
 
-	std::array<std::uint16_t, 36> indices =
-	{
-		// front face
-		0, 1, 2,
-		0, 2, 3,
+	//std::array<std::uint16_t, 36> indices =
+	//{
+	//	// front face
+	//	0, 1, 2,
+	//	0, 2, 3,
 
-		// back face
-		4, 6, 5,
-		4, 7, 6,
+	//	// back face
+	//	4, 6, 5,
+	//	4, 7, 6,
 
-		// left face
-		4, 5, 1,
-		4, 1, 0,
+	//	// left face
+	//	4, 5, 1,
+	//	4, 1, 0,
 
-		// right face
-		3, 2, 6,
-		3, 6, 7,
+	//	// right face
+	//	3, 2, 6,
+	//	3, 6, 7,
 
-		// top face
-		1, 5, 6,
-		1, 6, 2,
+	//	// top face
+	//	1, 5, 6,
+	//	1, 6, 2,
 
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
-	};
+	//	// bottom face
+	//	4, 0, 3,
+	//	4, 3, 7
+	//};
 
-	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+	//const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+	//const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
 
-	mBoxGeo = std::make_unique<MeshGeometry>();
-	mBoxGeo->Name = "boxGeo";
+	//mBoxGeo = std::make_unique<MeshGeometry>();
+	//mBoxGeo->Name = "boxGeo";
 
-	HR(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+	//HR(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
+	//CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
 
-	HR(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+	//HR(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
+	//CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-	mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
-		md3dCommandList, vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
+	//mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
+	//	md3dCommandList, vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
 
-	mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
-		md3dCommandList, indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
+	//mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
+	//	md3dCommandList, indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
 
-	mBoxGeo->VertexByteStride = sizeof(Vertex);
-	mBoxGeo->VertexBufferByteSize = vbByteSize;
-	mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	mBoxGeo->IndexBufferByteSize = ibByteSize;
+	//mBoxGeo->VertexByteStride = sizeof(Vertex);
+	//mBoxGeo->VertexBufferByteSize = vbByteSize;
+	//mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+	//mBoxGeo->IndexBufferByteSize = ibByteSize;
 
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
+	//SubmeshGeometry submesh;
+	//submesh.IndexCount = (UINT)indices.size();
+	//submesh.StartIndexLocation = 0;
+	//submesh.BaseVertexLocation = 0;
 
-	mBoxGeo->DrawArgs["box"] = submesh;
+	//mBoxGeo->DrawArgs["box"] = submesh;
+}
+
+void D3D12App::BuildLight()
+{
+	mpLight = new Light();
+	mpLight->Initialize(md3dDevice);
+
+	mpLight->SetDirection({ 0.5f, 0.5f, 0.5f });
+	mpLight->SetColor({ 1.0f, 1.0f, 1.0f });
+}
+
+void D3D12App::BuildCamera()
+{
+	mpCamera = new Camera();
+	mpCamera->Initialize(md3dDevice);
+
+	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
 }
 
 void D3D12App::BuildPipelineStateObject()
@@ -401,10 +439,6 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
 
-	gameObject->AddComponent<Material>();
-	Material& cMaterial = gameObject->GetComponent<Material>();
-	cMaterial.Initialize(md3dDevice, mCbvHeap, 0.5f);
-
 	gameObject->AddComponent<CTransform>();
     CTransform& cTransform = gameObject->GetComponent<CTransform>();
 
@@ -444,6 +478,27 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 		//mMesh.LoadMeshData(pDevice, pCommandList, meshPath);
 	}
 
+	bool bHasMaterial;
+	loader.read(reinterpret_cast<char*>(&bHasMaterial), sizeof(bool));
+
+	if (bHasMaterial)
+	{
+		int materialLength = 0;
+		char materialName[64] = {};
+
+		loader.read(reinterpret_cast<char*>(&materialLength), sizeof(int));
+		loader.read(reinterpret_cast<char*>(materialName), materialLength);
+		materialName[materialLength] = '\0';
+		std::string materialPath = "Assets/Materials/";
+		materialPath += materialName;
+		materialPath += ".bin";
+
+		gameObject->AddComponent<Material>();
+		Material& cMaterial = gameObject->GetComponent<Material>();
+
+		cMaterial.LoadMaterialData(md3dDevice, mRootSignature, mCbvHeap, materialPath);
+	} 
+
 	int childCount;
 	loader.read(reinterpret_cast<char*>(&childCount), sizeof(int));
 
@@ -451,29 +506,11 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	{
 		LoadGameObjectData(loader, gameObject);
 	}
-
-	gameObject->mShader.Initialize(md3dDevice, mRootSignature);
-	//mShader.Initialize(pDevice, pRootSignature);
 }
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/graph.bin");
-
-	//int size = 0;
-	//for (GameObject& gameObject : mGameObjects)
-	//{
-	//	gameObject.LoadGameObjectData(md3dDevice, md3dCommandList, mRootSignature, "Assets/Hierarchies/Box.bin");
-
-	//	if (size > 0)
-	//	{
-	//		gameObject.GetTransform().SetParent(&mGameObjects[size - 1]);
-	//		gameObject.GetTransform().SetPosition({ 2.0f * size, 0.0f, 0.0f }, Transform::Space::World);
-	//		//gameObject.GetTransform().SetPosition({ 2.0f, 0.0f, 0.0f }, Transform::Space::Local);	//Same
-	//	}
-	//	size++;
-	//	
-	//}
+	LoadHierarchyData("Assets/Hierarchies/MaterialTest.bin");
 }
 
 void D3D12App::OnResize()
@@ -667,7 +704,6 @@ int D3D12App::Update()
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
-				//UpdateBox();
 				Draw(mTimer);
 			}
 			else
@@ -682,27 +718,27 @@ int D3D12App::Update()
 
 void D3D12App::UpdateBox()
 {
-	// Convert Spherical to Cartesian coordinates.
-	float x = mRadius * sinf(mPhi) * cosf(mTheta);
-	float z = mRadius * sinf(mPhi) * sinf(mTheta);
-	float y = mRadius * cosf(mPhi);
+	//// Convert Spherical to Cartesian coordinates.
+	//float x = mRadius * sinf(mPhi) * cosf(mTheta);
+	//float z = mRadius * sinf(mPhi) * sinf(mTheta);
+	//float y = mRadius * cosf(mPhi);
 
-	// Build the view matrix.
-	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//// Build the view matrix.
+	//XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+	//XMVECTOR target = XMVectorZero();
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-	XMStoreFloat4x4(&mView, view);
+	//XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	//XMStoreFloat4x4(&mView, view);
 
-	XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	XMMATRIX proj = XMLoadFloat4x4(&mProj);
-	XMMATRIX worldViewProj = world * view * proj;
+	//XMMATRIX world = XMLoadFloat4x4(&mWorld);
+	//XMMATRIX proj = XMLoadFloat4x4(&mProj);
+	//XMMATRIX worldViewProj = world * view * proj;
 
-	// Update the constant buffer with the latest worldViewProj matrix.
-	ObjectConstants objConstants;
-	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-	mObjectCB->CopyData(0, objConstants);
+	//// Update the constant buffer with the latest worldViewProj matrix.
+	//ObjectConstants objConstants;
+	//XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+	//mObjectCB->CopyData(0, objConstants);
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
@@ -763,16 +799,22 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	auto rtvHandle = CurrentBackBufferView();
 	auto dsvHandle = DepthStencilView();
-
+	
 	md3dCommandList->ClearRenderTargetView(rtvHandle, DirectX::Colors::LightGreen, 0, nullptr);
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 	md3dCommandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
+	
+	//항상 CBV 내용 변경 전 RootSignature Set 필요.
+	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
+
+	//Update Constant Camera Buffer, Light Buffer
+	mpCamera->Update(md3dCommandList);
+	mpLight->Update(md3dCommandList);
 
 	//Draw Object.
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
 
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
@@ -811,6 +853,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 		mObjectCB->CopyData(index, objConstants);
 		auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -822,8 +865,18 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 			Mesh& mesh = gameObject->GetComponent<Mesh>();
 			gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
 			
+			//struct TestCBuffer {
+			//	XMFLOAT4 Color;
+			//};
+
+			//TestCBuffer cBuffer =
+			//{
+			//	.Color = {sinf(testVal), sinf(testVal), sinf(testVal), 1.0f}
+			//};
+
+			//mat.UpdateConstantBuffer(cBuffer);
 			Material& mat = gameObject->GetComponent<Material>();
-			mat.UpdateConstantBuffer(md3dCommandList, sinf(testVal));
+			mat.SetConstantBufferView(md3dCommandList);
 			mesh.Render(md3dCommandList, mCbvHeap, md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
 		}
 	}
@@ -866,12 +919,15 @@ void D3D12App::RenderObject()
 
 void D3D12App::Finalize()
 {
-	mBoxGeo->Finalize();
+	//mBoxGeo->Finalize();
 
 	for (auto gameObject : mGameObjects)
 	{
 		delete gameObject;
 	}
+
+	delete mpCamera;
+	delete mpLight;
 
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{

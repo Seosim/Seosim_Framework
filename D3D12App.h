@@ -3,12 +3,15 @@
 #include "UploadBuffer.h"
 #include "d3dUtil.h"
 #include "GameObject.h"
+#include "Camera.h"
+#include "Light.h"
 
 class D3D12App final
 {
 public:
 	struct ObjectConstants
 	{
+		XMFLOAT4X4 World = {};
 		XMFLOAT4X4 WorldViewProj = {};
 	};
 
@@ -29,6 +32,8 @@ public:
 	void BuildRootSignature();
 	void BuildShaderAndInputLayout();
 	void BuildBox();
+	void BuildLight();
+	void BuildCamera();
 	void BuildPipelineStateObject();
 
 	void LoadHierarchyData(const std::string& filePath);
@@ -111,19 +116,26 @@ private:
 	ID3D12PipelineState* mPSO = nullptr;
 
 	//Box
-	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
+	//std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
+	//XMFLOAT4X4 mWorld = MATRIX::Identify4x4();
+
 	float mTheta = 1.5f * XM_PI;
 	float mPhi = XM_PIDIV4;
 	float mRadius = 5.0f;
-	XMFLOAT4X4 mWorld = MATRIX::Identify4x4();
 	XMFLOAT4X4 mView = MATRIX::Identify4x4();
 	XMFLOAT4X4 mProj = MATRIX::Identify4x4();
-	POINT mLastMousePos = {};
 
 	int mWidth = 800;
 	int mHeight = 600;
+	POINT mLastMousePos = {};
 
 	//GameObject
 	GameObject mGameObject;
 	std::vector<GameObject*> mGameObjects;
+
+	//Camera
+	Camera* mpCamera = nullptr;
+
+	//Light
+	Light* mpLight = nullptr;
 };

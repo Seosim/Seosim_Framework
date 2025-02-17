@@ -8,7 +8,7 @@ public:
 
 	Shader(const Shader& rhs) = delete;
 
-	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature);
+	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName);
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);
 private:
 	ID3DBlob* mVertexBlob = nullptr;
