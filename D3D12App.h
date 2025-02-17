@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Texture.h"
 
 class D3D12App final
 {
@@ -34,6 +35,7 @@ public:
 	void BuildBox();
 	void BuildLight();
 	void BuildCamera();
+	void BuildTexture();
 	void BuildPipelineStateObject();
 
 	void LoadHierarchyData(const std::string& filePath);
@@ -86,6 +88,8 @@ private:
 	ID3D12DescriptorHeap* mRtvHeap = nullptr;
 	ID3D12DescriptorHeap* mDsvHeap = nullptr;
 	ID3D12DescriptorHeap* mCbvHeap = nullptr;
+	ID3D12DescriptorHeap* mSrvHeap = nullptr;
+
 	UINT mRtvDescriptorSize = 0;
 	UINT mDsvDescriptorSize = 0;
 	UINT mCbvSrvUavDescriptorSize = 0;
@@ -138,4 +142,8 @@ private:
 
 	//Light
 	Light* mpLight = nullptr;
+
+	//Texture
+	std::unordered_map<std::string, Texture*> mTextures;
+	Texture* mTexture = nullptr;
 };

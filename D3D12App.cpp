@@ -118,6 +118,7 @@ bool D3D12App::InitDirect3D()
 	BuildObjects();
 	BuildLight();
 	BuildCamera();
+	BuildTexture();
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -197,6 +198,13 @@ void D3D12App::CreateCbvSrvUavDescriptorHeap()
 	cbvHeapDesc.NumDescriptors = 1;
 
 	HR(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+
+	//Build SRV Heap.
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	HR(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvHeap)));
 }
 
 void D3D12App::BuildConstantBuffers()
@@ -227,13 +235,13 @@ void D3D12App::BuildRootSignature()
 {
 
 	D3D12_DESCRIPTOR_RANGE descriptorRange[1];
-	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].NumDescriptors = 1;
 	descriptorRange[0].BaseShaderRegister = 0;
 	descriptorRange[0].RegisterSpace = 0;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	constexpr int ROOT_PARAMATER_COUNT = 4;
+	constexpr int ROOT_PARAMATER_COUNT = 5;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
 
 	//Per Object
@@ -268,18 +276,34 @@ void D3D12App::BuildRootSignature()
 	};
 	rootParamater[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	//rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	//rootParamater[0].DescriptorTable.NumDescriptorRanges = 1;
-	//rootParamater[0].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
-	//rootParamater[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	//Texture
+	rootParamater[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParamater[4].DescriptorTable.NumDescriptorRanges = 1;
+	rootParamater[4].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
+	rootParamater[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
+
+	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[1];
+
+	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	pd3dSamplerDescs[0].MipLODBias = 0;
+	pd3dSamplerDescs[0].MaxAnisotropy = 1;
+	pd3dSamplerDescs[0].ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	pd3dSamplerDescs[0].MinLOD = 0;
+	pd3dSamplerDescs[0].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[0].ShaderRegister = 0;
+	pd3dSamplerDescs[0].RegisterSpace = 0;
+	pd3dSamplerDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootSignatureDesc.NumParameters = ROOT_PARAMATER_COUNT;
 	rootSignatureDesc.pParameters = rootParamater;
-	rootSignatureDesc.NumStaticSamplers = 0;
-	rootSignatureDesc.pStaticSamplers = nullptr;
+	rootSignatureDesc.NumStaticSamplers = _countof(pd3dSamplerDescs);
+	rootSignatureDesc.pStaticSamplers = pd3dSamplerDescs;
 
 	ID3DBlob* signatureBlob = nullptr;
 	ID3DBlob* errorBlob = nullptr;
@@ -382,8 +406,8 @@ void D3D12App::BuildLight()
 	mpLight = new Light();
 	mpLight->Initialize(md3dDevice);
 
-	mpLight->SetDirection({ 0.5f, 0.5f, 0.5f });
-	mpLight->SetColor({ 1.0f, 1.0f, 1.0f });
+	mpLight->SetDirection({ -0.32f,  0.77f, 0.56f });
+	mpLight->SetColor({ 1.0f, 0.9568627f, 0.8392157 });
 }
 
 void D3D12App::BuildCamera()
@@ -392,6 +416,16 @@ void D3D12App::BuildCamera()
 	mpCamera->Initialize(md3dDevice);
 
 	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
+}
+
+void D3D12App::BuildTexture()
+{
+	mTexture = new Texture();
+
+	std::wstring name{ L"./Assets/Textures/WoodCrate01.dds" };
+
+	mTexture->LoadTextureFromDDSFile(md3dDevice, md3dCommandList, name.c_str(), RESOURCE_TEXTURE2D, 0);
+	mTexture->CreateSrv(md3dDevice, mSrvHeap);
 }
 
 void D3D12App::BuildPipelineStateObject()
@@ -808,13 +842,20 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	//항상 CBV 내용 변경 전 RootSignature Set 필요.
 	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
 
+	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//texHandle.ptr += 
+
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
+	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
+
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
 	mpLight->Update(md3dCommandList);
 
+
 	//Draw Object.
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvHeap };
-	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
@@ -822,6 +863,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	float y = mRadius * cosf(mPhi);
 
 	// Build the view matrix.
+	mpCamera->SetPosition({ x, y, z }); 
 	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
 	XMVECTOR target = XMVectorZero();
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -856,7 +898,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 		mObjectCB->CopyData(index, objConstants);
-		auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
+		//auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
 		//md3dCommandList->SetGraphicsRootDescriptorTable(0, cbv);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
@@ -928,6 +970,7 @@ void D3D12App::Finalize()
 
 	delete mpCamera;
 	delete mpLight;
+	delete mTexture;
 
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{
@@ -942,6 +985,7 @@ void D3D12App::Finalize()
 	RELEASE_COM(mRtvHeap); 
 	RELEASE_COM(mDsvHeap);
 	RELEASE_COM(mCbvHeap);
+	RELEASE_COM(mSrvHeap);
 	RELEASE_COM(mRootSignature);
 	RELEASE_COM(mPSO);
 

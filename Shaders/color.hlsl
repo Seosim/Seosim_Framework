@@ -4,6 +4,10 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
+Texture2D gDiffuseMap : register(t0);
+SamplerState gsamLinear : register(s0);
+
+
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorld;
@@ -62,6 +66,8 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
+    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
+    
     // Normalize vectors.
     float3 N = normalize(pin.NormalW);
     float3 L = lightDir;
@@ -69,11 +75,11 @@ float4 PS(VertexOut pin) : SV_Target
     float3 R = reflect(-L, N);
 
     // Ambient term.
-    float3 ambient = color.rgb;
+    float3 ambient = diffuseAlbedo.rgb;
 
     // Diffuse term.
     float diff = max(dot(N, L), 0.0);
-    float3 diffuse = diff * color.rgb;
+    float3 diffuse = diff * diffuseAlbedo.rgb;
 
     // Specular term.
     float spec = 0.0;
