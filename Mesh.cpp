@@ -209,7 +209,7 @@ void Mesh::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommand
 	DrawArgs["box"] = submesh;
 }
 
-void Mesh::Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pCbvHeap, UINT size)
+void Mesh::Render(ID3D12GraphicsCommandList* pCommandList)
 {
 	//auto vbv = VertexBufferView();
 	//auto ibv = IndexBufferView();

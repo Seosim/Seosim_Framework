@@ -23,7 +23,7 @@ public:
 	void LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::string& filePath);
 
 	virtual void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
-	void Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pCbvHeap, UINT size);
+	void Render(ID3D12GraphicsCommandList* pCommandList);
 protected:
 	ID3DBlob* mVertexBufferCPU = nullptr;
 	ID3DBlob* mIndexBufferCPU = nullptr;

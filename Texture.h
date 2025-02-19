@@ -16,12 +16,16 @@ public:
 	Texture(const Texture&) = delete;
 
 	void LoadTextureFromDDSFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const wchar_t* pszFileName, UINT nResourceType, UINT nIndex);
-    void CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap);
+    void CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name);
+
     ID3D12Resource* GetResource() { return mpResource; }
+
+    static std::unordered_map<std::wstring, Texture*> TextureList;
 private:
 	ID3D12Resource* mpResource = nullptr;
 	ID3D12Resource* mpUploadBuffer = nullptr;
 	UINT mResourceType = {};
+    int ID = -1;
 };
 
 static ID3D12Resource* CreateTextureResourceFromDDSFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const wchar_t* pszFileName, ID3D12Resource** ppd3dUploadBuffer, D3D12_RESOURCE_STATES d3dResourceStates)

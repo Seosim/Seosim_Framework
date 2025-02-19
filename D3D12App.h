@@ -142,8 +142,4 @@ private:
 
 	//Light
 	Light* mpLight = nullptr;
-
-	//Texture
-	std::unordered_map<std::string, Texture*> mTextures;
-	Texture* mTexture = nullptr;
 };

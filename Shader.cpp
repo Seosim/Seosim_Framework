@@ -2,6 +2,8 @@
 #include "Shader.h"
 #include "d3dUtil.h"
 
+std::unordered_map<Shader::eType, Shader*> Shader::ShaderList{};
+
 Shader::~Shader()
 {
 	RELEASE_COM(mPSO);

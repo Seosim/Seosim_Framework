@@ -85,7 +85,7 @@ float4 PS(VertexOut pin) : SV_Target
     float spec = 0.0;
     if (diff > 0.0)
     {
-        spec = pow(max(dot(R, V), 0.0), 64);
+        spec = pow(max(dot(R, V), 0.0), 32);
     }
     float3 specular = spec * lightColor;
 

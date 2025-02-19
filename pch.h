@@ -142,3 +142,5 @@ namespace MathTool {
 
 	constexpr float PI = 3.141597f;
 }
+
+constexpr UINT MAX_TEXTURE_COUNT = 8;

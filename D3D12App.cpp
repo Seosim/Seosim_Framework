@@ -190,18 +190,20 @@ void D3D12App::CreateRtrAndDsvDescriptorHeap()
 
 void D3D12App::CreateCbvSrvUavDescriptorHeap()
 {
-	//Create CBV Descriptor Heap
-	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
-	cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	cbvHeapDesc.NodeMask = 0;
-	cbvHeapDesc.NumDescriptors = 1;
+	////Create CBV Descriptor Heap
+	//D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
+	//cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	//cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	//cbvHeapDesc.NodeMask = 0;
+	//cbvHeapDesc.NumDescriptors = 1;
 
-	HR(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+	//HR(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
+
+	constexpr int MAX_SRV_COUNT = 10000;
 
 	//Build SRV Heap.
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = 1;
+	srvHeapDesc.NumDescriptors = MAX_SRV_COUNT;
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	HR(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvHeap)));
@@ -420,12 +422,7 @@ void D3D12App::BuildCamera()
 
 void D3D12App::BuildTexture()
 {
-	mTexture = new Texture();
 
-	std::wstring name{ L"./Assets/Textures/WoodCrate01.dds" };
-
-	mTexture->LoadTextureFromDDSFile(md3dDevice, md3dCommandList, name.c_str(), RESOURCE_TEXTURE2D, 0);
-	mTexture->CreateSrv(md3dDevice, mSrvHeap);
 }
 
 void D3D12App::BuildPipelineStateObject()
@@ -530,7 +527,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 		gameObject->AddComponent<Material>();
 		Material& cMaterial = gameObject->GetComponent<Material>();
 
-		cMaterial.LoadMaterialData(md3dDevice, mRootSignature, mCbvHeap, materialPath);
+		cMaterial.LoadMaterialData(md3dDevice,md3dCommandList, mRootSignature, mSrvHeap, materialPath);
 	} 
 
 	int childCount;
@@ -843,7 +840,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
 
 	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//texHandle.ptr += 
+	//texHandle.ptr += mCbvSrvUavDescriptorSize;
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -853,7 +850,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
 	mpLight->Update(md3dCommandList);
-
 
 	//Draw Object.
 
@@ -876,13 +872,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	testVal += gameTimer.DeltaTime();
 	for (GameObject* gameObject : mGameObjects)
 	{
-		//if(index == 0)
-		//gameObject.GetTransform().RotateByWorldAxis(0, gameTimer.DeltaTime() * 33.0f, 0);
-		//gameObject->GetTransform().Rotate(0, gameTimer.DeltaTime() * 33.0f, 0);
-
 		CTransform& cTransform = gameObject->GetComponent<CTransform>();
-		//cTransform.Rotate(0, 1, 0);
-		//cTransform.RotateByWorldAxis(0, 1, 0);
 
 		auto xmf4x4world = cTransform.GetWorldTransform();
 
@@ -898,43 +888,17 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 		mObjectCB->CopyData(index, objConstants);
-		//auto cbv = mCbvHeap->GetGPUDescriptorHandleForHeapStart();
-		//md3dCommandList->SetGraphicsRootDescriptorTable(0, cbv);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
 		if (gameObject->HasComponent<Mesh>())
 		{
 			Mesh& mesh = gameObject->GetComponent<Mesh>();
-			gameObject->Render(md3dDevice, md3dCommandList, mCbvHeap);
-			
-			//struct TestCBuffer {
-			//	XMFLOAT4 Color;
-			//};
-
-			//TestCBuffer cBuffer =
-			//{
-			//	.Color = {sinf(testVal), sinf(testVal), sinf(testVal), 1.0f}
-			//};
-
-			//mat.UpdateConstantBuffer(cBuffer);
 			Material& mat = gameObject->GetComponent<Material>();
-			mat.SetConstantBufferView(md3dCommandList);
-			mesh.Render(md3dCommandList, mCbvHeap, md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV));
+
+			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
+			mesh.Render(md3dCommandList);
 		}
 	}
-
-
-	//md3dCommandList->SetPipelineState(mPSO);
-
-	//auto vbv = mBoxGeo->VertexBufferView();
-	//auto ibv = mBoxGeo->IndexBufferView();
-
-	//md3dCommandList->IASetVertexBuffers(0, 1, &vbv);
-	//md3dCommandList->IASetIndexBuffer(&ibv);
-	//md3dCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//md3dCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-	//md3dCommandList->DrawIndexedInstanced(mBoxGeo->DrawArgs["box"].IndexCount, 1, 0, 0, 0);
 
 	//Draw가 끝난 후 사용한 렌더타겟을 Present로 상태 변환
 	D3D12_RESOURCE_BARRIER barrier1 = {};
@@ -970,7 +934,18 @@ void D3D12App::Finalize()
 
 	delete mpCamera;
 	delete mpLight;
-	delete mTexture;
+
+	for (auto shaderPointer : Shader::ShaderList)
+	{
+		delete shaderPointer.second;
+	}
+	Shader::ShaderList.clear();
+
+	for (auto texturePointer : Texture::TextureList)
+	{
+		delete texturePointer.second;
+	}
+	Texture::TextureList.clear();
 
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{
