@@ -115,6 +115,7 @@ bool D3D12App::InitDirect3D()
 	BuildShaderAndInputLayout();
 	BuildBox();
 	BuildPipelineStateObject();
+	BuildSkybox();
 	BuildObjects();
 	BuildLight();
 	BuildCamera();
@@ -452,6 +453,13 @@ void D3D12App::BuildPipelineStateObject()
 	//psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
 	//psoDesc.DSVFormat = mDepthStencilFormat;
 	//HR(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
+}
+
+void D3D12App::BuildSkybox()
+{
+	mpSkybox = new Skybox();
+	
+	mpSkybox->Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -867,21 +875,34 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, view);
 
-	int index = 0;
-	static float testVal = 0.0f;
-	testVal += gameTimer.DeltaTime();
+	mpSkybox->mTransform.SetPosition({ x, y, z });
+	mpSkybox->mTransform.SetScale({ 10, 10, 10 });
+
+	{
+		auto xmf4x4world = mpSkybox->mTransform.GetWorldTransform();
+		XMMATRIX world = xmf4x4world;
+		XMMATRIX proj = XMLoadFloat4x4(&mProj);
+		XMMATRIX worldViewProj = world * view * proj;
+		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		mObjectCB->CopyData(0, objConstants);
+		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+		mpSkybox->Render(md3dCommandList, mSrvHeap);
+	}
+
+	int index = 1;
 	for (GameObject* gameObject : mGameObjects)
 	{
 		CTransform& cTransform = gameObject->GetComponent<CTransform>();
 
 		auto xmf4x4world = cTransform.GetWorldTransform();
 
-		XMFLOAT4X4 test;
-		XMStoreFloat4x4(&test, xmf4x4world);
-
 		XMMATRIX world = xmf4x4world;
 		XMMATRIX proj = XMLoadFloat4x4(&mProj);
 		XMMATRIX worldViewProj = world * view * proj;
+
+		mpCamera->SetMatrix(mView, mProj);
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
@@ -934,6 +955,7 @@ void D3D12App::Finalize()
 
 	delete mpCamera;
 	delete mpLight;
+	delete mpSkybox;
 
 	for (auto shaderPointer : Shader::ShaderList)
 	{

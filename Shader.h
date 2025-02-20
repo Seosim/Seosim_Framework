@@ -5,6 +5,7 @@ class Shader {
 public:
 	enum class eType {
 		Default,
+		Skybox,
 		Count
 	};
 

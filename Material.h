@@ -19,25 +19,6 @@ public:
 		mMaterialCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(T));
 		UpdateConstantBuffer(data);
 
-		{
-			std::wstring name{ L"./Assets/Textures/WoodCrate01.dds" };
-			Texture* texture = nullptr;
-
-			if (Texture::TextureList.find(name) == Texture::TextureList.end())
-			{
-				texture = new Texture();
-
-				texture->LoadTextureFromDDSFile(pDevice, pCommandList, name.c_str(), RESOURCE_TEXTURE2D, 0);
-				texture->CreateSrv(pDevice, pSrvHeap, name);
-			}
-			else
-			{
-				texture = Texture::TextureList[name];
-			}
-			SetTexture(texture, 0);
-		}
-
-
 		//기존에 있는 쉐이더면 따로 생성하지 않고 재사용 합니다.
 		if (Shader::ShaderList.find(shaderType) != Shader::ShaderList.end())
 		{
@@ -46,7 +27,57 @@ public:
 		else
 		{
 			mpShader = new Shader;
-			mpShader->Initialize(pDevice, pRootSignature, "color");
+
+			switch (shaderType)
+			{
+			case Shader::eType::Default: {
+				std::wstring name{ L"./Assets/Textures/bricks2.dds" };
+				Texture* texture = nullptr;
+
+				if (Texture::TextureList.find(name) == Texture::TextureList.end())
+				{
+					texture = new Texture();
+
+					texture->LoadTextureFromDDSFile(pDevice, pCommandList, name.c_str(), RESOURCE_TEXTURE2D, 0);
+					texture->CreateSrv(pDevice, pSrvHeap, name);
+				}
+				else
+				{
+					texture = Texture::TextureList[name];
+				}
+				SetTexture(texture, 0);
+
+				mpShader->Initialize(pDevice, pRootSignature, "color");
+				break;
+			}
+			case Shader::eType::Skybox:
+			{
+				std::wstring name{ L"./Assets/Textures/sunsetcube1024.dds" };
+				Texture* texture = nullptr;
+
+				if (Texture::TextureList.find(name) == Texture::TextureList.end())
+				{
+					texture = new Texture();
+
+					texture->LoadTextureFromDDSFile(pDevice, pCommandList, name.c_str(), RESOURCE_TEXTURE_CUBE, 0);
+					texture->CreateSrv(pDevice, pSrvHeap, name, true);
+				}
+				else
+				{
+					texture = Texture::TextureList[name];
+				}
+				SetTexture(texture, 0);
+
+				mpShader->Initialize(pDevice, pRootSignature, "Sky");
+				break;
+			}
+
+			case Shader::eType::Count:
+				break;
+			default:
+				break;
+			}
+
 			Shader::ShaderList[shaderType] = mpShader;
 		}
 	}

@@ -13,6 +13,7 @@ void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID
 		if (mTextures[i] != nullptr)
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mTextures[i]->GetID());
 			pCommandList->SetGraphicsRootDescriptorTable(4 + i, texHandle);
 		}
 

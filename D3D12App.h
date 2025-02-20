@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "Texture.h"
+#include "Skybox.h"
 
 class D3D12App final
 {
@@ -37,6 +38,7 @@ public:
 	void BuildCamera();
 	void BuildTexture();
 	void BuildPipelineStateObject();
+	void BuildSkybox();
 
 	void LoadHierarchyData(const std::string& filePath);
 	void LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
@@ -142,4 +144,7 @@ private:
 
 	//Light
 	Light* mpLight = nullptr;
+
+	//Skybox
+	Skybox* mpSkybox = nullptr;
 };

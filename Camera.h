@@ -5,6 +5,8 @@
 class Camera final {
 public:
 	struct CameraBuffer {
+		XMFLOAT4X4 View;
+		XMFLOAT4X4 Proj;
 		XMFLOAT3 CameraPos;
 	};
 
@@ -18,6 +20,7 @@ public:
 
 	void SetPosition(const XMFLOAT3& position);
 
+	void SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj);
 private:
 	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
 

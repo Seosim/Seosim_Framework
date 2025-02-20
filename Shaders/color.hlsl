@@ -4,31 +4,9 @@
 // Transforms and colors geometry.
 //***************************************************************************************
 
+#include "Common.hlsl"
+
 Texture2D gDiffuseMap : register(t0);
-SamplerState gsamLinear : register(s0);
-
-
-cbuffer cbPerObject : register(b0)
-{
-    float4x4 gWorld;
-	float4x4 gWorldViewProj; 
-};
-
-cbuffer cbPerMaterial : register(b1)
-{
-    float4 color;
-};
-
-cbuffer cbPerLight : register(b2)
-{
-    float3 lightDir;
-    float3 lightColor;
-}
-
-cbuffer cbPerCamera : register(b3)
-{
-    float3 cameraPos;
-}
 
 struct VertexIn
 {
@@ -66,7 +44,10 @@ VertexOut VS(VertexIn vin)
 
 float4 PS(VertexOut pin) : SV_Target
 {
+    
     float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
+    
+    //return diffuseAlbedo;
     
     // Normalize vectors.
     float3 N = normalize(pin.NormalW);
