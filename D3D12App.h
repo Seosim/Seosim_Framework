@@ -6,7 +6,6 @@
 #include "Camera.h"
 #include "Light.h"
 #include "Texture.h"
-#include "Skybox.h"
 
 class D3D12App final
 {
@@ -32,13 +31,10 @@ public:
 
 	void BuildConstantBuffers();
 	void BuildRootSignature();
-	void BuildShaderAndInputLayout();
-	void BuildBox();
 	void BuildLight();
 	void BuildCamera();
-	void BuildTexture();
-	void BuildPipelineStateObject();
 	void BuildSkybox();
+	void BuildResourceTexture();
 
 	void LoadHierarchyData(const std::string& filePath);
 	void LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
@@ -54,7 +50,6 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 	int Update();
-	void UpdateBox();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);
@@ -136,7 +131,6 @@ private:
 	POINT mLastMousePos = {};
 
 	//GameObject
-	GameObject mGameObject;
 	std::vector<GameObject*> mGameObjects;
 
 	//Camera
@@ -146,5 +140,7 @@ private:
 	Light* mpLight = nullptr;
 
 	//Skybox
-	Skybox* mpSkybox = nullptr;
+	GameObject* mSkybox = nullptr;
+
+	Texture* mDepthTexture = nullptr;
 };

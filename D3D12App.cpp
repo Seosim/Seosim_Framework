@@ -112,14 +112,11 @@ bool D3D12App::InitDirect3D()
 	CreateCbvSrvUavDescriptorHeap();
 	BuildConstantBuffers();
 	BuildRootSignature();
-	BuildShaderAndInputLayout();
-	BuildBox();
-	BuildPipelineStateObject();
 	BuildSkybox();
 	BuildObjects();
 	BuildLight();
 	BuildCamera();
-	BuildTexture();
+	BuildResourceTexture();
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -214,24 +211,6 @@ void D3D12App::BuildConstantBuffers()
 {
 	constexpr int MAX_OBJECT_COUNT = 100000;
 	mObjectCB = std::make_unique<UploadBuffer>(md3dDevice, MAX_OBJECT_COUNT, true, sizeof(ObjectConstants));
-
-	UINT objCBByteSize = (sizeof(ObjectConstants) + 255) & ~255;
-
-	//for (int i = 0; i < 3; ++i)
-	//{
-		//D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
-		//int boxCBufIndex = 0;
-		//cbAddress += boxCBufIndex * objCBByteSize;
-
-		//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-		//cbvDesc.BufferLocation = cbAddress;
-		//cbvDesc.SizeInBytes = (sizeof(ObjectConstants) + 255) & ~255;
-
-		//auto handle = mCbvHeap->GetCPUDescriptorHandleForHeapStart();
-		//handle.ptr += mCbvSrvUavDescriptorSize * boxCBufIndex;
-
-		//md3dDevice->CreateConstantBufferView(&cbvDesc, handle);
-	//}
 }
 
 void D3D12App::BuildRootSignature()
@@ -318,92 +297,6 @@ void D3D12App::BuildRootSignature()
 	RELEASE_COM(signatureBlob);
 }
 
-void D3D12App::BuildShaderAndInputLayout()
-{
-	HRESULT hr = S_OK;
-
-	mVertexBlob = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "VS", "vs_5_1");
-	mPixelBlob = d3dUtil::CompileShader(L"Shaders\\color.hlsl", nullptr, "PS", "ps_5_1");
-
-	mInputLayout =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-}
-
-void D3D12App::BuildBox()
-{
-	//std::array<Vertex, 8> vertices =
-	//{
-	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
-	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
-	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
-	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
-	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
-	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
-	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
-	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
-	//};
-
-	//std::array<std::uint16_t, 36> indices =
-	//{
-	//	// front face
-	//	0, 1, 2,
-	//	0, 2, 3,
-
-	//	// back face
-	//	4, 6, 5,
-	//	4, 7, 6,
-
-	//	// left face
-	//	4, 5, 1,
-	//	4, 1, 0,
-
-	//	// right face
-	//	3, 2, 6,
-	//	3, 6, 7,
-
-	//	// top face
-	//	1, 5, 6,
-	//	1, 6, 2,
-
-	//	// bottom face
-	//	4, 0, 3,
-	//	4, 3, 7
-	//};
-
-	//const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	//const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-	//mBoxGeo = std::make_unique<MeshGeometry>();
-	//mBoxGeo->Name = "boxGeo";
-
-	//HR(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	//CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	//HR(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	//CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	//mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
-	//	md3dCommandList, vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
-
-	//mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice,
-	//	md3dCommandList, indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
-
-	//mBoxGeo->VertexByteStride = sizeof(Vertex);
-	//mBoxGeo->VertexBufferByteSize = vbByteSize;
-	//mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	//mBoxGeo->IndexBufferByteSize = ibByteSize;
-
-	//SubmeshGeometry submesh;
-	//submesh.IndexCount = (UINT)indices.size();
-	//submesh.StartIndexLocation = 0;
-	//submesh.BaseVertexLocation = 0;
-
-	//mBoxGeo->DrawArgs["box"] = submesh;
-}
-
 void D3D12App::BuildLight()
 {
 	mpLight = new Light();
@@ -421,45 +314,27 @@ void D3D12App::BuildCamera()
 	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
 }
 
-void D3D12App::BuildTexture()
-{
-
-}
-
-void D3D12App::BuildPipelineStateObject()
-{
-	//D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
-	//ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
-	//psoDesc.InputLayout = { mInputLayout.data(), (UINT)mInputLayout.size() };
-	//psoDesc.pRootSignature = mRootSignature;
-	//psoDesc.VS =
-	//{
-	//	reinterpret_cast<BYTE*>(mVertexBlob->GetBufferPointer()),
-	//	mVertexBlob->GetBufferSize()
-	//};
-	//psoDesc.PS =
-	//{
-	//	reinterpret_cast<BYTE*>(mPixelBlob->GetBufferPointer()),
-	//	mPixelBlob->GetBufferSize()
-	//};
-	//psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	//psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	//psoDesc.SampleMask = UINT_MAX;
-	//psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	//psoDesc.NumRenderTargets = 1;
-	//psoDesc.RTVFormats[0] = mBackBufferFormat;
-	//psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	//psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
-	//psoDesc.DSVFormat = mDepthStencilFormat;
-	//HR(md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
-}
-
 void D3D12App::BuildSkybox()
 {
-	mpSkybox = new Skybox();
+	GameObject* skybox = new GameObject();
+	skybox->AddComponent<CTransform>();
+	skybox->AddComponent<Material>();
+	skybox->AddComponent<Mesh>();
 	
-	mpSkybox->Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap);
+	Material& material = skybox->GetComponent<Material>();
+	Mesh& mesh = skybox->GetComponent<Mesh>();
+
+	material.Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, NULL, Shader::eType::Skybox);
+	mesh.LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/cube.bin");
+
+	mSkybox = skybox;
+}
+
+void D3D12App::BuildResourceTexture()
+{
+	mDepthTexture = new Texture();
+
+	mDepthTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -755,31 +630,6 @@ int D3D12App::Update()
 	return (int)msg.wParam;
 }
 
-void D3D12App::UpdateBox()
-{
-	//// Convert Spherical to Cartesian coordinates.
-	//float x = mRadius * sinf(mPhi) * cosf(mTheta);
-	//float z = mRadius * sinf(mPhi) * sinf(mTheta);
-	//float y = mRadius * cosf(mPhi);
-
-	//// Build the view matrix.
-	//XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-	//XMVECTOR target = XMVectorZero();
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	//XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-	//XMStoreFloat4x4(&mView, view);
-
-	//XMMATRIX world = XMLoadFloat4x4(&mWorld);
-	//XMMATRIX proj = XMLoadFloat4x4(&mProj);
-	//XMMATRIX worldViewProj = world * view * proj;
-
-	//// Update the constant buffer with the latest worldViewProj matrix.
-	//ObjectConstants objConstants;
-	//XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-	//mObjectCB->CopyData(0, objConstants);
-}
-
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
@@ -833,15 +683,25 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
 	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//SRV To DSV
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Transition.pResource = mDepthTexture->GetResource();
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_READ;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		md3dCommandList->ResourceBarrier(1, &barrier);
+	}
 
 	auto rtvHandle = CurrentBackBufferView();
 	auto dsvHandle = DepthStencilView();
 	
 	md3dCommandList->ClearRenderTargetView(rtvHandle, DirectX::Colors::LightGreen, 0, nullptr);
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
 	md3dCommandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
 	
 	//항상 CBV 내용 변경 전 RootSignature Set 필요.
@@ -875,11 +735,14 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, view);
 
-	mpSkybox->mTransform.SetPosition({ x, y, z });
-	mpSkybox->mTransform.SetScale({ 10, 10, 10 });
+	CTransform& skyboxTransform = mSkybox->GetComponent<CTransform>();
 
+	skyboxTransform.SetPosition({ x, y, z });
+	skyboxTransform.SetScale({ 10, 10, 10 });
+
+	//Render Skybox
 	{
-		auto xmf4x4world = mpSkybox->mTransform.GetWorldTransform();
+		auto xmf4x4world = skyboxTransform.GetWorldTransform();
 		XMMATRIX world = xmf4x4world;
 		XMMATRIX proj = XMLoadFloat4x4(&mProj);
 		XMMATRIX worldViewProj = world * view * proj;
@@ -888,7 +751,12 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 		mObjectCB->CopyData(0, objConstants);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
-		mpSkybox->Render(md3dCommandList, mSrvHeap);
+
+		Material& skyboxMat = mSkybox->GetComponent<Material>();
+		Mesh& skyboxMesh = mSkybox->GetComponent<Mesh>();
+
+		skyboxMat.SetConstantBufferView(md3dCommandList, mSrvHeap);
+		skyboxMesh.Render(md3dCommandList);
 	}
 
 	int index = 1;
@@ -931,6 +799,18 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 	md3dCommandList->ResourceBarrier(1, &barrier1);
 
+	//DSV To SRV
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Transition.pResource = mDepthTexture->GetResource();
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_READ;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		md3dCommandList->ResourceBarrier(1, &barrier);
+	}
+
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
 	md3dCommandQueue->ExecuteCommandLists(_countof(cmdsLists), cmdsLists);
@@ -955,7 +835,8 @@ void D3D12App::Finalize()
 
 	delete mpCamera;
 	delete mpLight;
-	delete mpSkybox;
+
+	delete mSkybox;
 
 	for (auto shaderPointer : Shader::ShaderList)
 	{
@@ -973,7 +854,7 @@ void D3D12App::Finalize()
 	{
 		RELEASE_COM(mSwapChainBuffer[i]);
 	}
-	RELEASE_COM(mDepthStencilBuffer);
+	//RELEASE_COM(mDepthStencilBuffer);
 
 	RELEASE_COM(mFence);
 	RELEASE_COM(md3dCommandQueue);
