@@ -12,7 +12,7 @@ struct VertexIn
 {
 	float3 PosL    : POSITION;
 	float3 NormalL : NORMAL;
-	float2 UV    : UV;
+    float2 UV : UV;
 };
 
 struct VertexOut
@@ -27,7 +27,6 @@ VertexOut VS(VertexIn vin)
 
     vout.PosL = vin.PosL;
     vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
-	
 	//// Use local vertex position as cubemap lookup vector.
 	//vout.PosL = vin.PosL;
 	

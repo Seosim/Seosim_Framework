@@ -16,6 +16,13 @@ public:
 		XMFLOAT4X4 WorldViewProj = {};
 	};
 
+	enum class eRenderTargetType {
+		FRAME0,
+		FRAME1,
+		CAMERA_NORMAL,
+		COUNT
+	};
+
 	static D3D12App& Instance();
 	LRESULT MessageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -92,11 +99,11 @@ private:
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 	bool	  m4xMsaaState = false;
-	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
+	UINT      m4xMsaaQuality = 4;      // quality level of 4X MSAA
 
 	static const int SwapChainBufferCount = 2;
 	int mCurrBackBuffer = 0;
-	ID3D12Resource* mSwapChainBuffer[SwapChainBufferCount];
+	ID3D12Resource* mRenderTargets[(int)eRenderTargetType::COUNT];
 	ID3D12Resource* mDepthStencilBuffer;
 
 	static constexpr DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -143,4 +150,5 @@ private:
 	GameObject* mSkybox = nullptr;
 
 	Texture* mDepthTexture = nullptr;
+	Texture* mNormalTexture = nullptr;
 };

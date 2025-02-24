@@ -157,8 +157,8 @@ void D3D12App::CreateSwapChain()
 	sd.BufferCount = SwapChainBufferCount;
 	sd.OutputWindow = mhMainWnd;
 	sd.Windowed = true;
-	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;//DXGI_SWAP_EFFECT_FLIP_DISCARD;
+	sd.Flags = 0;//DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	HR(mdxgiFactory->CreateSwapChain(md3dCommandQueue, &sd, reinterpret_cast<IDXGISwapChain**>(&mSwapChain)));
 
 	// 전체 화면 전환을 비활성화합니다.
@@ -172,7 +172,7 @@ void D3D12App::CreateRtrAndDsvDescriptorHeap()
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
-	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
+	rtvHeapDesc.NumDescriptors = (UINT)eRenderTargetType::COUNT;
 	
 	HR(md3dDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mRtvHeap)));
 
@@ -215,15 +215,21 @@ void D3D12App::BuildConstantBuffers()
 
 void D3D12App::BuildRootSignature()
 {
+	D3D12_DESCRIPTOR_RANGE descriptorRange[2];
 
-	D3D12_DESCRIPTOR_RANGE descriptorRange[1];
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].NumDescriptors = 1;
 	descriptorRange[0].BaseShaderRegister = 0;
 	descriptorRange[0].RegisterSpace = 0;
 	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	constexpr int ROOT_PARAMATER_COUNT = 5;
+	descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRange[1].NumDescriptors = 1;
+	descriptorRange[1].BaseShaderRegister = 1;
+	descriptorRange[1].RegisterSpace = 0;
+	descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	constexpr int ROOT_PARAMATER_COUNT = 6;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
 
 	//Per Object
@@ -263,7 +269,11 @@ void D3D12App::BuildRootSignature()
 	rootParamater[4].DescriptorTable.NumDescriptorRanges = 1;
 	rootParamater[4].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
 	rootParamater[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-
+	
+	rootParamater[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParamater[5].DescriptorTable.NumDescriptorRanges = 1;
+	rootParamater[5].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
+	rootParamater[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[1];
 
@@ -333,8 +343,10 @@ void D3D12App::BuildSkybox()
 void D3D12App::BuildResourceTexture()
 {
 	mDepthTexture = new Texture();
-
 	mDepthTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+
+	mNormalTexture = new Texture();
+	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -437,12 +449,12 @@ void D3D12App::OnResize()
 
 	HR(md3dCommandList->Reset(md3dCommandAllocator, nullptr));
 
-	for (int i = 0; i < SwapChainBufferCount; ++i)
+	for (int i = 0; i < (int)eRenderTargetType::COUNT; ++i)
 	{
-		if (mSwapChainBuffer[i])
+		if (mRenderTargets[i])
 		{
-			mSwapChainBuffer[i]->Release();
-			mSwapChainBuffer[i] = nullptr;
+			mRenderTargets[i]->Release();
+			mRenderTargets[i] = nullptr;
 		}
 	}
 
@@ -459,9 +471,60 @@ void D3D12App::OnResize()
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapHandle(mRtvHeap->GetCPUDescriptorHandleForHeapStart());
 	for (UINT i = 0; i < SwapChainBufferCount; i++)
 	{
-		HR(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mSwapChainBuffer[i])));
-		md3dDevice->CreateRenderTargetView(mSwapChainBuffer[i], nullptr, rtvHeapHandle);
+		HR(mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mRenderTargets[i])));
+		md3dDevice->CreateRenderTargetView(mRenderTargets[i], nullptr, rtvHeapHandle);
 		rtvHeapHandle.ptr += mRtvDescriptorSize;
+	}
+
+	//Create CameraNormal Map
+	{
+		constexpr SIZE_T CAMERA_NORMALS = SIZE_T(eRenderTargetType::CAMERA_NORMAL);
+
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC RT_DESC =
+		{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Width = (UINT)mWidth,
+			.Height = (UINT)mHeight,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.SampleDesc = {.Count = 1, .Quality = 0 },
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		};
+
+		D3D12_CLEAR_VALUE CLEAR_VALUE =
+		{
+			.Format = RT_DESC.Format,
+			.Color = { 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &RT_DESC
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, &CLEAR_VALUE
+			, IID_PPV_ARGS(&mRenderTargets[CAMERA_NORMALS])));
+
+		D3D12_RENDER_TARGET_VIEW_DESC RTV_DESC =
+		{
+			.Format = RT_DESC.Format,
+			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+		};
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += CAMERA_NORMALS * mRtvDescriptorSize;
+		md3dDevice->CreateRenderTargetView(mRenderTargets[CAMERA_NORMALS], &RTV_DESC, rtvHandle);
+		if (mNormalTexture)
+			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
 	}
 
 	//Create Depth/Stencil Buffer & View.
@@ -498,6 +561,9 @@ void D3D12App::OnResize()
 	dsvDesc.Format = mDepthStencilFormat;
 	auto dsvHandle = DepthStencilView();
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, dsvHandle);
+	if(mDepthTexture)
+		mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+
 
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -548,7 +614,7 @@ void D3D12App::FlushCommandQueue()
 
 ID3D12Resource* D3D12App::CurrentBackBuffer() const
 {
-	return mSwapChainBuffer[mCurrBackBuffer];
+	return mRenderTargets[mCurrBackBuffer];
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE D3D12App::CurrentBackBufferView() const
@@ -676,14 +742,29 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	//렌더타겟 상태 변환
-	D3D12_RESOURCE_BARRIER barrier0 = {};
-	barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier0.Transition.pResource = CurrentBackBuffer();
-	barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	md3dCommandList->ResourceBarrier(1, &barrier0);
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = CurrentBackBuffer();
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
+	//렌더타겟 상태 변환
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
 
 	//SRV To DSV
 	{
@@ -699,21 +780,29 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	auto rtvHandle = CurrentBackBufferView();
 	auto dsvHandle = DepthStencilView();
+
+	D3D12_CPU_DESCRIPTOR_HANDLE cameraNormalHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	cameraNormalHandle.ptr += mRtvDescriptorSize * (int)eRenderTargetType::CAMERA_NORMAL;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { rtvHandle, cameraNormalHandle };
+
+	FLOAT clearVal[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	
-	md3dCommandList->ClearRenderTargetView(rtvHandle, DirectX::Colors::LightGreen, 0, nullptr);
+	md3dCommandList->ClearRenderTargetView(rtvHandle, clearVal, 0, nullptr);
+	md3dCommandList->ClearRenderTargetView(cameraNormalHandle, clearVal, 0, nullptr);
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	md3dCommandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
+	md3dCommandList->OMSetRenderTargets(2, rtvhandles, false, &dsvHandle);
 	
 	//항상 CBV 내용 변경 전 RootSignature Set 필요.
 	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
 
-	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	//texHandle.ptr += mCbvSrvUavDescriptorSize;
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
+	//md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
 
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
@@ -785,19 +874,38 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 			Material& mat = gameObject->GetComponent<Material>();
 
 			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
+
+			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mNormalTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
+
 			mesh.Render(md3dCommandList);
 		}
 	}
 
 	//Draw가 끝난 후 사용한 렌더타겟을 Present로 상태 변환
-	D3D12_RESOURCE_BARRIER barrier1 = {};
-	barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier1.Transition.pResource = CurrentBackBuffer();
-	barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	md3dCommandList->ResourceBarrier(1, &barrier1);
+	{
+		D3D12_RESOURCE_BARRIER barrier1 = {};
+		barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier1.Transition.pResource = CurrentBackBuffer();
+		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	{
+		D3D12_RESOURCE_BARRIER barrier1 = {};
+		barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier1.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
+		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
 
 	//DSV To SRV
 	{
@@ -835,7 +943,6 @@ void D3D12App::Finalize()
 
 	delete mpCamera;
 	delete mpLight;
-
 	delete mSkybox;
 
 	for (auto shaderPointer : Shader::ShaderList)
@@ -850,9 +957,10 @@ void D3D12App::Finalize()
 	}
 	Texture::TextureList.clear();
 
+	//for (int i = 0; i < (int)eRenderTargetType::COUNT; ++i)
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{
-		RELEASE_COM(mSwapChainBuffer[i]);
+		RELEASE_COM(mRenderTargets[i]);
 	}
 	//RELEASE_COM(mDepthStencilBuffer);
 

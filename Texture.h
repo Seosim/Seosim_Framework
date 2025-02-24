@@ -19,13 +19,15 @@ public:
     void CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, bool isCubeMap = false);
     void CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, ID3D12Resource* pResource, const DXGI_FORMAT format);
 
+    void ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, ID3D12Resource* pResource, const DXGI_FORMAT format);
+
     ID3D12Resource* GetResource();
 
     int GetID() const;
 
     static std::unordered_map<std::wstring, Texture*> TextureList;
-private:
 	ID3D12Resource* mpResource = nullptr;
+private:
 	ID3D12Resource* mpUploadBuffer = nullptr;
 	UINT mResourceType = {};
     int ID = -1;

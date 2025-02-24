@@ -23,6 +23,12 @@ struct VertexOut
     float2 UV : UV;
 };
 
+struct PixelOut
+{
+    float4 color : SV_TARGET0;
+    float4 normal : SV_TARGET1;
+};
+
 VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
@@ -42,8 +48,9 @@ VertexOut VS(VertexIn vin)
     return vout;
 }
 
-float4 PS(VertexOut pin) : SV_Target
+PixelOut PS(VertexOut pin)
 {
+    PixelOut pixelOut;
     
     float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
     
@@ -73,7 +80,9 @@ float4 PS(VertexOut pin) : SV_Target
     // Combine results.
     float3 finalColor = ambient + diffuse + specular;
 
-    return float4(finalColor, 1.0f);
+    pixelOut.color = float4(finalColor, 1.0f);
+    pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
+    return pixelOut;
 }
 
 
