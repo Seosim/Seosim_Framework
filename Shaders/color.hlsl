@@ -7,7 +7,6 @@
 #include "Common.hlsl"
 
 Texture2D gDiffuseMap : register(t0);
-Texture2D gTestMap : register(t1);
 
 struct VertexIn
 {
@@ -54,7 +53,6 @@ PixelOut PS(VertexOut pin)
     PixelOut pixelOut;
     
     float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
-    float4 normalMap = gTestMap.Sample(gsamLinear, pin.UV);
     
     //return diffuseAlbedo;
     
@@ -82,7 +80,7 @@ PixelOut PS(VertexOut pin)
     // Combine results.
     float3 finalColor = ambient + diffuse + specular;
 
-    pixelOut.color = float4(finalColor + normalMap.xyz, 1.0f);
+    pixelOut.color = float4(finalColor, 1.0f);
     pixelOut.normal = float4(N, 1.0f);
     //pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;

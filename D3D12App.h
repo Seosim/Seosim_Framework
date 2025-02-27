@@ -19,6 +19,7 @@ public:
 	enum class eRenderTargetType {
 		FRAME0,
 		FRAME1,
+		MSAA,
 		CAMERA_NORMAL,
 		COUNT
 	};
@@ -151,4 +152,8 @@ private:
 
 	Texture* mDepthTexture = nullptr;
 	Texture* mNormalTexture = nullptr;
+	Texture* mMSAATexture = nullptr;
+
+	//Shader
+	Shader* mScreenShader = nullptr;
 };

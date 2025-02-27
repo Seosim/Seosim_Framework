@@ -6,6 +6,8 @@
 
 #include "Common.hlsl"
 
+
+
 TextureCube gCubeMap : register(t0);
 
 struct VertexIn

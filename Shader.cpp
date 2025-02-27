@@ -9,7 +9,7 @@ Shader::~Shader()
 	RELEASE_COM(mPSO);
 }
 
-void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName)
+void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName, const Command& command)
 {
 	HRESULT hr = S_OK;
 
@@ -54,16 +54,11 @@ void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignatu
 		psoDesc.RTVFormats[1] = mBackBufferFormat;
 	}
 	psoDesc.RTVFormats[0] = mBackBufferFormat;
-	psoDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	psoDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+	psoDesc.SampleDesc.Count = command.SampleCount;
+	psoDesc.SampleDesc.Quality = 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;
-
-	//TODO: 앞으로 쉐이더 별 설정 필요.
-	if (shaderName == "Sky")
-	{
-		psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
-		psoDesc.DepthStencilState.DepthEnable = FALSE;
-	}
+	psoDesc.RasterizerState.CullMode = command.CullingMode;
+	psoDesc.DepthStencilState.DepthEnable = command.DepthEnable;
 
 	HR(pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
@@ -73,4 +68,15 @@ void Shader::SetPipelineState(ID3D12GraphicsCommandList* pCommandList)
 	ASSERT(mPSO);
 
 	pCommandList->SetPipelineState(mPSO);
+}
+
+Shader::Command Shader::DefaultCommand()
+{
+	Command command = {
+		.SampleCount = 4,
+		.CullingMode = D3D12_CULL_MODE_BACK,
+		.DepthEnable = TRUE,
+	};
+
+	return command;
 }

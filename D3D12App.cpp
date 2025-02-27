@@ -347,6 +347,9 @@ void D3D12App::BuildResourceTexture()
 
 	mNormalTexture = new Texture();
 	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+
+	mMSAATexture = new Texture();
+	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -437,6 +440,12 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 void D3D12App::BuildObjects()
 {
 	LoadHierarchyData("Assets/Hierarchies/MaterialTest.bin");
+
+	Shader::Command command = Shader::DefaultCommand();
+	command.SampleCount = 1;
+	command.DepthEnable = FALSE;
+	mScreenShader = new Shader();
+	mScreenShader->Initialize(md3dDevice, mRootSignature, "Screen", command);
 }
 
 void D3D12App::OnResize()
@@ -476,6 +485,57 @@ void D3D12App::OnResize()
 		rtvHeapHandle.ptr += mRtvDescriptorSize;
 	}
 
+	// Create the render target view for msaa.
+	{
+		constexpr SIZE_T MSAA = SIZE_T(eRenderTargetType::MSAA);
+
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC RT_DESC =
+		{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Width = (UINT)mWidth,
+			.Height = (UINT)mHeight,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.SampleDesc = {.Count = MSAA_SAMPLING_COUNT, .Quality = 0 },
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		};
+
+		D3D12_CLEAR_VALUE CLEAR_VALUE =
+		{
+			.Format = RT_DESC.Format,
+			.Color = { 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &RT_DESC
+			, D3D12_RESOURCE_STATE_RESOLVE_SOURCE
+			, &CLEAR_VALUE
+			, IID_PPV_ARGS(&mRenderTargets[MSAA])));
+
+		D3D12_RENDER_TARGET_VIEW_DESC RTV_DESC =
+		{
+			.Format = RT_DESC.Format,
+			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS
+		};
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += MSAA * mRtvDescriptorSize;
+		md3dDevice->CreateRenderTargetView(mRenderTargets[MSAA], &RTV_DESC, rtvHandle);
+		if (mMSAATexture)
+			mMSAATexture->ChangeResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R8G8B8A8_UNORM);
+	}
+
 	//Create CameraNormal Map
 	{
 		constexpr SIZE_T CAMERA_NORMALS = SIZE_T(eRenderTargetType::CAMERA_NORMAL);
@@ -497,7 +557,7 @@ void D3D12App::OnResize()
 			.DepthOrArraySize = 1,
 			.MipLevels = 1,
 			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
-			.SampleDesc = {.Count = 1, .Quality = 0 },
+			.SampleDesc = {.Count = MSAA_SAMPLING_COUNT, .Quality = 0 },
 			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
 		};
 
@@ -517,7 +577,7 @@ void D3D12App::OnResize()
 		D3D12_RENDER_TARGET_VIEW_DESC RTV_DESC =
 		{
 			.Format = RT_DESC.Format,
-			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS
 		};
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -536,8 +596,8 @@ void D3D12App::OnResize()
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.Format = mDepthStencilFormat;
-	depthStencilDesc.SampleDesc.Count = m4xMsaaState ? 4 : 1;
-	depthStencilDesc.SampleDesc.Quality = m4xMsaaState ? (m4xMsaaQuality - 1) : 0;
+	depthStencilDesc.SampleDesc.Count = MSAA_SAMPLING_COUNT;
+	depthStencilDesc.SampleDesc.Quality = 0;
 	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
@@ -557,13 +617,12 @@ void D3D12App::OnResize()
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
 	dsvDesc.Format = mDepthStencilFormat;
 	auto dsvHandle = DepthStencilView();
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, dsvHandle);
 	if(mDepthTexture)
 		mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
-
 
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -741,30 +800,30 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->RSSetViewports(1, &mViewport);
 	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
-	//·»´õÅ¸°Ù »óÅÂ º¯È¯
+
+	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (MSAA)
 	{
 		D3D12_RESOURCE_BARRIER barrier0 = {};
 		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier0.Transition.pResource = CurrentBackBuffer();
-		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::MSAA];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
-	//·»´õÅ¸°Ù »óÅÂ º¯È¯
+	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (CameraNormal)
 	{
 		D3D12_RESOURCE_BARRIER barrier0 = {};
 		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
-		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
-
 
 	//SRV To DSV
 	{
@@ -781,14 +840,16 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	auto rtvHandle = CurrentBackBufferView();
 	auto dsvHandle = DepthStencilView();
 
+	D3D12_CPU_DESCRIPTOR_HANDLE MSAAHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	MSAAHandle.ptr += mRtvDescriptorSize * (int)eRenderTargetType::MSAA;
+
 	D3D12_CPU_DESCRIPTOR_HANDLE cameraNormalHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	cameraNormalHandle.ptr += mRtvDescriptorSize * (int)eRenderTargetType::CAMERA_NORMAL;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { rtvHandle, cameraNormalHandle };
-
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { MSAAHandle, cameraNormalHandle };
 	FLOAT clearVal[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	
-	md3dCommandList->ClearRenderTargetView(rtvHandle, clearVal, 0, nullptr);
+	md3dCommandList->ClearRenderTargetView(MSAAHandle, clearVal, 0, nullptr);
 	md3dCommandList->ClearRenderTargetView(cameraNormalHandle, clearVal, 0, nullptr);
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	md3dCommandList->OMSetRenderTargets(2, rtvhandles, false, &dsvHandle);
@@ -883,27 +944,62 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		}
 	}
 
-	//Draw°¡ ³¡³­ ÈÄ »ç¿ëÇÑ ·»´õÅ¸°ÙÀ» Present·Î »óÅÂ º¯È¯
-	{
-		D3D12_RESOURCE_BARRIER barrier1 = {};
-		barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier1.Transition.pResource = CurrentBackBuffer();
-		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-		md3dCommandList->ResourceBarrier(1, &barrier1);
-	}
-
 	{
 		D3D12_RESOURCE_BARRIER barrier1 = {};
 		barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier1.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
 		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::MSAA];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
+
+	//Render Screen
+	{
+		//·»´õÅ¸°Ù »óÅÂ º¯È¯
+		{
+			D3D12_RESOURCE_BARRIER barrier0 = {};
+			barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier0.Transition.pResource = CurrentBackBuffer();
+			barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+			barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+			barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { rtvHandle };
+		md3dCommandList->OMSetRenderTargets(1, rtvhandles, false, nullptr);
+		md3dCommandList->ClearRenderTargetView(rtvHandle, clearVal, 0, nullptr);
+
+
+		{
+			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mMSAATexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
+		}
+
+		{
+			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mNormalTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
+		}
+
+		mScreenShader->SetPipelineState(md3dCommandList);
+		md3dCommandList->DrawInstanced(6, 1, 0, 0);
 	}
 
 
@@ -917,6 +1013,18 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		md3dCommandList->ResourceBarrier(1, &barrier);
+	}
+
+	//Draw°¡ ³¡³­ ÈÄ »ç¿ëÇÑ ·»´õÅ¸°ÙÀ» Present·Î »óÅÂ º¯È¯
+	{
+		D3D12_RESOURCE_BARRIER barrier1 = {};
+		barrier1.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier1.Transition.pResource = CurrentBackBuffer();
+		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier1);
 	}
 
 	HR(md3dCommandList->Close());
@@ -950,6 +1058,8 @@ void D3D12App::Finalize()
 		delete shaderPointer.second;
 	}
 	Shader::ShaderList.clear();
+
+	delete mScreenShader;
 
 	for (auto texturePointer : Texture::TextureList)
 	{

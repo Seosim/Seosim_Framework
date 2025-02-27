@@ -9,12 +9,20 @@ public:
 		Count
 	};
 
+	struct Command {
+		UINT SampleCount;
+		D3D12_CULL_MODE CullingMode;
+		BOOL DepthEnable;
+	};
+
 	Shader() = default;
 	~Shader();
 
 	Shader(const Shader& rhs) = delete;
 
-	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName);
+	static Command DefaultCommand();
+
+	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName, const Command& command);
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);
 
 	static std::unordered_map<eType, Shader*> ShaderList;

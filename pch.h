@@ -144,3 +144,5 @@ namespace MathTool {
 }
 
 constexpr UINT MAX_TEXTURE_COUNT = 8;
+
+constexpr UINT MSAA_SAMPLING_COUNT = 4;

@@ -47,7 +47,7 @@ public:
 				}
 				SetTexture(texture, 0);
 
-				mpShader->Initialize(pDevice, pRootSignature, "color");
+				mpShader->Initialize(pDevice, pRootSignature, "color", Shader::DefaultCommand());
 				break;
 			}
 			case Shader::eType::Skybox:
@@ -68,7 +68,11 @@ public:
 				}
 				SetTexture(texture, 0);
 
-				mpShader->Initialize(pDevice, pRootSignature, "Sky");
+				Shader::Command command = Shader::DefaultCommand();
+				command.CullingMode = D3D12_CULL_MODE_FRONT;
+				command.DepthEnable = FALSE;
+
+				mpShader->Initialize(pDevice, pRootSignature, "Sky", command);
 				break;
 			}
 
