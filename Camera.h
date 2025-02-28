@@ -8,6 +8,8 @@ public:
 		XMFLOAT4X4 View;
 		XMFLOAT4X4 Proj;
 		XMFLOAT3 CameraPos;
+		float ScreenWidth;
+		float ScreenHeight;
 	};
 
 	Camera() = default;
@@ -21,6 +23,8 @@ public:
 	void SetPosition(const XMFLOAT3& position);
 
 	void SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj);
+
+	void SetScreenSize(float width, float height);
 private:
 	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
 

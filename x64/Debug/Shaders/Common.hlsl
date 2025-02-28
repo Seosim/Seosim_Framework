@@ -23,4 +23,6 @@ cbuffer cbPerCamera : register(b3)
     float4x4 gView;
     float4x4 gProj;
     float3 cameraPos;
+    float ScreenWidth;
+    float ScreenHeight;
 }

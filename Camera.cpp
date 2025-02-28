@@ -32,3 +32,9 @@ void Camera::SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj)
 	mCameraBuffer.View = view;
 	mCameraBuffer.Proj = proj;
 }
+
+void Camera::SetScreenSize(float width, float height)
+{
+	mCameraBuffer.ScreenWidth = width;
+	mCameraBuffer.ScreenHeight = height;
+}

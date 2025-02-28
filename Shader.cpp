@@ -51,9 +51,9 @@ void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignatu
 	if (shaderName == "color")
 	{
 		psoDesc.NumRenderTargets = 2;
-		psoDesc.RTVFormats[1] = mBackBufferFormat;
+		psoDesc.RTVFormats[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	}
-	psoDesc.RTVFormats[0] = mBackBufferFormat;
+	psoDesc.RTVFormats[0] = command.Format;
 	psoDesc.SampleDesc.Count = command.SampleCount;
 	psoDesc.SampleDesc.Quality = 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;
@@ -76,6 +76,7 @@ Shader::Command Shader::DefaultCommand()
 		.SampleCount = 4,
 		.CullingMode = D3D12_CULL_MODE_BACK,
 		.DepthEnable = TRUE,
+		.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
 	};
 
 	return command;

@@ -13,6 +13,7 @@ public:
 		UINT SampleCount;
 		D3D12_CULL_MODE CullingMode;
 		BOOL DepthEnable;
+		DXGI_FORMAT Format;
 	};
 
 	Shader() = default;
@@ -32,7 +33,7 @@ private:
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 	ID3D12PipelineState* mPSO = nullptr;
 
-	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	bool	  m4xMsaaState = false;
 	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA

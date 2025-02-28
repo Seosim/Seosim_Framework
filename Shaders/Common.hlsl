@@ -23,4 +23,20 @@ cbuffer cbPerCamera : register(b3)
     float4x4 gView;
     float4x4 gProj;
     float3 cameraPos;
+    float ScreenWidth;
+    float ScreenHeight;
+}
+
+// 선형 공간으로 변환
+float4 LinearizeColor(float4 color)
+{
+    float3 linearColor = color.rgb;
+    return float4(pow(linearColor, 2.2f), color.a);
+}
+
+// 선형 공간에서 sRGB로 변환
+float4 ToSRGB(float4 color)
+{
+    float3 srgbColor = color.rgb;
+    return float4(pow(srgbColor, 1.0f / 2.2f), color.a);
 }

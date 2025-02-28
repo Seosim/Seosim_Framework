@@ -21,6 +21,7 @@ public:
 		FRAME1,
 		MSAA,
 		CAMERA_NORMAL,
+		SCREEN,
 		COUNT
 	};
 
@@ -153,6 +154,7 @@ private:
 	Texture* mDepthTexture = nullptr;
 	Texture* mNormalTexture = nullptr;
 	Texture* mMSAATexture = nullptr;
+	Texture* mScreenTexture = nullptr;
 
 	//Shader
 	Shader* mScreenShader = nullptr;

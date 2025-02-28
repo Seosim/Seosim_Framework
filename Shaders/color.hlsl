@@ -54,6 +54,8 @@ PixelOut PS(VertexOut pin)
     
     float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
     
+    diffuseAlbedo = LinearizeColor(diffuseAlbedo);
+    
     //return diffuseAlbedo;
     
     // Normalize vectors.
@@ -81,8 +83,8 @@ PixelOut PS(VertexOut pin)
     float3 finalColor = ambient + diffuse + specular;
 
     pixelOut.color = float4(finalColor, 1.0f);
-    pixelOut.normal = float4(N, 1.0f);
-    //pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
+    //pixelOut.normal = float4(N, 1.0f);
+    pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;
 }
 

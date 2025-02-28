@@ -6,7 +6,7 @@
 
 #include "Common.hlsl"
 
-Texture2D gMSAAMap : register(t0);
+Texture2D<float4> gMSAAMap : register(t0);
 
 static const float2 Vertices[6] =
 {

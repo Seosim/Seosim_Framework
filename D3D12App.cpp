@@ -322,6 +322,7 @@ void D3D12App::BuildCamera()
 	mpCamera->Initialize(md3dDevice);
 
 	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
+	mpCamera->SetScreenSize(mWidth, mHeight);
 }
 
 void D3D12App::BuildSkybox()
@@ -349,7 +350,10 @@ void D3D12App::BuildResourceTexture()
 	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
 
 	mMSAATexture = new Texture();
-	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R8G8B8A8_UNORM);
+	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R16G16B16A16_FLOAT);
+
+	mScreenTexture = new Texture();
+	mScreenTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -444,6 +448,7 @@ void D3D12App::BuildObjects()
 	Shader::Command command = Shader::DefaultCommand();
 	command.SampleCount = 1;
 	command.DepthEnable = FALSE;
+	command.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	mScreenShader = new Shader();
 	mScreenShader->Initialize(md3dDevice, mRootSignature, "Screen", command);
 }
@@ -505,7 +510,7 @@ void D3D12App::OnResize()
 			.Height = (UINT)mHeight,
 			.DepthOrArraySize = 1,
 			.MipLevels = 1,
-			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
 			.SampleDesc = {.Count = MSAA_SAMPLING_COUNT, .Quality = 0 },
 			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
 		};
@@ -533,7 +538,7 @@ void D3D12App::OnResize()
 		rtvHandle.ptr += MSAA * mRtvDescriptorSize;
 		md3dDevice->CreateRenderTargetView(mRenderTargets[MSAA], &RTV_DESC, rtvHandle);
 		if (mMSAATexture)
-			mMSAATexture->ChangeResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R8G8B8A8_UNORM);
+			mMSAATexture->ChangeResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
 	//Create CameraNormal Map
@@ -585,6 +590,57 @@ void D3D12App::OnResize()
 		md3dDevice->CreateRenderTargetView(mRenderTargets[CAMERA_NORMALS], &RTV_DESC, rtvHandle);
 		if (mNormalTexture)
 			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+	}
+
+	//Create Screen Map
+	{
+		constexpr SIZE_T SCREEN = SIZE_T(eRenderTargetType::SCREEN);
+
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC RT_DESC =
+		{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Width = (UINT)mWidth,
+			.Height = (UINT)mHeight,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
+			.SampleDesc = {.Count = 1, .Quality = 0 },
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		};
+
+		D3D12_CLEAR_VALUE CLEAR_VALUE =
+		{
+			.Format = RT_DESC.Format,
+			.Color = { 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &RT_DESC
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, &CLEAR_VALUE
+			, IID_PPV_ARGS(&mRenderTargets[SCREEN])));
+
+		D3D12_RENDER_TARGET_VIEW_DESC RTV_DESC =
+		{
+			.Format = RT_DESC.Format,
+			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D
+		};
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += SCREEN * mRtvDescriptorSize;
+		md3dDevice->CreateRenderTargetView(mRenderTargets[SCREEN], &RTV_DESC, rtvHandle);
+		if (mScreenTexture)
+			mScreenTexture->ChangeResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
 	//Create Depth/Stencil Buffer & View.
@@ -647,6 +703,8 @@ void D3D12App::OnResize()
 	mViewport.MaxDepth = 1.0f;
 
 	mScissorRect = { 0, 0, mWidth, mHeight };
+	if (mpCamera)
+		mpCamera->SetScreenSize(mWidth, mHeight);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), GetAspectRatio(), 1.0f, 1000.0f);
@@ -800,14 +858,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->RSSetViewports(1, &mViewport);
 	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
-
 	//렌더타겟 상태 변환 (MSAA)
 	{
 		D3D12_RESOURCE_BARRIER barrier0 = {};
 		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::MSAA];
-		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
@@ -857,20 +914,14 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	//항상 CBV 내용 변경 전 RootSignature Set 필요.
 	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
 
-	//D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//texHandle.ptr += mCbvSrvUavDescriptorSize;
-
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-	//md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
 
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
 	mpLight->Update(md3dCommandList);
 
 	//Draw Object.
-
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
 	float z = mRadius * sinf(mPhi) * sinf(mTheta);
@@ -961,7 +1012,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::MSAA];
 		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
@@ -969,6 +1020,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	//Render Screen
 	{
+		md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
+
 		//렌더타겟 상태 변환
 		{
 			D3D12_RESOURCE_BARRIER barrier0 = {};
@@ -988,15 +1041,15 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mMSAATexture->GetID());
+			texHandle.ptr += 32 * (mScreenTexture->GetID());
 			md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
 		}
 
-		{
-			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mNormalTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
-		}
+		//{
+		//	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		//	texHandle.ptr += 32 * (mScreenTexture->GetID());
+		//	md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
+		//}
 
 		mScreenShader->SetPipelineState(md3dCommandList);
 		md3dCommandList->DrawInstanced(6, 1, 0, 0);
@@ -1067,12 +1120,12 @@ void D3D12App::Finalize()
 	}
 	Texture::TextureList.clear();
 
-	//for (int i = 0; i < (int)eRenderTargetType::COUNT; ++i)
 	for (int i = 0; i < SwapChainBufferCount; ++i)
 	{
 		RELEASE_COM(mRenderTargets[i]);
 	}
-	//RELEASE_COM(mDepthStencilBuffer);
+	//RELEASE_COM(mRenderTargets[(int)eRenderTargetType::SCREEN]);
+
 
 	RELEASE_COM(mFence);
 	RELEASE_COM(md3dCommandQueue);
