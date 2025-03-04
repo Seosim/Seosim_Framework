@@ -142,5 +142,8 @@
     <FxCompile Include="Shaders\Screen.hlsl">
       <Filter>소스 파일\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\Shadow.hlsl">
+      <Filter>소스 파일\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

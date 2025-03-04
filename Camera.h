@@ -20,6 +20,7 @@ public:
 
 	void Update(ID3D12GraphicsCommandList* pCommandList);
 
+	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position);
 
 	void SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj);

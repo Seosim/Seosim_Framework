@@ -22,6 +22,11 @@ void Camera::Update(ID3D12GraphicsCommandList* pCommandList)
 	pCommandList->SetGraphicsRootConstantBufferView(3, cbAddress);
 }
 
+XMFLOAT3 Camera::GetPosition() const
+{
+	return mCameraBuffer.CameraPos;
+}
+
 void Camera::SetPosition(const XMFLOAT3& position)
 {
 	mCameraBuffer.CameraPos = position;

@@ -98,6 +98,7 @@ public:
 
 	void SetTexture(Texture* texture, UINT index);
 	
+	void UpdateTextureOnSrv(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap);
 private:
 	Shader* mpShader = nullptr;
 	std::unique_ptr<UploadBuffer> mMaterialCB = nullptr;

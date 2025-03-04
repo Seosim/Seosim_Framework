@@ -8,16 +8,7 @@ void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID
 	mpShader->SetPipelineState(pCommandList);
 	pCommandList->SetGraphicsRootConstantBufferView(1, cbAddress);
 
-	for (int i = 0; i < mTextures.size(); ++i)
-	{
-		if (mTextures[i] != nullptr)
-		{
-			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mTextures[i]->GetID());
-			pCommandList->SetGraphicsRootDescriptorTable(4 + i, texHandle);
-		}
-
-	}
+	UpdateTextureOnSrv(pCommandList, srvHeap);
 }
 
 void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, const std::string& filePath)
@@ -41,5 +32,19 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 void Material::SetTexture(Texture* texture, UINT index)
 {
 	mTextures[index] = texture;
+}
+
+void Material::UpdateTextureOnSrv(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap)
+{
+	for (int i = 0; i < mTextures.size(); ++i)
+	{
+		if (mTextures[i] != nullptr)
+		{
+			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mTextures[i]->GetID());
+			pCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0 + i, texHandle);
+		}
+
+	}
 }
 

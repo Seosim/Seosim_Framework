@@ -60,6 +60,14 @@ void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignatu
 	psoDesc.RasterizerState.CullMode = command.CullingMode;
 	psoDesc.DepthStencilState.DepthEnable = command.DepthEnable;
 
+	//TODO: 그림자 쉐이더 처리 필요.
+	if (shaderName == "Shadow")
+	{
+		psoDesc.RasterizerState.DepthBias = 100000;
+		psoDesc.RasterizerState.DepthBiasClamp = 0.0f;
+		psoDesc.RasterizerState.SlopeScaledDepthBias = 1.0f;
+	}
+
 	HR(pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO)));
 }
 

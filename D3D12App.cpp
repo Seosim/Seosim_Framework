@@ -112,6 +112,7 @@ bool D3D12App::InitDirect3D()
 	CreateCbvSrvUavDescriptorHeap();
 	BuildConstantBuffers();
 	BuildRootSignature();
+	BuildShadow();
 	BuildSkybox();
 	BuildObjects();
 	BuildLight();
@@ -181,7 +182,7 @@ void D3D12App::CreateRtrAndDsvDescriptorHeap()
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;
-	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.NumDescriptors = 2;
 
 	HR(md3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&mDsvHeap)));
 }
@@ -229,51 +230,66 @@ void D3D12App::BuildRootSignature()
 	descriptorRange[1].RegisterSpace = 0;
 	descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	constexpr int ROOT_PARAMATER_COUNT = 6;
+	constexpr int ROOT_PARAMATER_COUNT = (int)eRootParameter::COUNT;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
 
 	//Per Object
-	rootParamater[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParamater[0].Descriptor = {
+	constexpr int objectIndex = (int)eRootParameter::OBJECT;
+	rootParamater[objectIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[objectIndex].Descriptor = {
 		.ShaderRegister = 0,
 		.RegisterSpace = 0
 	};
-	rootParamater[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParamater[objectIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Per Material
-	rootParamater[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParamater[1].Descriptor = {
+	constexpr int materialIndex = (int)eRootParameter::MATERIAL;
+	rootParamater[materialIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[materialIndex].Descriptor = {
 		.ShaderRegister = 1,
 		.RegisterSpace = 0
 	};
-	rootParamater[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParamater[materialIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Per Light
-	rootParamater[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParamater[2].Descriptor = {
+	constexpr int lightIndex = (int)eRootParameter::LIGHT;
+	rootParamater[lightIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[lightIndex].Descriptor = {
 		.ShaderRegister = 2,
 		.RegisterSpace = 0
 	};
-	rootParamater[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParamater[lightIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Per Camera
-	rootParamater[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParamater[3].Descriptor = {
+	constexpr int cameraIndex = (int)eRootParameter::CAMERA;
+	rootParamater[cameraIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[cameraIndex].Descriptor = {
 		.ShaderRegister = 3,
 		.RegisterSpace = 0
 	};
-	rootParamater[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParamater[cameraIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	//Per Shadow
+	constexpr int shadowIndex = (int)eRootParameter::SHADOW;
+	rootParamater[shadowIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootParamater[shadowIndex].Descriptor = {
+		.ShaderRegister = 4,
+		.RegisterSpace = 0
+	};
+	rootParamater[shadowIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Texture
-	rootParamater[4].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParamater[4].DescriptorTable.NumDescriptorRanges = 1;
-	rootParamater[4].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
-	rootParamater[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	constexpr int tex0Index = (int)eRootParameter::TEXTURE0;
+	rootParamater[tex0Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParamater[tex0Index].DescriptorTable.NumDescriptorRanges = 1;
+	rootParamater[tex0Index].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
+	rootParamater[tex0Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	
-	rootParamater[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParamater[5].DescriptorTable.NumDescriptorRanges = 1;
-	rootParamater[5].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
-	rootParamater[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	constexpr int tex1Index = (int)eRootParameter::TEXTURE1;
+	rootParamater[tex1Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParamater[tex1Index].DescriptorTable.NumDescriptorRanges = 1;
+	rootParamater[tex1Index].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
+	rootParamater[tex1Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[1];
 
@@ -312,8 +328,23 @@ void D3D12App::BuildLight()
 	mpLight = new Light();
 	mpLight->Initialize(md3dDevice);
 
-	mpLight->SetDirection({ -0.32f,  0.77f, 0.56f });
+	mpLight->SetDirection(mShadowBuffer.LightDir);
 	mpLight->SetColor({ 1.0f, 0.9568627f, 0.8392157 });
+}
+
+void D3D12App::BuildShadow()
+{
+	mShadowBuffer.LightDir = { -0.32f,  0.77f, 0.56f };
+
+	mShadowCB = std::make_unique<UploadBuffer>(md3dDevice, 1, true, sizeof(ShadowConstants));
+
+	mShadowShader = new Shader();
+	auto command = Shader::DefaultCommand();
+	command.SampleCount = 1;
+	mShadowShader->Initialize(md3dDevice, mRootSignature, "Shadow", command);
+
+	mShadowTexture = new Texture();
+	mShadowTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 }
 
 void D3D12App::BuildCamera()
@@ -476,6 +507,12 @@ void D3D12App::OnResize()
 	{
 		mDepthStencilBuffer->Release();
 		mDepthStencilBuffer = nullptr;
+	}
+
+	if (mShadow)
+	{
+		mShadow->Release();
+		mShadow = nullptr;
 	}
 
 	HR(mSwapChain->ResizeBuffers(SwapChainBufferCount, mWidth, mHeight, mBackBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
@@ -643,6 +680,34 @@ void D3D12App::OnResize()
 			mScreenTexture->ChangeResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
+	//Create ShadowMap
+	{
+		D3D12_RESOURCE_DESC texDesc;
+		ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		texDesc.Alignment = 0;
+		texDesc.Width = mWidth;
+		texDesc.Height = mHeight;
+		texDesc.DepthOrArraySize = 1;
+		texDesc.MipLevels = 1;
+		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
+		texDesc.SampleDesc.Count = 1;
+		texDesc.SampleDesc.Quality = 0;
+		texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+		D3D12_CLEAR_VALUE optClear;
+		optClear.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		optClear.DepthStencil.Depth = 1.0f;
+		optClear.DepthStencil.Stencil = 0;
+
+		auto heapType = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+		HR(md3dDevice->CreateCommittedResource(&heapType, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_GENERIC_READ, &optClear, IID_PPV_ARGS(&mShadow)));
+		if (mShadowTexture)
+			mShadowTexture->ChangeResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+	}
+
 	//Create Depth/Stencil Buffer & View.
 	D3D12_RESOURCE_DESC depthStencilDesc = {};
 	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -679,6 +744,20 @@ void D3D12App::OnResize()
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, dsvHandle);
 	if(mDepthTexture)
 		mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+
+	//Shadow Depth
+	{
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dsvDesc.Texture2D.MipSlice = 0;
+
+		auto dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+		dsvHandle.ptr += mDsvDescriptorSize;
+
+		md3dDevice->CreateDepthStencilView(mShadow, &dsvDesc, dsvHandle);
+	}
 
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -905,17 +984,19 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { MSAAHandle, cameraNormalHandle };
 	FLOAT clearVal[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	//항상 CBV 내용 변경 전 RootSignature Set 필요.
+	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
+	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
+	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	RenderObjectForShadow();
 	
 	md3dCommandList->ClearRenderTargetView(MSAAHandle, clearVal, 0, nullptr);
 	md3dCommandList->ClearRenderTargetView(cameraNormalHandle, clearVal, 0, nullptr);
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	md3dCommandList->OMSetRenderTargets(2, rtvhandles, false, &dsvHandle);
 	
-	//항상 CBV 내용 변경 전 RootSignature Set 필요.
-	md3dCommandList->SetGraphicsRootSignature(mRootSignature);
-
-	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
-	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
@@ -960,40 +1041,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		skyboxMesh.Render(md3dCommandList);
 	}
 
-	int index = 1;
-	for (GameObject* gameObject : mGameObjects)
-	{
-		CTransform& cTransform = gameObject->GetComponent<CTransform>();
-
-		auto xmf4x4world = cTransform.GetWorldTransform();
-
-		XMMATRIX world = xmf4x4world;
-		XMMATRIX proj = XMLoadFloat4x4(&mProj);
-		XMMATRIX worldViewProj = world * view * proj;
-
-		mpCamera->SetMatrix(mView, mProj);
-
-		// Update the constant buffer with the latest worldViewProj matrix.
-		ObjectConstants objConstants;
-		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-		mObjectCB->CopyData(index, objConstants);
-		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
-
-		if (gameObject->HasComponent<Mesh>())
-		{
-			Mesh& mesh = gameObject->GetComponent<Mesh>();
-			Material& mat = gameObject->GetComponent<Material>();
-
-			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
-
-			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mNormalTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
-
-			mesh.Render(md3dCommandList);
-		}
-	}
+	RenderObject();
 
 	{
 		D3D12_RESOURCE_BARRIER barrier1 = {};
@@ -1041,8 +1089,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mScreenTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable(4, texHandle);
+			texHandle.ptr += mCbvSrvUavDescriptorSize * (mScreenTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
 		}
 
 		//{
@@ -1089,8 +1137,178 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	FlushCommandQueue();
 }
 
+void D3D12App::UpdateShadowTransform()
+{
+	float radius = 5.0f;
+
+	// Only the first "main" light casts a shadow.
+	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
+	XMVECTOR lightPos = 2.0f * radius * lightDir;
+	XMFLOAT3 cameraPos = mpCamera->GetPosition();
+	XMVECTOR targetPos = XMLoadFloat3(&cameraPos);
+	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
+
+	XMStoreFloat3(&mShadowBuffer.LightPosW, lightPos);
+
+	// Transform bounding sphere to light space.
+	XMFLOAT3 sphereCenterLS;
+	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
+
+	// Ortho frustum in light space encloses scene.
+	float l = sphereCenterLS.x - radius;
+	float b = sphereCenterLS.y - radius;
+	float n = sphereCenterLS.z - radius;
+	float r = sphereCenterLS.x + radius;
+	float t = sphereCenterLS.y + radius;
+	float f = sphereCenterLS.z + radius;
+
+	mShadowBuffer.NearZ = n;
+	mShadowBuffer.FarZ = f;
+	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
+
+	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+	XMMATRIX T(
+		0.5f, 0.0f, 0.0f, 0.0f,
+		0.0f, -0.5f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.5f, 0.5f, 0.0f, 1.0f);
+
+	XMMATRIX S = lightView * lightProj * T;
+	XMStoreFloat4x4(&mShadowBuffer.LightView, XMMatrixTranspose(lightView));
+	XMStoreFloat4x4(&mShadowBuffer.LightProj, XMMatrixTranspose(lightProj));
+	XMStoreFloat4x4(&mShadowBuffer.ShadowTransform, XMMatrixTranspose(S));
+
+	mShadowCB->CopyData(0, mShadowBuffer);
+}
+
 void D3D12App::RenderObject()
 {
+	//Draw Object.
+	// Convert Spherical to Cartesian coordinates.
+	float x = mRadius * sinf(mPhi) * cosf(mTheta);
+	float z = mRadius * sinf(mPhi) * sinf(mTheta);
+	float y = mRadius * cosf(mPhi);
+
+	// Build the view matrix.
+	mpCamera->SetPosition({ x, y, z });
+	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+	XMVECTOR target = XMVectorZero();
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	XMStoreFloat4x4(&mView, view);
+
+	int index = 1;
+	for (GameObject* gameObject : mGameObjects)
+	{
+		CTransform& cTransform = gameObject->GetComponent<CTransform>();
+
+		auto xmf4x4world = cTransform.GetWorldTransform();
+
+		XMMATRIX world = xmf4x4world;
+		XMMATRIX proj = XMLoadFloat4x4(&mProj);
+		XMMATRIX worldViewProj = world * view * proj;
+
+		mpCamera->SetMatrix(mView, mProj);
+
+		// Update the constant buffer with the latest worldViewProj matrix.
+		ObjectConstants objConstants;
+		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+		mObjectCB->CopyData(index, objConstants);
+		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
+
+		if (gameObject->HasComponent<Mesh>())
+		{
+			Mesh& mesh = gameObject->GetComponent<Mesh>();
+			Material& mat = gameObject->GetComponent<Material>();
+
+			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
+
+			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			texHandle.ptr += 32 * (mNormalTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE1, texHandle);
+
+			mesh.Render(md3dCommandList);
+		}
+	}
+}
+
+void D3D12App::RenderObjectForShadow()
+{
+	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mShadow, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+
+	// Clear the back buffer and depth buffer.
+
+	auto dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	dsvHandle.ptr += mDsvDescriptorSize;
+
+	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	// Set null render target because we are only going to draw to
+	// depth buffer.  Setting a null render target will disable color writes.
+	// Note the active PSO also must specify a render target count of 0.
+	md3dCommandList->OMSetRenderTargets(0, nullptr, false, &dsvHandle);
+
+	UpdateShadowTransform();
+	md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::SHADOW, mShadowCB->Resource()->GetGPUVirtualAddress());
+
+	mShadowShader->SetPipelineState(md3dCommandList);
+
+	{
+		//Draw Object.
+		// Convert Spherical to Cartesian coordinates.
+		float x = mRadius * sinf(mPhi) * cosf(mTheta);
+		float z = mRadius * sinf(mPhi) * sinf(mTheta);
+		float y = mRadius * cosf(mPhi);
+
+		// Build the view matrix.
+		mpCamera->SetPosition({ x, y, z });
+		XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
+		XMVECTOR target = XMVectorZero();
+		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+		XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+		XMStoreFloat4x4(&mView, view);
+
+		int index = 1;
+		for (GameObject* gameObject : mGameObjects)
+		{
+			CTransform& cTransform = gameObject->GetComponent<CTransform>();
+
+			auto xmf4x4world = cTransform.GetWorldTransform();
+
+			XMMATRIX world = xmf4x4world;
+			XMMATRIX proj = XMLoadFloat4x4(&mProj);
+			XMMATRIX worldViewProj = world * view * proj;
+
+			mpCamera->SetMatrix(mView, mProj);
+
+			// Update the constant buffer with the latest worldViewProj matrix.
+			ObjectConstants objConstants;
+			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
+			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+			mObjectCB->CopyData(index, objConstants);
+			md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
+
+			if (gameObject->HasComponent<Mesh>())
+			{
+				Mesh& mesh = gameObject->GetComponent<Mesh>();
+				Material& mat = gameObject->GetComponent<Material>();
+
+				mat.UpdateTextureOnSrv(md3dCommandList, mSrvHeap);
+
+				mesh.Render(md3dCommandList);
+			}
+		}
+	}
+
+	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mShadow, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
+	md3dCommandList->ResourceBarrier(1, &barrier1);
 }
 
 void D3D12App::Finalize()
@@ -1124,7 +1342,8 @@ void D3D12App::Finalize()
 	{
 		RELEASE_COM(mRenderTargets[i]);
 	}
-	//RELEASE_COM(mRenderTargets[(int)eRenderTargetType::SCREEN]);
+
+	delete mShadowShader;
 
 
 	RELEASE_COM(mFence);

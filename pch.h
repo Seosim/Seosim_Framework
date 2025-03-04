@@ -146,3 +146,14 @@ namespace MathTool {
 constexpr UINT MAX_TEXTURE_COUNT = 8;
 
 constexpr UINT MSAA_SAMPLING_COUNT = 4;
+
+enum class eRootParameter {
+	OBJECT,
+	MATERIAL,
+	LIGHT,
+	CAMERA,
+	SHADOW,
+	TEXTURE0,
+	TEXTURE1,
+	COUNT
+};

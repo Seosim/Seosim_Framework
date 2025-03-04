@@ -16,6 +16,17 @@ public:
 		XMFLOAT4X4 WorldViewProj = {};
 	};
 
+	struct ShadowConstants
+	{
+		XMFLOAT4X4 LightView;
+		XMFLOAT4X4 LightProj;
+		XMFLOAT4X4 ShadowTransform;
+		XMFLOAT3 LightDir;
+		float NearZ;
+		XMFLOAT3 LightPosW;
+		float FarZ;
+	};
+
 	enum class eRenderTargetType {
 		FRAME0,
 		FRAME1,
@@ -41,6 +52,7 @@ public:
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 	void BuildLight();
+	void BuildShadow();
 	void BuildCamera();
 	void BuildSkybox();
 	void BuildResourceTexture();
@@ -65,7 +77,11 @@ public:
 	float GetAspectRatio() const;
 	void Draw(const GameTimer& gameTimer);
 
+	//Shadow func
+	void UpdateShadowTransform();
+
 	void RenderObject();
+	void RenderObjectForShadow();
 
 	void Finalize();
 private:
@@ -158,4 +174,12 @@ private:
 
 	//Shader
 	Shader* mScreenShader = nullptr;
+
+	//Shadow
+	ID3D12Resource* mShadow = nullptr;
+	Texture* mShadowTexture = nullptr;
+	std::unique_ptr<UploadBuffer> mShadowCB = nullptr;
+	ShadowConstants mShadowBuffer = {};
+	Shader* mShadowShader = nullptr;
+
 };
