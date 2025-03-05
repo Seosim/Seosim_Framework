@@ -19,7 +19,8 @@ struct VertexOut
 {
     float4 PosH : SV_POSITION;
     float3 NormalW : NORMAL;
-    float3 PosW : POSITION;
+    float3 PosW : POSITION0;
+    float4 ShadowPosH : POSITION1;
     float2 UV : UV;
 };
 
@@ -42,6 +43,8 @@ VertexOut VS(VertexIn vin)
 
     // Transform normal to world space.
     vout.NormalW = normalize(mul(float4(vin.Normal, 0.0f), gWorld).xyz);
+    
+    vout.ShadowPosH = mul(posW, ShadowTransform);
 
     vout.UV = vin.UV;
 
@@ -80,13 +83,13 @@ PixelOut PS(VertexOut pin)
     float3 specular = spec * lightColor;
 
     // Combine results.
-    float3 finalColor = ambient + diffuse + specular;
+    float shadowFac = CalcShadowFactor(pin.ShadowPosH);
+    
+    float3 finalColor = (ambient + diffuse + specular) * shadowFac;
 
     pixelOut.color = float4(finalColor, 1.0f);
+    pixelOut.color = float4(shadowFac, shadowFac, shadowFac, 1.0f);
     //pixelOut.normal = float4(N, 1.0f);
     pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;
 }
-
-
-

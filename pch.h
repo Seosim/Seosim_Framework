@@ -155,5 +155,6 @@ enum class eRootParameter {
 	SHADOW,
 	TEXTURE0,
 	TEXTURE1,
+	SHADOW_TEXTURE,
 	COUNT
 };

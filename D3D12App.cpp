@@ -216,7 +216,9 @@ void D3D12App::BuildConstantBuffers()
 
 void D3D12App::BuildRootSignature()
 {
-	D3D12_DESCRIPTOR_RANGE descriptorRange[2];
+	constexpr int MAX_TEXTURE_COUNT = 3;
+
+	D3D12_DESCRIPTOR_RANGE descriptorRange[MAX_TEXTURE_COUNT];
 
 	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	descriptorRange[0].NumDescriptors = 1;
@@ -229,6 +231,12 @@ void D3D12App::BuildRootSignature()
 	descriptorRange[1].BaseShaderRegister = 1;
 	descriptorRange[1].RegisterSpace = 0;
 	descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	descriptorRange[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	descriptorRange[2].NumDescriptors = 1;
+	descriptorRange[2].BaseShaderRegister = 2;
+	descriptorRange[2].RegisterSpace = 0;
+	descriptorRange[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
 	constexpr int ROOT_PARAMATER_COUNT = (int)eRootParameter::COUNT;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
@@ -291,7 +299,13 @@ void D3D12App::BuildRootSignature()
 	rootParamater[tex1Index].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
 	rootParamater[tex1Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[1];
+	constexpr int shadowTextureIndex = (int)eRootParameter::SHADOW_TEXTURE;
+	rootParamater[shadowTextureIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootParamater[shadowTextureIndex].DescriptorTable.NumDescriptorRanges = 1;
+	rootParamater[shadowTextureIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[2];
+	rootParamater[shadowTextureIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
 
 	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -305,6 +319,20 @@ void D3D12App::BuildRootSignature()
 	pd3dSamplerDescs[0].ShaderRegister = 0;
 	pd3dSamplerDescs[0].RegisterSpace = 0;
 	pd3dSamplerDescs[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dSamplerDescs[1].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	pd3dSamplerDescs[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[1].MipLODBias = 0.0f;
+	pd3dSamplerDescs[1].MaxAnisotropy = 16;
+	pd3dSamplerDescs[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	pd3dSamplerDescs[1].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	pd3dSamplerDescs[1].MinLOD = 0;
+	pd3dSamplerDescs[1].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[1].ShaderRegister = 1;
+	pd3dSamplerDescs[1].RegisterSpace = 0;
+	pd3dSamplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -344,7 +372,7 @@ void D3D12App::BuildShadow()
 	mShadowShader->Initialize(md3dDevice, mRootSignature, "Shadow", command);
 
 	mShadowTexture = new Texture();
-	mShadowTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+	mShadowTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
 }
 
 void D3D12App::BuildCamera()
@@ -686,8 +714,8 @@ void D3D12App::OnResize()
 		ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		texDesc.Alignment = 0;
-		texDesc.Width = mWidth;
-		texDesc.Height = mHeight;
+		texDesc.Width = 2048;
+		texDesc.Height = 2048;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
 		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
@@ -705,7 +733,7 @@ void D3D12App::OnResize()
 
 		HR(md3dDevice->CreateCommittedResource(&heapType, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_GENERIC_READ, &optClear, IID_PPV_ARGS(&mShadow)));
 		if (mShadowTexture)
-			mShadowTexture->ChangeResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+			mShadowTexture->ChangeResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
 	}
 
 	//Create Depth/Stencil Buffer & View.
@@ -1139,13 +1167,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 void D3D12App::UpdateShadowTransform()
 {
-	float radius = 5.0f;
+	float radius = 5.0;
 
 	// Only the first "main" light casts a shadow.
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMVECTOR lightPos = 2.0f * radius * lightDir;
 	XMFLOAT3 cameraPos = mpCamera->GetPosition();
-	XMVECTOR targetPos = XMLoadFloat3(&cameraPos);
+	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 0); //XMLoadFloat3(&cameraPos);
+	XMVECTOR lightPos = (2.0f * radius * lightDir);
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 
@@ -1198,6 +1226,10 @@ void D3D12App::RenderObject()
 
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, view);
+
+	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	texHandle.ptr += mCbvSrvUavDescriptorSize * (mShadowTexture->GetID());
+	md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
 
 	int index = 1;
 	for (GameObject* gameObject : mGameObjects)
