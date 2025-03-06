@@ -35,7 +35,7 @@ VertexOut VS(VertexIn vin)
     VertexOut vout;
 
 	// Transform to clip space.
-    vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+    vout.PosH = mul(mul(mul(float4(vin.PosL, 1.0f), gWorld), gView), gProj);
 
     // Transform to world space.
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
@@ -86,10 +86,14 @@ PixelOut PS(VertexOut pin)
     float shadowFac = CalcShadowFactor(pin.ShadowPosH);
     
     float3 finalColor = (ambient + diffuse + specular) * shadowFac;
-
+    
+    float4 test = pin.ShadowPosH / pin.ShadowPosH.w;
     pixelOut.color = float4(finalColor, 1.0f);
-    pixelOut.color = float4(shadowFac, shadowFac, shadowFac, 1.0f);
-    //pixelOut.normal = float4(N, 1.0f);
+    //pixelOut.color = float4(shadowFac, shadowFac, shadowFac, 1.0f);
+    //pixelOut.color = test;
+    pixelOut.color = gShadowMap.Sample(gsamLinear, test.xy);
+    //float shadowDepth = gShadowMap.SampleLevel(gsamLinear, test.xy, 0.0f).r;
+    //pixelOut.color = gShadowMap.Sample(gsamLinear, pin.UV);
     pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;
 }

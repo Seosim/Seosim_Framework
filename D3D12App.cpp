@@ -362,7 +362,7 @@ void D3D12App::BuildLight()
 
 void D3D12App::BuildShadow()
 {
-	mShadowBuffer.LightDir = { -0.32f,  0.77f, 0.56f };
+	mShadowBuffer.LightDir = { 0.577350020,  -0.577350020, 0.577350020 };
 
 	mShadowCB = std::make_unique<UploadBuffer>(md3dDevice, 1, true, sizeof(ShadowConstants));
 
@@ -373,6 +373,10 @@ void D3D12App::BuildShadow()
 
 	mShadowTexture = new Texture();
 	mShadowTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
+
+	mShadowViewport = { 0.0f, 0.0f, (float)SHADOW_MAP_SIZE, (float)SHADOW_MAP_SIZE, 0.0f, 1.0f };
+	mShadowScissorRect = { 0, 0, (int)SHADOW_MAP_SIZE, (int)SHADOW_MAP_SIZE };
+
 }
 
 void D3D12App::BuildCamera()
@@ -714,8 +718,8 @@ void D3D12App::OnResize()
 		ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
 		texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 		texDesc.Alignment = 0;
-		texDesc.Width = 2048;
-		texDesc.Height = 2048;
+		texDesc.Width = SHADOW_MAP_SIZE;
+		texDesc.Height = SHADOW_MAP_SIZE;
 		texDesc.DepthOrArraySize = 1;
 		texDesc.MipLevels = 1;
 		texDesc.Format = DXGI_FORMAT_R24G8_TYPELESS;
@@ -945,7 +949,7 @@ void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
 		mRadius += dx - dy;
 
 		// Restrict the radius.
-		mRadius = MathTool::Clamp(mRadius, 3.0f, 15.0f);
+		mRadius = MathTool::Clamp(mRadius, 3.0f, 100.0f);
 	}
 
 	mLastMousePos.x = x;
@@ -961,9 +965,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 {
 	HR(md3dCommandAllocator->Reset());
 	HR(md3dCommandList->Reset(md3dCommandAllocator, nullptr));
-
-	md3dCommandList->RSSetViewports(1, &mViewport);
-	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (MSAA)
 	{
@@ -1018,6 +1019,9 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
+	md3dCommandList->RSSetViewports(1, &mShadowViewport);
+	md3dCommandList->RSSetScissorRects(1, &mShadowScissorRect);
+
 	RenderObjectForShadow();
 	
 	md3dCommandList->ClearRenderTargetView(MSAAHandle, clearVal, 0, nullptr);
@@ -1025,6 +1029,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 	md3dCommandList->OMSetRenderTargets(2, rtvhandles, false, &dsvHandle);
 	
+	md3dCommandList->RSSetViewports(1, &mViewport);
+	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	//Update Constant Camera Buffer, Light Buffer
 	mpCamera->Update(md3dCommandList);
@@ -1167,13 +1173,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 void D3D12App::UpdateShadowTransform()
 {
-	float radius = 5.0;
+	float radius = 20.0277557f;
+	//float radius = 3.0f;
 
 	// Only the first "main" light casts a shadow.
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMFLOAT3 cameraPos = mpCamera->GetPosition();
-	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 0); //XMLoadFloat3(&cameraPos);
-	XMVECTOR lightPos = (2.0f * radius * lightDir);
+	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1); //XMLoadFloat3(&cameraPos);
+	XMVECTOR lightPos = (-2.0f * radius * lightDir);
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 

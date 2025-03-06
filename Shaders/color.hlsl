@@ -55,7 +55,7 @@ PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
     
-    float4 diffuseAlbedo = gShadowMap.Sample(gsamLinear, pin.UV);
+    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
     
     diffuseAlbedo = LinearizeColor(diffuseAlbedo);
     
@@ -78,17 +78,17 @@ PixelOut PS(VertexOut pin)
     float spec = 0.0;
     if (diff > 0.0)
     {
-        spec = pow(max(dot(R, V), 0.0), 32);
+        spec = pow(max(dot(R, V), 0.0), 64);
     }
     float3 specular = spec * lightColor;
 
     // Combine results.
     float shadowFac = CalcShadowFactor(pin.ShadowPosH);
     
-    float3 finalColor = (ambient + diffuse + specular) * shadowFac;
-
-    pixelOut.color = float4(pin.UV,0.0f, 1.0f);
-    //pixelOut.color = float4(shadowFac, shadowFac, shadowFac, 1.0f);
+    float3 finalColor = diffuse + (ambient + specular) * shadowFac;
+    
+    pixelOut.color = float4(finalColor, 1.0f);
+    //pixelOut.color = gShadowMap.Sample(gsamLinear, pin.UV);
     pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;
 }

@@ -181,5 +181,6 @@ private:
 	std::unique_ptr<UploadBuffer> mShadowCB = nullptr;
 	ShadowConstants mShadowBuffer = {};
 	Shader* mShadowShader = nullptr;
-
+	D3D12_VIEWPORT mShadowViewport;
+	tagRECT mShadowScissorRect;
 };
