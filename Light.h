@@ -6,6 +6,7 @@ class Light final {
 public:
 	struct LightBuffer {
 		XMFLOAT3 LightDir = {};
+		float padding0;
 		XMFLOAT3 LightColor = {};
 	};
 

@@ -287,19 +287,19 @@ void D3D12App::BuildRootSignature()
 	rootParamater[shadowIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Texture
-	constexpr int tex0Index = (int)eRootParameter::TEXTURE0;
+	constexpr int tex0Index = (int)eRootParameter::CUBE_MAP;
 	rootParamater[tex0Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParamater[tex0Index].DescriptorTable.NumDescriptorRanges = 1;
 	rootParamater[tex0Index].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
 	rootParamater[tex0Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	
-	constexpr int tex1Index = (int)eRootParameter::TEXTURE1;
+	constexpr int tex1Index = (int)eRootParameter::SHADOW_TEXTURE;
 	rootParamater[tex1Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParamater[tex1Index].DescriptorTable.NumDescriptorRanges = 1;
 	rootParamater[tex1Index].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
 	rootParamater[tex1Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	constexpr int shadowTextureIndex = (int)eRootParameter::SHADOW_TEXTURE;
+	constexpr int shadowTextureIndex = (int)eRootParameter::TEXTURE0;
 	rootParamater[shadowTextureIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootParamater[shadowTextureIndex].DescriptorTable.NumDescriptorRanges = 1;
 	rootParamater[shadowTextureIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[2];
@@ -307,7 +307,7 @@ void D3D12App::BuildRootSignature()
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
 
-	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
 	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	pd3dSamplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	pd3dSamplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -506,7 +506,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/MaterialTest.bin");
+	LoadHierarchyData("Assets/Hierarchies/TextureH.bin");
 
 	Shader::Command command = Shader::DefaultCommand();
 	command.SampleCount = 1;
@@ -1072,6 +1072,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		Mesh& skyboxMesh = mSkybox->GetComponent<Mesh>();
 
 		skyboxMat.SetConstantBufferView(md3dCommandList, mSrvHeap);
+		skyboxMat.UpdateTextureOnSrv(md3dCommandList, mSrvHeap, (UINT)eRootParameter::CUBE_MAP, 0);
 		skyboxMesh.Render(md3dCommandList);
 	}
 
@@ -1124,7 +1125,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 			texHandle.ptr += mCbvSrvUavDescriptorSize * (mScreenTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
+			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::CUBE_MAP, texHandle);
 		}
 
 		//{
@@ -1265,8 +1266,8 @@ void D3D12App::RenderObject()
 			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
 
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mNormalTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE1, texHandle);
+			texHandle.ptr += 32 * (mShadowTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
 
 			mesh.Render(md3dCommandList);
 		}

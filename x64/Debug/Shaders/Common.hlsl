@@ -3,7 +3,9 @@ SamplerState gsamLinear : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
 
 
-Texture2D gShadowMap : register(t2);
+TextureCube gCubeMap : register(t0);
+Texture2D gShadowMap : register(t1);
+
 
 cbuffer cbPerObject : register(b0)
 {
@@ -11,14 +13,10 @@ cbuffer cbPerObject : register(b0)
     float4x4 gWorldViewProj;
 };
 
-cbuffer cbPerMaterial : register(b1)
-{
-    float4 color;
-};
-
 cbuffer cbPerLight : register(b2)
 {
     float3 lightDir;
+    float padding0;
     float3 lightColor;
 }
 

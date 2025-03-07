@@ -6,7 +6,15 @@
 
 #include "Common.hlsl"
 
-Texture2D gDiffuseMap : register(t0);
+Texture2D gDiffuseMap : register(t2);
+
+cbuffer cbPerMaterial : register(b1)
+{
+    float4 BaseColor;
+    float4 Emission;
+    float Metalic;
+    float Smoothness;
+};
 
 struct VertexIn
 {
@@ -51,44 +59,89 @@ VertexOut VS(VertexIn vin)
     return vout;
 }
 
+//PixelOut PS(VertexOut pin)
+//{
+//    PixelOut pixelOut;
+    
+//    // 텍스처에서 알베도 값을 샘플링
+//    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
+//    diffuseAlbedo = LinearizeColor(diffuseAlbedo);
+
+//    // 노멀, 조명 및 뷰 벡터 계산
+//    float3 N = normalize(pin.NormalW);
+//    float3 L = normalize(lightDir);
+//    float3 V = normalize(cameraPos - pin.PosW);
+//    float3 H = normalize(L + V); // 블린-퐁에서 사용되는 Halfway 벡터
+
+//    // 주변광 (Ambient) 계산
+//    float3 ambient = BaseColor.rgb * 0.1f; // 기본 색상 기반의 약한 주변광
+
+//    // 확산광 (Diffuse) 계산
+//    float diff = max(dot(N, L), 0.0);
+//    float3 diffuse = diff * diffuseAlbedo.rgb;
+
+//    // 스펙큘러 (Specular) 계산 (Blinn-Phong)
+//    float shininess = Smoothness * 128.0f; // 조도에 따른 하이라이트 강도
+//    float spec = pow(max(dot(N, H), 0.0), shininess); // Halfway 벡터를 사용한 스펙큘러 계산
+//    float3 specular = spec * lightColor * Metalic; // 금속성(Metallic)을 고려한 스펙큘러 반사
+
+//    // 그림자 계산
+//    float shadowFac = CalcShadowFactor(pin.ShadowPosH);
+
+//    // 최종 색상 조합
+//    float3 finalColor = ambient + (diffuse + specular) * shadowFac;
+
+//    pixelOut.color = float4(finalColor, 1.0f); // 최종 색상 출력
+//    pixelOut.normal = float4(mul(N, (float3x3) gView), 1.0f); // 뷰 공간 노멀
+//    return pixelOut;
+//}
+
 PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
     
+    // 디퓨즈 맵 샘플링
     float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
     
     diffuseAlbedo = LinearizeColor(diffuseAlbedo);
     
-    //return diffuseAlbedo;
-    
-    // Normalize vectors.
-    float3 N = normalize(pin.NormalW);
-    float3 L = lightDir;
-    float3 V = normalize(cameraPos - pin.PosW);
-    float3 R = reflect(-L, N);
+    // Normalized vectors
+    float3 N = normalize(pin.NormalW); // 표면 법선 벡터
+    float3 L = -normalize(lightDir); // 조명 방향
+    float3 V = normalize(cameraPos - pin.PosW); // 카메라 방향 (뷰 벡터)
+    float3 H = normalize(L + V); // Halfway 벡터 (Blinn-Phong)
 
-    // Ambient term.
+    // Ambient term
     float3 ambient = diffuseAlbedo.rgb;
 
-    // Diffuse term.
+    // Diffuse term
     float diff = max(dot(N, L), 0.0);
     float3 diffuse = diff * diffuseAlbedo.rgb;
 
-    // Specular term.
-    float spec = 0.0;
-    if (diff > 0.0)
-    {
-        spec = pow(max(dot(R, V), 0.0), 64);
-    }
+    // Specular term (Blinn-Phong)
+    float shininess = 64.0; // 조명 강도
+    float spec = pow(max(dot(N, H), 0.0), shininess);
     float3 specular = spec * lightColor;
 
-    // Combine results.
+    // 그림자 계산
     float shadowFac = CalcShadowFactor(pin.ShadowPosH);
-    
-    float3 finalColor = diffuse + (ambient + specular) * shadowFac;
-    
+
+    // Fresnel 효과 계산 (Fresnel-Schlick Approximation)
+    float F0 = 0.04; // 기본 반사율
+    float fresnel = F0 + (1.0 - F0) * pow(1.0 - dot(V, N), 5);
+
+    // 환경 맵 샘플링
+    float3 R = reflect(-V, N);
+    float3 envColor = gCubeMap.Sample(gsamLinear, R).rgb;
+
+    // Fresnel 효과를 반영하여 환경 맵 색상 조정
+    float3 finalEnvColor = envColor * fresnel;
+
+    // 최종 색상 조합
+    float3 finalColor = ambient + (diffuse + specular) * shadowFac + finalEnvColor * 0.2f;
+
     pixelOut.color = float4(finalColor, 1.0f);
-    //pixelOut.color = gShadowMap.Sample(gsamLinear, pin.UV);
+    
     pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
     return pixelOut;
 }

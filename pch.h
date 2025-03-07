@@ -155,8 +155,8 @@ enum class eRootParameter {
 	LIGHT,
 	CAMERA,
 	SHADOW,
-	TEXTURE0,
-	TEXTURE1,
+	CUBE_MAP,
 	SHADOW_TEXTURE,
+	TEXTURE0,
 	COUNT
 };
