@@ -1076,7 +1076,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		skyboxMesh.Render(md3dCommandList);
 	}
 
-	RenderObject();
+	RenderObject(gameTimer.DeltaTime());
 
 	{
 		D3D12_RESOURCE_BARRIER barrier1 = {};
@@ -1179,7 +1179,7 @@ void D3D12App::UpdateShadowTransform()
 
 	// Only the first "main" light casts a shadow.
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1); //XMLoadFloat3(&cameraPos);
+	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1);
 	XMVECTOR lightPos = (-2.0f * radius * lightDir);
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
@@ -1217,7 +1217,7 @@ void D3D12App::UpdateShadowTransform()
 	mShadowCB->CopyData(0, mShadowBuffer);
 }
 
-void D3D12App::RenderObject()
+void D3D12App::RenderObject(const float deltaTime)
 {
 	//Draw Object.
 	// Convert Spherical to Cartesian coordinates.

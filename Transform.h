@@ -25,6 +25,9 @@ public:
 	XMMATRIX GetWorldTransform() const;
 
 	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
+	void Move(const XMFLOAT3& velocity, Space space = Space::World);
+
+
 	void SetScale(const XMFLOAT3& scale);
 
 	void Rotate(const float angleX, const float angleY, const float angleZ);

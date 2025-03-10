@@ -147,7 +147,7 @@ constexpr UINT MAX_TEXTURE_COUNT = 8;
 
 constexpr UINT MSAA_SAMPLING_COUNT = 4;
 
-constexpr UINT SHADOW_MAP_SIZE = 1024;
+constexpr UINT SHADOW_MAP_SIZE = 2048;
 
 enum class eRootParameter {
 	OBJECT,

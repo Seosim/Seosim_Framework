@@ -41,6 +41,35 @@ void CTransform::SetPosition(const XMFLOAT3& position, Space space)
 	}
 }
 
+void CTransform::Move(const XMFLOAT3& velocity, Space space)
+{
+	XMVECTOR vPosition = XMLoadFloat3(&mPosition);
+	XMVECTOR vVelocity = XMLoadFloat3(&velocity);
+	vPosition += vVelocity;
+
+	XMStoreFloat3(&mPosition, vPosition);
+
+	return;
+	if (space == Space::Local)
+	{
+		vPosition += vVelocity;
+	}
+	else if (space == Space::World)
+	{
+		XMMATRIX localToGlobal = getLocalToWorldTransform();
+		XMMATRIX globalToLocal = XMMatrixInverse(nullptr, localToGlobal);
+
+		XMVECTOR vGlobalPosition = XMVector3TransformCoord(vPosition, localToGlobal);
+		XMVECTOR vGlobalVelocity = XMVector3TransformCoord(vVelocity, localToGlobal);
+
+		vGlobalPosition += vGlobalVelocity;
+
+		XMVECTOR localPosition = XMVector3TransformCoord(vGlobalPosition, globalToLocal);
+
+		XMStoreFloat3(&mPosition, localPosition);
+	}
+}
+
 void CTransform::SetScale(const XMFLOAT3& scale)
 {
 	mScale = scale;

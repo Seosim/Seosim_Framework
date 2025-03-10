@@ -80,7 +80,7 @@ public:
 	//Shadow func
 	void UpdateShadowTransform();
 
-	void RenderObject();
+	void RenderObject(const float deltaTime);
 	void RenderObjectForShadow();
 
 	void Finalize();
