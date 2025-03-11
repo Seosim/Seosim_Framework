@@ -107,17 +107,22 @@ bool D3D12App::InitDirect3D()
 
 	OnResize();
 
+
 	HR(md3dCommandList->Reset(md3dCommandAllocator, nullptr));
 
 	CreateCbvSrvUavDescriptorHeap();
 	BuildConstantBuffers();
 	BuildRootSignature();
+	BuildComputeRootSignature();
 	BuildShadow();
 	BuildSkybox();
 	BuildObjects();
 	BuildLight();
 	BuildCamera();
 	BuildResourceTexture();
+	BuildComputeShader();
+	BuildUAVTexture();
+
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -216,27 +221,49 @@ void D3D12App::BuildConstantBuffers()
 
 void D3D12App::BuildRootSignature()
 {
-	constexpr int MAX_TEXTURE_COUNT = 3;
-
+	constexpr int MAX_TEXTURE_COUNT = (int)eDescriptorRange::COUNT;
 	D3D12_DESCRIPTOR_RANGE descriptorRange[MAX_TEXTURE_COUNT];
 
-	descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange[0].NumDescriptors = 1;
-	descriptorRange[0].BaseShaderRegister = 0;
-	descriptorRange[0].RegisterSpace = 0;
-	descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	{
+		constexpr int texture0Index = (int)eDescriptorRange::CUBE_MAP;
 
-	descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange[1].NumDescriptors = 1;
-	descriptorRange[1].BaseShaderRegister = 1;
-	descriptorRange[1].RegisterSpace = 0;
-	descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descriptorRange[texture0Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[texture0Index].NumDescriptors = 1;
+		descriptorRange[texture0Index].BaseShaderRegister = 0;
+		descriptorRange[texture0Index].RegisterSpace = 0;
+		descriptorRange[texture0Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
 
-	descriptorRange[2].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	descriptorRange[2].NumDescriptors = 1;
-	descriptorRange[2].BaseShaderRegister = 2;
-	descriptorRange[2].RegisterSpace = 0;
-	descriptorRange[2].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	{
+		constexpr int texture1Index = (int)eDescriptorRange::SHADOW_MAP;
+
+		descriptorRange[texture1Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[texture1Index].NumDescriptors = 1;
+		descriptorRange[texture1Index].BaseShaderRegister = 1;
+		descriptorRange[texture1Index].RegisterSpace = 0;
+		descriptorRange[texture1Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
+
+	{
+		constexpr int texture2Index = (int)eDescriptorRange::TEXTURE0;
+
+		descriptorRange[texture2Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[texture2Index].NumDescriptors = 1;
+		descriptorRange[texture2Index].BaseShaderRegister = 2;
+		descriptorRange[texture2Index].RegisterSpace = 0;
+		descriptorRange[texture2Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
+
+	{
+		constexpr int computedTextureIndex = (int)eDescriptorRange::COMPUTED_TEXTURE;
+
+		descriptorRange[computedTextureIndex].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+		descriptorRange[computedTextureIndex].NumDescriptors = 1;
+		descriptorRange[computedTextureIndex].BaseShaderRegister = 0;
+		descriptorRange[computedTextureIndex].RegisterSpace = 0;
+		descriptorRange[computedTextureIndex].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
+
 
 	constexpr int ROOT_PARAMATER_COUNT = (int)eRootParameter::COUNT;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
@@ -287,23 +314,42 @@ void D3D12App::BuildRootSignature()
 	rootParamater[shadowIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	//Texture
-	constexpr int tex0Index = (int)eRootParameter::CUBE_MAP;
-	rootParamater[tex0Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParamater[tex0Index].DescriptorTable.NumDescriptorRanges = 1;
-	rootParamater[tex0Index].DescriptorTable.pDescriptorRanges = &descriptorRange[0];
-	rootParamater[tex0Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	
-	constexpr int tex1Index = (int)eRootParameter::SHADOW_TEXTURE;
-	rootParamater[tex1Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParamater[tex1Index].DescriptorTable.NumDescriptorRanges = 1;
-	rootParamater[tex1Index].DescriptorTable.pDescriptorRanges = &descriptorRange[1];
-	rootParamater[tex1Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	{
+		constexpr int cubeMapIndex = (int)eRootParameter::CUBE_MAP;
+		constexpr int cubeMapRangeIndex = (int)eDescriptorRange::CUBE_MAP;
+		rootParamater[cubeMapIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[cubeMapIndex].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[cubeMapIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[cubeMapRangeIndex];
+		rootParamater[cubeMapIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
 
-	constexpr int shadowTextureIndex = (int)eRootParameter::TEXTURE0;
-	rootParamater[shadowTextureIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParamater[shadowTextureIndex].DescriptorTable.NumDescriptorRanges = 1;
-	rootParamater[shadowTextureIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[2];
-	rootParamater[shadowTextureIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	{
+		constexpr int shadowMapIndex = (int)eRootParameter::SHADOW_TEXTURE;
+		constexpr int shadowMapRangeIndex = (int)eDescriptorRange::SHADOW_MAP;
+		rootParamater[shadowMapIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[shadowMapIndex].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[shadowMapIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[shadowMapRangeIndex];
+		rootParamater[shadowMapIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+	{
+		constexpr int texture0Index = (int)eRootParameter::TEXTURE0;
+		constexpr int texture0RangeIndex = (int)eDescriptorRange::TEXTURE0;
+		rootParamater[texture0Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[texture0Index].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[texture0Index].DescriptorTable.pDescriptorRanges = &descriptorRange[texture0RangeIndex];
+		rootParamater[texture0Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+	{
+		constexpr int computedTextureIndex = (int)eRootParameter::COMPUTED_TEXTURE;
+		constexpr int computedTextureRangeIndex = (int)eDescriptorRange::COMPUTED_TEXTURE;
+		rootParamater[computedTextureIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[computedTextureIndex].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[computedTextureIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[computedTextureRangeIndex];
+		rootParamater[computedTextureIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
 
@@ -351,32 +397,57 @@ void D3D12App::BuildRootSignature()
 	RELEASE_COM(signatureBlob);
 }
 
+void D3D12App::BuildComputeRootSignature()
+{
+	CD3DX12_DESCRIPTOR_RANGE srvTable;
+	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+
+	CD3DX12_DESCRIPTOR_RANGE uavTable;
+	uavTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+
+	// Root parameter can be a table, root descriptor or root constants.
+	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+
+	// Perfomance TIP: Order from most frequent to least frequent.
+	slotRootParameter[0].InitAsDescriptorTable(1, &srvTable);
+	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable);
+
+	// A root signature is an array of root parameters.
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter,
+		0, nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
+	ID3DBlob* serializedRootSig = nullptr;
+	ID3DBlob* errorBlob = nullptr;
+	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		&serializedRootSig, &errorBlob);
+
+	if (errorBlob != nullptr)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+
+	HR(md3dDevice->CreateRootSignature(
+		0,
+		serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(),
+		IID_PPV_ARGS(&mComputeRootSignature)));
+}
+
 void D3D12App::BuildLight()
 {
 	mpLight = new Light();
 	mpLight->Initialize(md3dDevice);
 
-	mpLight->SetDirection(mShadowBuffer.LightDir);
-	mpLight->SetColor({ 1.0f, 0.9568627f, 0.8392157 });
+	mpLight->SetDirection(mpShadow->GetShadowDirection());
+	mpLight->SetColor({ 1.0f, 0.9568627f, 0.8392157f });
 }
 
 void D3D12App::BuildShadow()
 {
-	mShadowBuffer.LightDir = { 0.577350020,  -0.577350020, 0.577350020 };
-
-	mShadowCB = std::make_unique<UploadBuffer>(md3dDevice, 1, true, sizeof(ShadowConstants));
-
-	mShadowShader = new Shader();
-	auto command = Shader::DefaultCommand();
-	command.SampleCount = 1;
-	mShadowShader->Initialize(md3dDevice, mRootSignature, "Shadow", command);
-
-	mShadowTexture = new Texture();
-	mShadowTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
-
-	mShadowViewport = { 0.0f, 0.0f, (float)SHADOW_MAP_SIZE, (float)SHADOW_MAP_SIZE, 0.0f, 1.0f };
-	mShadowScissorRect = { 0, 0, (int)SHADOW_MAP_SIZE, (int)SHADOW_MAP_SIZE };
-
+	mpShadow = new Shadow();
+	mpShadow->Initialize(md3dDevice, mRootSignature, mSrvHeap, mShadowResource);
 }
 
 void D3D12App::BuildCamera()
@@ -417,6 +488,18 @@ void D3D12App::BuildResourceTexture()
 
 	mScreenTexture = new Texture();
 	mScreenTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
+}
+
+void D3D12App::BuildComputeShader()
+{
+	mComputeShader = new ComputeShader();
+	mComputeShader->Initialize(md3dDevice, mRootSignature, "PostProcessing");
+}
+
+void D3D12App::BuildUAVTexture()
+{
+	mPostProcessingTexture = new Texture();
+	mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"PostProcessedTexture", mWidth, mHeight);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -541,11 +624,7 @@ void D3D12App::OnResize()
 		mDepthStencilBuffer = nullptr;
 	}
 
-	if (mShadow)
-	{
-		mShadow->Release();
-		mShadow = nullptr;
-	}
+	RELEASE_COM(mShadowResource);
 
 	HR(mSwapChain->ResizeBuffers(SwapChainBufferCount, mWidth, mHeight, mBackBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
@@ -735,9 +814,9 @@ void D3D12App::OnResize()
 
 		auto heapType = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 
-		HR(md3dDevice->CreateCommittedResource(&heapType, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_GENERIC_READ, &optClear, IID_PPV_ARGS(&mShadow)));
-		if (mShadowTexture)
-			mShadowTexture->ChangeResource(md3dDevice, mSrvHeap, L"ShadowMap", mShadow, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
+		HR(md3dDevice->CreateCommittedResource(&heapType, D3D12_HEAP_FLAG_NONE, &texDesc, D3D12_RESOURCE_STATE_GENERIC_READ, &optClear, IID_PPV_ARGS(&mShadowResource)));
+		if(mpShadow)
+			mpShadow->ChangeResource(md3dDevice, mSrvHeap, mShadowResource);
 	}
 
 	//Create Depth/Stencil Buffer & View.
@@ -788,7 +867,7 @@ void D3D12App::OnResize()
 		auto dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 		dsvHandle.ptr += mDsvDescriptorSize;
 
-		md3dDevice->CreateDepthStencilView(mShadow, &dsvDesc, dsvHandle);
+		md3dDevice->CreateDepthStencilView(mShadowResource, &dsvDesc, dsvHandle);
 	}
 
 	D3D12_RESOURCE_BARRIER barrier = {};
@@ -1019,8 +1098,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvHeap };
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-	md3dCommandList->RSSetViewports(1, &mShadowViewport);
-	md3dCommandList->RSSetScissorRects(1, &mShadowScissorRect);
+	mpShadow->SetViewPortAndScissorRect(md3dCommandList);
 
 	RenderObjectForShadow();
 	
@@ -1174,51 +1252,15 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 void D3D12App::UpdateShadowTransform()
 {
-	float radius = 20.0277557f;
-	//float radius = 3.0f;
-
-	// Only the first "main" light casts a shadow.
-	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1);
-	XMVECTOR lightPos = (-2.0f * radius * lightDir);
-	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
-
-	XMStoreFloat3(&mShadowBuffer.LightPosW, lightPos);
-
-	// Transform bounding sphere to light space.
-	XMFLOAT3 sphereCenterLS;
-	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
-
-	// Ortho frustum in light space encloses scene.
-	float l = sphereCenterLS.x - radius;
-	float b = sphereCenterLS.y - radius;
-	float n = sphereCenterLS.z - radius;
-	float r = sphereCenterLS.x + radius;
-	float t = sphereCenterLS.y + radius;
-	float f = sphereCenterLS.z + radius;
-
-	mShadowBuffer.NearZ = n;
-	mShadowBuffer.FarZ = f;
-	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
-
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
-	XMMATRIX T(
-		0.5f, 0.0f, 0.0f, 0.0f,
-		0.0f, -0.5f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.5f, 0.5f, 0.0f, 1.0f);
-
-	XMMATRIX S = lightView * lightProj * T;
-	XMStoreFloat4x4(&mShadowBuffer.LightView, XMMatrixTranspose(lightView));
-	XMStoreFloat4x4(&mShadowBuffer.LightProj, XMMatrixTranspose(lightProj));
-	XMStoreFloat4x4(&mShadowBuffer.ShadowTransform, XMMatrixTranspose(S));
-
-	mShadowCB->CopyData(0, mShadowBuffer);
+	if (mpShadow)
+		mpShadow->UpdateShadowTransform(md3dCommandList);
 }
 
 void D3D12App::RenderObject(const float deltaTime)
 {
+	//Set ShadowTexture
+	mpShadow->SetGraphicsRootDescriptorTable(md3dCommandList, mSrvHeap);
+
 	//Draw Object.
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
@@ -1233,10 +1275,6 @@ void D3D12App::RenderObject(const float deltaTime)
 
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, view);
-
-	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	texHandle.ptr += mCbvSrvUavDescriptorSize * (mShadowTexture->GetID());
-	md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
 
 	int index = 1;
 	for (GameObject* gameObject : mGameObjects)
@@ -1264,11 +1302,6 @@ void D3D12App::RenderObject(const float deltaTime)
 			Material& mat = gameObject->GetComponent<Material>();
 
 			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
-
-			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += 32 * (mShadowTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
-
 			mesh.Render(md3dCommandList);
 		}
 	}
@@ -1276,7 +1309,9 @@ void D3D12App::RenderObject(const float deltaTime)
 
 void D3D12App::RenderObjectForShadow()
 {
-	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mShadow, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
+	auto shadowResource = mpShadow->GetResource();
+
+	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(shadowResource, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	md3dCommandList->ResourceBarrier(1, &barrier0);
 
 	//UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
@@ -1294,10 +1329,6 @@ void D3D12App::RenderObjectForShadow()
 	md3dCommandList->OMSetRenderTargets(0, nullptr, false, &dsvHandle);
 
 	UpdateShadowTransform();
-	md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::SHADOW, mShadowCB->Resource()->GetGPUVirtualAddress());
-
-	mShadowShader->SetPipelineState(md3dCommandList);
-
 	{
 		//Draw Object.
 		// Convert Spherical to Cartesian coordinates.
@@ -1346,8 +1377,63 @@ void D3D12App::RenderObjectForShadow()
 		}
 	}
 
-	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mShadow, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
+	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(shadowResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
 	md3dCommandList->ResourceBarrier(1, &barrier1);
+}
+
+void D3D12App::PostProcessing()
+{
+	//md3dCommandList->SetComputeRootSignature(mRootSignature);
+
+	//ID3D12Resource* screenResource = mScreenTexture->GetResource();
+	//ID3D12Resource* postProcessingResource = mPostProcessingTexture->GetResource();
+
+	//md3dCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(postProcessingResource,
+	//	D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+	//for (int i = 0; i < 4; ++i)	//4=blur cnt
+	//{
+	//	//
+	//	// Horizontal Blur pass.
+	//	//
+
+	//	mComputeShader->SetPipelineState(md3dCommandList);
+
+	//	auto handle = mSrvHeap->GetCPUDescriptorHandleForHeapStart();
+	//	handle.ptr += mScreenTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, mBlur1GpuUav);
+
+	//	// How many groups do we need to dispatch to cover a row of pixels, where each
+	//	// group covers 256 pixels (the 256 is defined in the ComputeShader).
+	//	UINT numGroupsX = (UINT)ceilf(mWidth / 256.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, mHeight, 1);
+
+
+	//	md3dCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+	//	//
+	//	// Vertical Blur pass.
+	//	//
+
+	//	cmdList->SetPipelineState(vertBlurPSO);
+
+	//	cmdList->SetComputeRootDescriptorTable(1, mBlur1GpuSrv);
+	//	cmdList->SetComputeRootDescriptorTable(2, mBlur0GpuUav);
+
+	//	// How many groups do we need to dispatch to cover a column of pixels, where each
+	//	// group covers 256 pixels  (the 256 is defined in the ComputeShader).
+	//	UINT numGroupsY = (UINT)ceilf(mHeight / 256.0f);
+	//	cmdList->Dispatch(mWidth, numGroupsY, 1);
+
+	//	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap0.Get(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+	//	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	//}
 }
 
 void D3D12App::Finalize()
@@ -1362,6 +1448,7 @@ void D3D12App::Finalize()
 	delete mpCamera;
 	delete mpLight;
 	delete mSkybox;
+	delete mpShadow;
 
 	for (auto shaderPointer : Shader::ShaderList)
 	{
@@ -1370,6 +1457,7 @@ void D3D12App::Finalize()
 	Shader::ShaderList.clear();
 
 	delete mScreenShader;
+	delete mComputeShader;
 
 	for (auto texturePointer : Texture::TextureList)
 	{
@@ -1382,9 +1470,6 @@ void D3D12App::Finalize()
 		RELEASE_COM(mRenderTargets[i]);
 	}
 
-	delete mShadowShader;
-
-
 	RELEASE_COM(mFence);
 	RELEASE_COM(md3dCommandQueue);
 	RELEASE_COM(md3dCommandAllocator);
@@ -1394,6 +1479,7 @@ void D3D12App::Finalize()
 	RELEASE_COM(mCbvHeap);
 	RELEASE_COM(mSrvHeap);
 	RELEASE_COM(mRootSignature);
+	RELEASE_COM(mComputeRootSignature);
 	RELEASE_COM(mPSO);
 
 	RELEASE_COM(mSwapChain);

@@ -48,8 +48,6 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 {
 	mpResource = pResource;
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.Format = format;
@@ -61,11 +59,58 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 	const int textureIndex = Texture::TextureList.size();
 	ID = textureIndex;
 
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
 	hDescriptor.ptr += 32 * ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
 	Texture::TextureList[name] = this;
+}
+
+void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const float width, const float height)
+{
+	const int textureIndex = Texture::TextureList.size();
+	ID = textureIndex;
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
+	hDescriptor.ptr += 32 * ID;
+
+	Texture::TextureList[name] = this;
+
+	D3D12_RESOURCE_DESC texDesc;
+	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	texDesc.Alignment = 0;
+	texDesc.Width = width;
+	texDesc.Height = height;
+	texDesc.DepthOrArraySize = 1;
+	texDesc.MipLevels = 1;
+	texDesc.Format = format;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	texDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+	auto heapProperty = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+
+	HR(pDevice->CreateCommittedResource(
+		&heapProperty,
+		D3D12_HEAP_FLAG_NONE,
+		&texDesc,
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(&mpResource)));
+
+	//PostProcessing (UAV)
+	{
+		D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+
+		uavDesc.Format = format;
+		uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+		uavDesc.Texture2D.MipSlice = 0;
+
+		pDevice->CreateUnorderedAccessView(mpResource, nullptr, &uavDesc, hDescriptor);
+	}
 }
 
 void Texture::ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, ID3D12Resource* pResource, const DXGI_FORMAT format, bool bMSAA)

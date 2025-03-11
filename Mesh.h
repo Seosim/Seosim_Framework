@@ -43,8 +43,8 @@ protected:
 	DXGI_FORMAT mIndexFormat = DXGI_FORMAT_R16_UINT;
 	UINT mIndexBufferByteSize = 0;
 
-	std::array<D3D12_VERTEX_BUFFER_VIEW, 3> mVertexBufferViews;
-	D3D12_INDEX_BUFFER_VIEW mIndexBufferView;
+	std::array<D3D12_VERTEX_BUFFER_VIEW, 3> mVertexBufferViews = {};
+	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};
 
 	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 private:

@@ -149,6 +149,14 @@ constexpr UINT MSAA_SAMPLING_COUNT = 4;
 
 constexpr UINT SHADOW_MAP_SIZE = 2048;
 
+enum class eDescriptorRange {
+	CUBE_MAP,
+	SHADOW_MAP,
+	TEXTURE0,
+	COMPUTED_TEXTURE,
+	COUNT
+};
+
 enum class eRootParameter {
 	OBJECT,
 	MATERIAL,
@@ -158,5 +166,6 @@ enum class eRootParameter {
 	CUBE_MAP,
 	SHADOW_TEXTURE,
 	TEXTURE0,
+	COMPUTED_TEXTURE,
 	COUNT
 };

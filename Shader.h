@@ -18,7 +18,6 @@ public:
 
 	Shader() = default;
 	~Shader();
-
 	Shader(const Shader& rhs) = delete;
 
 	static Command DefaultCommand();
@@ -39,4 +38,22 @@ private:
 	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
 
 	UINT mTextureCount = 0;
+};
+
+
+
+
+
+class ComputeShader {
+public:
+	ComputeShader() = default;
+	~ComputeShader() { RELEASE_COM(mPSO); }
+	ComputeShader(const ComputeShader&) = delete;
+
+	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName);
+	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);
+
+private:
+	ID3DBlob* mComputeBlob = nullptr;
+	ID3D12PipelineState* mPSO = nullptr;
 };

@@ -5,6 +5,7 @@
 #include "GameObject.h"
 #include "Camera.h"
 #include "Light.h"
+#include "Shadow.h"
 #include "Texture.h"
 
 class D3D12App final
@@ -14,17 +15,6 @@ public:
 	{
 		XMFLOAT4X4 World = {};
 		XMFLOAT4X4 WorldViewProj = {};
-	};
-
-	struct ShadowConstants
-	{
-		XMFLOAT4X4 LightView;
-		XMFLOAT4X4 LightProj;
-		XMFLOAT4X4 ShadowTransform;
-		XMFLOAT3 LightDir;
-		float NearZ;
-		XMFLOAT3 LightPosW;
-		float FarZ;
 	};
 
 	enum class eRenderTargetType {
@@ -51,11 +41,14 @@ public:
 
 	void BuildConstantBuffers();
 	void BuildRootSignature();
+	void BuildComputeRootSignature();
 	void BuildLight();
 	void BuildShadow();
 	void BuildCamera();
 	void BuildSkybox();
 	void BuildResourceTexture();
+	void BuildComputeShader();
+	void BuildUAVTexture();
 
 	void LoadHierarchyData(const std::string& filePath);
 	void LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
@@ -82,6 +75,8 @@ public:
 
 	void RenderObject(const float deltaTime);
 	void RenderObjectForShadow();
+
+	void PostProcessing();
 
 	void Finalize();
 private:
@@ -129,6 +124,7 @@ private:
 
 	std::unique_ptr<UploadBuffer> mObjectCB = nullptr;
 	ID3D12RootSignature* mRootSignature = nullptr;
+	ID3D12RootSignature* mComputeRootSignature = nullptr;
 
 	D3D12_VIEWPORT mViewport;
 	tagRECT mScissorRect;
@@ -174,13 +170,12 @@ private:
 
 	//Shader
 	Shader* mScreenShader = nullptr;
+	ComputeShader* mComputeShader = nullptr;
 
 	//Shadow
-	ID3D12Resource* mShadow = nullptr;
-	Texture* mShadowTexture = nullptr;
-	std::unique_ptr<UploadBuffer> mShadowCB = nullptr;
-	ShadowConstants mShadowBuffer = {};
-	Shader* mShadowShader = nullptr;
-	D3D12_VIEWPORT mShadowViewport;
-	tagRECT mShadowScissorRect;
+	Shadow* mpShadow = nullptr;
+	ID3D12Resource* mShadowResource = nullptr;	//Shader 클래스에 리소스를 연결해주는 용도로 사용중
+
+	//UAV Texture
+	Texture* mPostProcessingTexture = nullptr;
 };
