@@ -6,7 +6,7 @@
 
 #include "Common.hlsl"
 
-Texture2D<float4> gMSAAMap : register(t0);
+Texture2D<float4> gMSAAMap : register(t2);
 
 static const float2 Vertices[6] =
 {
@@ -77,9 +77,9 @@ float4 PS(VertexOut pin) : SV_Target
 {
     float4 color = gMSAAMap.Sample(gsamLinear, pin.UV);
     
-    color.rgb = ACESFitted(color.rgb);
+    //color.rgb = ACESFitted(color.rgb);
     
-    color = ToSRGB(color);
+    //color = ToSRGB(color);
     
     return color;
 }

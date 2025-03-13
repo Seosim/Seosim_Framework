@@ -6,80 +6,64 @@
 
 #include "Common.hlsl"
 
-struct VertexIn
-{
-	float3 PosL    : POSITION;
-	float3 NormalL : NORMAL;
-    float2 UV : UV;
-};
-
-struct VertexOut
-{
-	float4 PosH : SV_POSITION;
-    float3 PosL : POSITION;
-};
-
-static const int gMaxBlurRadius = 5;
-static const int gBlurRadius = 3;
-
-static const float weights[11] =
-{
-    0.05, 0.09, 0.12, 0.15, 0.18, 0.20, 0.18, 0.15, 0.12, 0.09, 0.05
-};
-
 Texture2D gInput : register(t0);
 RWTexture2D<float4> gOutput : register(u0);
 
-#define N 256
-#define CacheSize (N + 2 * gMaxBlurRadius)
-groupshared float4 gCache[CacheSize];
 
-[numthreads(N, 1, 1)]
-void CS(int3 groupThreadID : SV_GroupThreadID,
-				int3 dispatchThreadID : SV_DispatchThreadID)
+
+//ACES TONE MAPPING
+static const float3x3 aces_input_matrix =
 {
-	// Put in an array for each indexing.
+    float3(0.59719f, 0.35458f, 0.04823f),
+	float3(0.07600f, 0.90834f, 0.01566f),
+	float3(0.02840f, 0.13383f, 0.83777f)
+};
 
-	//
-	// Fill local thread storage to reduce bandwidth.  To blur 
-	// N pixels, we will need to load N + 2*BlurRadius pixels
-	// due to the blur radius.
-	//
-	
-	// This thread group runs N threads.  To get the extra 2*BlurRadius pixels, 
-	// have 2*BlurRadius threads sample an extra pixel.
-    if (groupThreadID.x < gBlurRadius)
-    {
-		// Clamp out of bound samples that occur at image borders.
-        int x = max(dispatchThreadID.x - gBlurRadius, 0);
-        gCache[groupThreadID.x] = gInput[int2(x, dispatchThreadID.y)];
-    }
-    if (groupThreadID.x >= N - gBlurRadius)
-    {
-		// Clamp out of bound samples that occur at image borders.
-        int x = min(dispatchThreadID.x + gBlurRadius, gInput.Length.x - 1);
-        gCache[groupThreadID.x + 2 * gBlurRadius] = gInput[int2(x, dispatchThreadID.y)];
-    }
+static const float3x3 aces_output_matrix =
+{
+    float3(1.60475f, -0.53108f, -0.07367f),
+	float3(-0.10208f, 1.10813f, -0.00605f),
+	float3(-0.00327f, -0.07276f, 1.07602f)
+};
 
-	// Clamp out of bound samples that occur at image borders.
-    gCache[groupThreadID.x + gBlurRadius] = gInput[min(dispatchThreadID.xy, gInput.Length.xy - 1)];
+float3 MultiplyMatrix(float3x3 m, float3 v)
+{
+    float x = m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2];
+    float y = m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2];
+    float z = m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2];
 
-	// Wait for all threads to finish.
-    GroupMemoryBarrierWithGroupSync();
-	
-	//
-	// Now blur each pixel.
-	//
-
-    float4 blurColor = float4(0, 0, 0, 0);
-	
-    for (int i = -gBlurRadius; i <= gBlurRadius; ++i)
-    {
-        int k = groupThreadID.x + gBlurRadius + i;
-		
-        blurColor += weights[i + gBlurRadius] * gCache[k];
-    }
-	
-    gOutput[dispatchThreadID.xy] = blurColor;
+    return float3(x, y, z);
 }
 
+float3 RttAndOdtFit(float3 v)
+{
+    float3 a = v * (v + 0.0245786f) - 0.000090537f;
+    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    return a / b;
+}
+
+float3 ACESFitted(float3 v)
+{
+    v = MultiplyMatrix(aces_input_matrix, v);
+    v = RttAndOdtFit(v);
+    return mul(aces_output_matrix, v);
+}
+
+
+[numthreads(16, 16, 1)]
+void CS(int3 dispatchThreadID : SV_DispatchThreadID)
+{
+    //TODO:
+    int2 texCoord = dispatchThreadID.xy;
+
+    // 원본 색상 가져오기
+    float4 color = gInput[texCoord];
+    
+    // ACES 톤 매핑 적용
+    color.rgb = ACESFitted(color.rgb);
+
+    // sRGB 변환 적용
+    color.rgb = ToSRGB(color);
+    // 결과를 UAV에 저장
+    gOutput[texCoord] = color;
+}

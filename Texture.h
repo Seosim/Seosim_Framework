@@ -22,8 +22,9 @@ public:
     //UAV 생성용 함수
     void InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const float width, const float height);
 
-    void ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, ID3D12Resource* pResource, const DXGI_FORMAT format, bool bMSAA = true);
 
+    void ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const std::wstring& name, ID3D12Resource* pResource, const DXGI_FORMAT format, bool bMSAA = true);
+    
     ID3D12Resource* GetResource();
 
     int GetID() const;
@@ -33,7 +34,7 @@ public:
 private:
 	ID3D12Resource* mpUploadBuffer = nullptr;
 	UINT mResourceType = {};
-    int ID = -1;
+    int CPU_ID = -1;
 };
 
 static ID3D12Resource* CreateTextureResourceFromDDSFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const wchar_t* pszFileName, ID3D12Resource** ppd3dUploadBuffer, D3D12_RESOURCE_STATES d3dResourceStates)

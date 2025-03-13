@@ -3,7 +3,6 @@
 
 std::unordered_map<std::wstring, Texture*> Texture::TextureList;
 
-
 void Texture::LoadTextureFromDDSFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const wchar_t* pszFileName, UINT nResourceType, UINT nIndex)
 {
 	mResourceType = nResourceType;
@@ -35,9 +34,9 @@ void Texture::CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, c
 
 
 	const int textureIndex = Texture::TextureList.size();
-	ID = textureIndex;
+	CPU_ID = textureIndex;
 
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += 32 * CPU_ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -57,10 +56,10 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	const int textureIndex = Texture::TextureList.size();
-	ID = textureIndex;
+	CPU_ID = textureIndex;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += 32 * CPU_ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -70,12 +69,16 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const float width, const float height)
 {
 	const int textureIndex = Texture::TextureList.size();
-	ID = textureIndex;
+	CPU_ID = textureIndex;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += 32 * CPU_ID;
 
 	Texture::TextureList[name] = this;
+
+	//SRV와 UAV로 사용하기 위해 텍스처리스트에 2가지 KEY를 넣습니다.
+	std::wstring uavName = name + L"UAV";
+	Texture::TextureList[uavName] = nullptr;
 
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -100,6 +103,19 @@ void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHea
 		D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS(&mpResource)));
+
+	//PostProcessing (SRV)
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		srvDesc.Format = format;
+		srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
+		hDescriptor.ptr += 32;
+	}
 
 	//PostProcessing (UAV)
 	{
@@ -127,18 +143,18 @@ void Texture::ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHe
 	srvDesc.Texture2D.MipLevels = mpResource->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += 32 * CPU_ID;
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
 	Texture::TextureList[name] = this;
 }
 
-ID3D12Resource* Texture::GetResource()
+ID3D12Resource* Texture::GetResource() const
 {
 	return mpResource;
 }
 
 int Texture::GetID() const
 {
-	return ID;
+	return CPU_ID;
 }

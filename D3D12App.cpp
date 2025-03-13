@@ -114,6 +114,7 @@ bool D3D12App::InitDirect3D()
 	BuildConstantBuffers();
 	BuildRootSignature();
 	BuildComputeRootSignature();
+	BuildUAVTexture();
 	BuildShadow();
 	BuildSkybox();
 	BuildObjects();
@@ -121,7 +122,6 @@ bool D3D12App::InitDirect3D()
 	BuildCamera();
 	BuildResourceTexture();
 	BuildComputeShader();
-	BuildUAVTexture();
 
 
 	HR(md3dCommandList->Close());
@@ -493,7 +493,7 @@ void D3D12App::BuildResourceTexture()
 void D3D12App::BuildComputeShader()
 {
 	mComputeShader = new ComputeShader();
-	mComputeShader->Initialize(md3dDevice, mRootSignature, "PostProcessing");
+	mComputeShader->Initialize(md3dDevice, mComputeRootSignature, "PostProcessing");
 }
 
 void D3D12App::BuildUAVTexture()
@@ -856,6 +856,16 @@ void D3D12App::OnResize()
 	if(mDepthTexture)
 		mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 
+
+	D3D12_RESOURCE_BARRIER barrier = {};
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = mDepthStencilBuffer;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	md3dCommandList->ResourceBarrier(1, &barrier);
+
 	//Shadow Depth
 	{
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
@@ -870,14 +880,16 @@ void D3D12App::OnResize()
 		md3dDevice->CreateDepthStencilView(mShadowResource, &dsvDesc, dsvHandle);
 	}
 
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = mDepthStencilBuffer;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	md3dCommandList->ResourceBarrier(1, &barrier);
+
+	//PostProcessing Shader
+	{
+		auto& resource = mPostProcessingTexture->GetResource();
+
+		if (mPostProcessingTexture)
+		{
+			mPostProcessingTexture.
+		}
+	}
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -1183,6 +1195,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	{
 		md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
 
+		PostProcessing();
+
 		//·»´õÅ¸°Ù »óÅÂ º¯È¯
 		{
 			D3D12_RESOURCE_BARRIER barrier0 = {};
@@ -1202,8 +1216,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-			texHandle.ptr += mCbvSrvUavDescriptorSize * (mScreenTexture->GetID());
-			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::CUBE_MAP, texHandle);
+			texHandle.ptr += mCbvSrvUavDescriptorSize * (mPostProcessingTexture->GetID());
+			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
 		}
 
 		//{
@@ -1383,57 +1397,33 @@ void D3D12App::RenderObjectForShadow()
 
 void D3D12App::PostProcessing()
 {
-	//md3dCommandList->SetComputeRootSignature(mRootSignature);
+	md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
+	mComputeShader->SetPipelineState(md3dCommandList);
 
-	//ID3D12Resource* screenResource = mScreenTexture->GetResource();
-	//ID3D12Resource* postProcessingResource = mPostProcessingTexture->GetResource();
+	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle0.ptr += mScreenTexture->GetID() * mCbvSrvUavDescriptorSize;
 
-	//md3dCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(postProcessingResource,
-	//	D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle1.ptr += (mPostProcessingTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
 
-	//for (int i = 0; i < 4; ++i)	//4=blur cnt
-	//{
-	//	//
-	//	// Horizontal Blur pass.
-	//	//
+	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-	//	mComputeShader->SetPipelineState(md3dCommandList);
+	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mPostProcessingTexture->GetResource(),
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
-	//	auto handle = mSrvHeap->GetCPUDescriptorHandleForHeapStart();
-	//	handle.ptr += mScreenTexture->GetID() * mCbvSrvUavDescriptorSize;
+	md3dCommandList->ResourceBarrier(1, &barrier0);
 
-	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle);
-	//	md3dCommandList->SetComputeRootDescriptorTable(1, mBlur1GpuUav);
+	// How many groups do we need to dispatch to cover image, where each
+	// group covers 16x16 pixels.
+	UINT numGroupsX = (UINT)ceilf(mWidth / 16.0f);
+	UINT numGroupsY = (UINT)ceilf(mHeight / 16.0f);
+	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
-	//	// How many groups do we need to dispatch to cover a row of pixels, where each
-	//	// group covers 256 pixels (the 256 is defined in the ComputeShader).
-	//	UINT numGroupsX = (UINT)ceilf(mWidth / 256.0f);
-	//	md3dCommandList->Dispatch(numGroupsX, mHeight, 1);
+	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mPostProcessingTexture->GetResource(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
 
-
-	//	md3dCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
-
-	//	//
-	//	// Vertical Blur pass.
-	//	//
-
-	//	cmdList->SetPipelineState(vertBlurPSO);
-
-	//	cmdList->SetComputeRootDescriptorTable(1, mBlur1GpuSrv);
-	//	cmdList->SetComputeRootDescriptorTable(2, mBlur0GpuUav);
-
-	//	// How many groups do we need to dispatch to cover a column of pixels, where each
-	//	// group covers 256 pixels  (the 256 is defined in the ComputeShader).
-	//	UINT numGroupsY = (UINT)ceilf(mHeight / 256.0f);
-	//	cmdList->Dispatch(mWidth, numGroupsY, 1);
-
-	//	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap0.Get(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
-
-	//	cmdList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mBlurMap1.Get(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-	//}
+	md3dCommandList->ResourceBarrier(1, &barrier1);
 }
 
 void D3D12App::Finalize()
@@ -1459,9 +1449,13 @@ void D3D12App::Finalize()
 	delete mScreenShader;
 	delete mComputeShader;
 
-	for (auto texturePointer : Texture::TextureList)
+	for (auto& texturePointer : Texture::TextureList)
 	{
-		delete texturePointer.second;
+		if (texturePointer.second)
+		{
+			delete texturePointer.second;
+			texturePointer.second = nullptr;
+		}
 	}
 	Texture::TextureList.clear();
 
