@@ -499,7 +499,7 @@ void D3D12App::BuildComputeShader()
 void D3D12App::BuildUAVTexture()
 {
 	mPostProcessingTexture = new Texture();
-	mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"PostProcessedTexture", mWidth, mHeight);
+	mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"PostProcessedTexture", mWidth, mHeight);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -882,14 +882,15 @@ void D3D12App::OnResize()
 
 
 	//PostProcessing Shader
-	{
-		auto& resource = mPostProcessingTexture->GetResource();
 
-		if (mPostProcessingTexture)
-		{
-			mPostProcessingTexture.
-		}
+	if (mPostProcessingTexture)
+	{
+		ID3D12Resource* resource = mPostProcessingTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L" ", mWidth, mHeight);
 	}
+	
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };

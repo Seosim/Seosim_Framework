@@ -68,17 +68,20 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 
 void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const float width, const float height)
 {
-	const int textureIndex = Texture::TextureList.size();
-	CPU_ID = textureIndex;
+	if (CPU_ID == -1)
+	{
+		const int textureIndex = Texture::TextureList.size();
+		CPU_ID = textureIndex;
+
+		Texture::TextureList[name] = this;
+
+		//SRV와 UAV로 사용하기 위해 텍스처리스트에 2가지 KEY를 넣습니다.
+		std::wstring uavName = name + L"UAV";
+		Texture::TextureList[uavName] = nullptr;
+	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
 	hDescriptor.ptr += 32 * CPU_ID;
-
-	Texture::TextureList[name] = this;
-
-	//SRV와 UAV로 사용하기 위해 텍스처리스트에 2가지 KEY를 넣습니다.
-	std::wstring uavName = name + L"UAV";
-	Texture::TextureList[uavName] = nullptr;
 
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -149,7 +152,7 @@ void Texture::ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHe
 	Texture::TextureList[name] = this;
 }
 
-ID3D12Resource* Texture::GetResource() const
+ID3D12Resource* Texture::GetResource()
 {
 	return mpResource;
 }
