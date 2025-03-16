@@ -50,7 +50,7 @@ float3 ACESFitted(float3 v)
 }
 
 
-[numthreads(16, 16, 1)]
+[numthreads(32, 32, 1)]
 void CS(int3 dispatchThreadID : SV_DispatchThreadID)
 {
     //TODO:

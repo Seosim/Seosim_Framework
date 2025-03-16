@@ -1011,6 +1011,8 @@ int D3D12App::Update()
 				Sleep(100);
 			}
 		}
+
+		Input::Instance().SaveKeyState();
 	}
 
 	return (int)msg.wParam;
@@ -1417,8 +1419,8 @@ void D3D12App::PostProcessing()
 
 	// How many groups do we need to dispatch to cover image, where each
 	// group covers 16x16 pixels.
-	UINT numGroupsX = (UINT)ceilf(mWidth / 16.0f);
-	UINT numGroupsY = (UINT)ceilf(mHeight / 16.0f);
+	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
+	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
 	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mPostProcessingTexture->GetResource(),
@@ -1552,6 +1554,12 @@ LRESULT D3D12App::MessageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				}
 			}
 			break;
+	case WM_KEYDOWN:
+		Input::Instance().KeyDown((int)wParam);
+		break;
+	case WM_KEYUP:
+		Input::Instance().KeyUp((int)wParam);
+		break;
 		}
 	}
 	return DefWindowProc(hwnd, msg, wParam, lParam);

@@ -1,4 +1,5 @@
 #pragma once
+#include "Input.h"
 #include "GameTimer.h";
 #include "UploadBuffer.h"
 #include "d3dUtil.h"

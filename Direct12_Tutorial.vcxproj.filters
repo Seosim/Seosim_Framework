@@ -22,6 +22,12 @@
     <Filter Include="소스 파일\Component">
       <UniqueIdentifier>{9684c70a-a442-4316-9452-74845da00b00}</UniqueIdentifier>
     </Filter>
+    <Filter Include="헤더 파일\Input">
+      <UniqueIdentifier>{6ed7e702-a1cf-4724-bf76-357e7df488c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Input">
+      <UniqueIdentifier>{2687b94a-67c8-4279-b240-f02a9a19afde}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="Shadow.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Input.cpp">
+      <Filter>소스 파일\Input</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +142,9 @@
     </ClInclude>
     <ClInclude Include="Shadow.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Input.h">
+      <Filter>헤더 파일\Input</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
