@@ -7,7 +7,7 @@
 #include "Texture.h"
 #include "UploadBuffer.h"
 
-class Material : public IComponent {
+class Material final : public IComponent {
 public:
 	~Material() {}
 

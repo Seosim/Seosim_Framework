@@ -65,6 +65,7 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 	int Update();
+	void UpdatePhysics();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);

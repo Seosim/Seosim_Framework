@@ -3,7 +3,7 @@
 #include "IComponent.h"
 
 
-class Mesh : public IComponent {
+class Mesh final : public IComponent {
 public:
 	struct SubmeshGeometry
 	{

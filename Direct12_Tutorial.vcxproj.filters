@@ -81,6 +81,9 @@
     <ClCompile Include="Input.cpp">
       <Filter>소스 파일\Input</Filter>
     </ClCompile>
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>소스 파일\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -145,6 +148,9 @@
     </ClInclude>
     <ClInclude Include="Input.h">
       <Filter>헤더 파일\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>헤더 파일\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -535,6 +535,12 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	cTransform.SetParent(parent);
 	cTransform.SetTransformData(position, rotation, scale);
 
+	//TODO: 익스포터에서 RigidBody 사용유무 체크해야함. 현재는 그냥 다 넣는 중
+	gameObject->AddComponent<RigidBody>();
+	RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+	rigidBody.SetTransform(&cTransform);
+
+
 	bool bHasMesh;
 	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
 
@@ -1004,7 +1010,9 @@ int D3D12App::Update()
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
+				UpdatePhysics();
 				Draw(mTimer);
+				Input::Instance().SaveKeyState();
 			}
 			else
 			{
@@ -1012,10 +1020,21 @@ int D3D12App::Update()
 			}
 		}
 
-		Input::Instance().SaveKeyState();
 	}
 
 	return (int)msg.wParam;
+}
+
+void D3D12App::UpdatePhysics()
+{
+	for (GameObject* gameObject : mGameObjects)
+	{
+		if (gameObject->HasComponent<RigidBody>())
+		{
+			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+			rigidBody.UpdatePhysics(mTimer.DeltaTime());
+		}
+	}
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
@@ -1305,6 +1324,29 @@ void D3D12App::RenderObject(const float deltaTime)
 		XMMATRIX worldViewProj = world * view * proj;
 
 		mpCamera->SetMatrix(mView, mProj);
+
+		//HACK: RIGID BODY 테스트
+		if (index == 3)
+		{
+			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+			float speed = 30.0f;
+			if (Input::Instance().GetKey('W'))
+			{
+				rigidBody.AddForce({ 0.0f, 0.0f, speed * deltaTime });
+			}
+			if (Input::Instance().GetKey('S'))
+			{
+				rigidBody.AddForce({ 0.0f, 0.0f, -speed * deltaTime });
+			}
+			if (Input::Instance().GetKey('A'))
+			{
+				rigidBody.AddForce({ -speed * deltaTime, 0.0f, 0.0f });
+			}
+			if (Input::Instance().GetKey('D'))
+			{
+				rigidBody.AddForce({ speed * deltaTime, 0.0f, 0.0f });
+			}
+		}
 
 		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;

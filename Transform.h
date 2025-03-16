@@ -6,7 +6,7 @@
 
 class GameObject;
 
-class CTransform : public IComponent {
+class CTransform final : public IComponent {
 public:
 	CTransform() = default;
 	~CTransform() {
@@ -24,6 +24,7 @@ public:
 	XMMATRIX GetLocalTransform() const;
 	XMMATRIX GetWorldTransform() const;
 
+	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
 	void Move(const XMFLOAT3& velocity, Space space = Space::World);
 

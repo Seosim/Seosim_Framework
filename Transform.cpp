@@ -23,6 +23,11 @@ XMMATRIX CTransform::GetWorldTransform() const
 	return GetLocalTransform() * getLocalToWorldTransform();
 }
 
+XMFLOAT3 CTransform::GetPosition() const
+{
+	return mPosition;
+}
+
 void CTransform::SetPosition(const XMFLOAT3& position, Space space)
 {
 	if (space == Space::Local)

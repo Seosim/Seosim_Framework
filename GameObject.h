@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Transform.h"
 #include "Material.h"
+#include "RigidBody.h"
 #include "d3dUtil.h"
 #include "ComponentManager.h"
 
