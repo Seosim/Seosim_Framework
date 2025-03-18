@@ -25,6 +25,7 @@ public:
 	XMMATRIX GetWorldTransform() const;
 
 	XMFLOAT3 GetPosition() const;
+	XMFLOAT3 GetWorldPosition() const;
 	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
 	void Move(const XMFLOAT3& velocity, Space space = Space::World);
 
@@ -35,6 +36,7 @@ public:
 	void RotateByWorldAxis(const float angleX, const float angleY, const float angleZ);
 
 	void SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward);
+	XMFLOAT4 GetRotationQuat() const;
 	void SetRotationByQuat(const XMVECTOR quat);
 
 	GameObject* GetParent() const;

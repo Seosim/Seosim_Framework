@@ -536,10 +536,20 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	cTransform.SetTransformData(position, rotation, scale);
 
 	//TODO: 익스포터에서 RigidBody 사용유무 체크해야함. 현재는 그냥 다 넣는 중
-	gameObject->AddComponent<RigidBody>();
-	RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-	rigidBody.SetTransform(&cTransform);
+	{
+		gameObject->AddComponent<RigidBody>();
+		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+		rigidBody.SetTransform(&cTransform);
+	}
 
+
+	//TODO: 익스포터에서 Collider 사용 유무 체크해야함. 현재는 그냥 다 넣는 중
+	{
+		float size = 0.25f;
+		gameObject->AddComponent<BoxCollider>();
+		BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
+		boxCollider.Initialize(&cTransform, { size, size, size });
+	}
 
 	bool bHasMesh;
 	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
@@ -920,6 +930,35 @@ void D3D12App::OnResize()
 	XMStoreFloat4x4(&mProj, P);
 }
 
+void D3D12App::CollisionCheck()
+{
+	for (GameObject* gameobject : mGameObjects)
+	{
+		if (gameobject->HasComponent<BoxCollider>())
+		{
+			BoxCollider& collider = gameobject->GetComponent <BoxCollider>();
+			collider.UpdateTransform();
+		}
+	}
+
+	for (int i = 0; i < mGameObjects.size() - 1; ++i)
+	{
+		for (int j = i + 1; j < mGameObjects.size(); ++j)
+		{
+			if (mGameObjects[i]->HasComponent<BoxCollider>() && mGameObjects[j]->HasComponent<BoxCollider>())
+			{
+				BoxCollider& colliderA = mGameObjects[i]->GetComponent<BoxCollider>();
+				BoxCollider& colliderB = mGameObjects[j]->GetComponent<BoxCollider>();
+
+				if (colliderA.CollisionCheck(colliderB))
+				{
+
+				}
+			}
+		}
+	}
+}
+
 void D3D12App::FlushCommandQueue()
 {
 	mFenceValue++;
@@ -1011,6 +1050,7 @@ int D3D12App::Update()
 			{
 				CalculateFrameStats();
 				UpdatePhysics();
+				CollisionCheck();
 				Draw(mTimer);
 				Input::Instance().SaveKeyState();
 			}

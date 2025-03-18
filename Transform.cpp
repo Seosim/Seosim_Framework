@@ -28,6 +28,14 @@ XMFLOAT3 CTransform::GetPosition() const
 	return mPosition;
 }
 
+XMFLOAT3 CTransform::GetWorldPosition() const
+{
+	auto matrix = GetWorldTransform();
+	XMFLOAT3 worldPosition = { matrix.r[3].m128_f32[0] , matrix.r[3].m128_f32[1], matrix.r[3].m128_f32[2] };
+
+	return worldPosition;
+}
+
 void CTransform::SetPosition(const XMFLOAT3& position, Space space)
 {
 	if (space == Space::Local)
@@ -147,6 +155,17 @@ void CTransform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const X
 	mRight = right;
 	mUp = up;
 	mForward = forward;
+}
+
+XMFLOAT4 CTransform::GetRotationQuat() const
+{
+	auto matrix = GetWorldTransform();
+
+	XMVECTOR quat = XMQuaternionRotationMatrix(matrix);
+	XMFLOAT4 result;
+	XMStoreFloat4(&result, quat);
+
+	return result;
 }
 
 void CTransform::SetRotationByQuat(const XMVECTOR quat)

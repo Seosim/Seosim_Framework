@@ -55,6 +55,8 @@ public:
 	void LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
 	void BuildObjects();
 
+	//Collision Check
+	void CollisionCheck();
 
 	void FlushCommandQueue();
 	

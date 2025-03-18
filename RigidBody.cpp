@@ -10,15 +10,20 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	XMVECTOR vPosition = XMLoadFloat3(&position);
 
 	// 최대 속도 제한
-	float maxSpeed = 10.0f;
+	float maxSpeed = 100.0f;
 	float speed = XMVectorGetX(XMVector3Length(vVel));
 	if (speed > maxSpeed)
 	{
 		vVel = XMVector3Normalize(vVel) * maxSpeed;
 	}
 
+	//// 중력 적용 (y축 방향으로 -9.81 m/s²)
+	//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * deltaTime, 0.0f, 0.0f);
+	//vAcc += gravity;
+
 	vVel += vAcc * deltaTime;
 	vVel *= max(1.0f - (mDrag * deltaTime), 0.0f);
+
 	vPosition += vVel;
 
 	XMStoreFloat3(&mVelocity, vVel);
