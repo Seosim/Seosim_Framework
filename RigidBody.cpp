@@ -3,7 +3,7 @@
 
 void RigidBody::UpdatePhysics(const float deltaTime)
 {
-	XMFLOAT3 position = mTransform->GetPosition();
+	XMFLOAT3 position = mTransform->GetLocalPosition();
 
 	XMVECTOR vVel = XMLoadFloat3(&mVelocity);
 	XMVECTOR vAcc = XMLoadFloat3(&mAcceleration);
@@ -20,7 +20,7 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	//// 중력 적용 (y축 방향으로 -9.81 m/s²)
 	//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * deltaTime, 0.0f, 0.0f);
 	//vAcc += gravity;
-
+	mDrag = 5.0f;
 	vVel += vAcc * deltaTime;
 	vVel *= max(1.0f - (mDrag * deltaTime), 0.0f);
 
@@ -44,7 +44,7 @@ void RigidBody::AddForce(const XMFLOAT3& force)
 	XMStoreFloat3(&mAcceleration, vAcc);
 }
 
-void RigidBody::SetTransform(CTransform* pTransform)
+void RigidBody::SetTransform(Transform* pTransform)
 {
 	mTransform = pTransform;
 }

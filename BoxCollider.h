@@ -11,12 +11,12 @@ public:
 
 	virtual void Awake() {};
 
-	void Initialize(CTransform* pTransform, const XMFLOAT3& size);
+	void Initialize(Transform* pTransform, const XMFLOAT3& size);
 
 	void UpdateTransform();
 
 	bool CollisionCheck(const BoxCollider& other);
 private:
 	BoundingOrientedBox mBox = {};
-	CTransform* mTransform = nullptr;
+	Transform* mTransform = nullptr;
 };

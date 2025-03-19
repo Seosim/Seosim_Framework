@@ -462,7 +462,7 @@ void D3D12App::BuildCamera()
 void D3D12App::BuildSkybox()
 {
 	GameObject* skybox = new GameObject();
-	skybox->AddComponent<CTransform>();
+	skybox->AddComponent<Transform>();
 	skybox->AddComponent<Material>();
 	skybox->AddComponent<Mesh>();
 	
@@ -518,8 +518,8 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
 
-	gameObject->AddComponent<CTransform>();
-    CTransform& cTransform = gameObject->GetComponent<CTransform>();
+	gameObject->AddComponent<Transform>();
+    Transform& cTransform = gameObject->GetComponent<Transform>();
 
 	mGameObjects.push_back(gameObject);
 
@@ -1203,7 +1203,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
 	XMStoreFloat4x4(&mView, view);
 
-	CTransform& skyboxTransform = mSkybox->GetComponent<CTransform>();
+	Transform& skyboxTransform = mSkybox->GetComponent<Transform>();
 
 	skyboxTransform.SetPosition({ x, y, z });
 	skyboxTransform.SetScale({ 10, 10, 10 });
@@ -1355,7 +1355,7 @@ void D3D12App::RenderObject(const float deltaTime)
 	int index = 1;
 	for (GameObject* gameObject : mGameObjects)
 	{
-		CTransform& cTransform = gameObject->GetComponent<CTransform>();
+		Transform& cTransform = gameObject->GetComponent<Transform>();
 
 		auto xmf4x4world = cTransform.GetWorldTransform();
 
@@ -1370,21 +1370,30 @@ void D3D12App::RenderObject(const float deltaTime)
 		{
 			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 			float speed = 30.0f;
+
 			if (Input::Instance().GetKey('W'))
 			{
-				rigidBody.AddForce({ 0.0f, 0.0f, speed * deltaTime });
+				XMFLOAT3 forwardVector;
+				XMStoreFloat3(&forwardVector, cTransform.GetForwardVector() * speed * deltaTime);
+				rigidBody.AddForce(forwardVector);
 			}
 			if (Input::Instance().GetKey('S'))
 			{
-				rigidBody.AddForce({ 0.0f, 0.0f, -speed * deltaTime });
+				XMFLOAT3 backVector;
+				XMStoreFloat3(&backVector, cTransform.GetForwardVector() * -speed * deltaTime);
+				rigidBody.AddForce(backVector);
 			}
 			if (Input::Instance().GetKey('A'))
 			{
-				rigidBody.AddForce({ -speed * deltaTime, 0.0f, 0.0f });
+				XMFLOAT3 leftVector;
+				XMStoreFloat3(&leftVector, cTransform.GetRightVector() * -speed * deltaTime);
+				rigidBody.AddForce(leftVector);
 			}
 			if (Input::Instance().GetKey('D'))
 			{
-				rigidBody.AddForce({ speed * deltaTime, 0.0f, 0.0f });
+				XMFLOAT3 rightVector;
+				XMStoreFloat3(&rightVector, cTransform.GetRightVector() * speed * deltaTime);
+				rigidBody.AddForce(rightVector);
 			}
 		}
 
@@ -1447,7 +1456,7 @@ void D3D12App::RenderObjectForShadow()
 		int index = 1;
 		for (GameObject* gameObject : mGameObjects)
 		{
-			CTransform& cTransform = gameObject->GetComponent<CTransform>();
+			Transform& cTransform = gameObject->GetComponent<Transform>();
 
 			auto xmf4x4world = cTransform.GetWorldTransform();
 

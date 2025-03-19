@@ -3,7 +3,7 @@
 #include "Transform.h"
 
 //Component Transform
-XMMATRIX CTransform::GetLocalTransform() const
+XMMATRIX Transform::GetLocalTransform() const
 {
 	XMFLOAT4X4 rotationTranslation =
 	{
@@ -17,18 +17,18 @@ XMMATRIX CTransform::GetLocalTransform() const
 	return localTransform;
 }
 
-XMMATRIX CTransform::GetWorldTransform() const
+XMMATRIX Transform::GetWorldTransform() const
 {
 
 	return GetLocalTransform() * getLocalToWorldTransform();
 }
 
-XMFLOAT3 CTransform::GetPosition() const
+XMFLOAT3 Transform::GetLocalPosition() const
 {
 	return mPosition;
 }
 
-XMFLOAT3 CTransform::GetWorldPosition() const
+XMFLOAT3 Transform::GetPosition() const
 {
 	auto matrix = GetWorldTransform();
 	XMFLOAT3 worldPosition = { matrix.r[3].m128_f32[0] , matrix.r[3].m128_f32[1], matrix.r[3].m128_f32[2] };
@@ -36,7 +36,7 @@ XMFLOAT3 CTransform::GetWorldPosition() const
 	return worldPosition;
 }
 
-void CTransform::SetPosition(const XMFLOAT3& position, Space space)
+void Transform::SetPosition(const XMFLOAT3& position, Space space)
 {
 	if (space == Space::Local)
 	{
@@ -54,7 +54,7 @@ void CTransform::SetPosition(const XMFLOAT3& position, Space space)
 	}
 }
 
-void CTransform::Move(const XMFLOAT3& velocity, Space space)
+void Transform::Move(const XMFLOAT3& velocity, Space space)
 {
 	XMVECTOR vPosition = XMLoadFloat3(&mPosition);
 	XMVECTOR vVelocity = XMLoadFloat3(&velocity);
@@ -83,12 +83,12 @@ void CTransform::Move(const XMFLOAT3& velocity, Space space)
 	}
 }
 
-void CTransform::SetScale(const XMFLOAT3& scale)
+void Transform::SetScale(const XMFLOAT3& scale)
 {
 	mScale = scale;
 }
 
-void CTransform::Rotate(const float angleX, const float angleY, const float angleZ)
+void Transform::Rotate(const float angleX, const float angleY, const float angleZ)
 {
 	XMVECTOR right = XMLoadFloat3(&mRight);
 	XMVECTOR up = XMLoadFloat3(&mUp);
@@ -125,7 +125,7 @@ void CTransform::Rotate(const float angleX, const float angleY, const float angl
 	XMStoreFloat3(&mUp, up);
 }
 
-void CTransform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
+void Transform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
 {
 	XMVECTOR right = XMLoadFloat3(&mRight);
 	XMVECTOR up = XMLoadFloat3(&mUp);
@@ -150,14 +150,49 @@ void CTransform::RotateByWorldAxis(const float angleX, const float angleY, const
 	//XMStoreFloat3(&mPosition, position);
 }
 
-void CTransform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward)
+XMFLOAT3 Transform::GetRight() const
+{
+	auto matrix = GetWorldTransform();
+	return { matrix.r[0].m128_f32[0], matrix.r[0].m128_f32[1], matrix.r[0].m128_f32[2] };
+}
+
+XMFLOAT3 Transform::GetUp() const
+{
+	auto matrix = GetWorldTransform();
+	return { matrix.r[1].m128_f32[0], matrix.r[1].m128_f32[1], matrix.r[1].m128_f32[2] };
+}
+
+XMFLOAT3 Transform::GetForward() const
+{
+	auto matrix = GetWorldTransform();
+	XMFLOAT3 worldForward = { matrix.r[2].m128_f32[0], matrix.r[2].m128_f32[1], matrix.r[2].m128_f32[2] };
+
+	return worldForward;
+}
+
+XMVECTOR Transform::GetRightVector() const
+{
+	return GetWorldTransform().r[0];
+}
+
+XMVECTOR Transform::GetUpVector() const
+{
+	return GetWorldTransform().r[1];
+}
+
+XMVECTOR Transform::GetForwardVector() const
+{
+	return GetWorldTransform().r[2];
+}
+
+void Transform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward)
 {
 	mRight = right;
 	mUp = up;
 	mForward = forward;
 }
 
-XMFLOAT4 CTransform::GetRotationQuat() const
+XMFLOAT4 Transform::GetRotationQuat() const
 {
 	auto matrix = GetWorldTransform();
 
@@ -168,7 +203,7 @@ XMFLOAT4 CTransform::GetRotationQuat() const
 	return result;
 }
 
-void CTransform::SetRotationByQuat(const XMVECTOR quat)
+void Transform::SetRotationByQuat(const XMVECTOR quat)
 {
 	XMFLOAT4X4 rotation = {};
 	XMStoreFloat4x4(&rotation, XMMatrixRotationQuaternion(quat));
@@ -186,17 +221,17 @@ void CTransform::SetRotationByQuat(const XMVECTOR quat)
 	mForward.z = rotation._33;
 }
 
-GameObject* CTransform::GetParent() const
+GameObject* Transform::GetParent() const
 {
 	return mParent;
 }
 
-void CTransform::SetParent(GameObject* parent)
+void Transform::SetParent(GameObject* parent)
 {
 	mParent = parent;
 }
 
-XMMATRIX CTransform::getLocalToWorldTransform() const
+XMMATRIX Transform::getLocalToWorldTransform() const
 {
 	XMMATRIX global = XMMatrixIdentity();
 
@@ -204,14 +239,14 @@ XMMATRIX CTransform::getLocalToWorldTransform() const
 
 	while (parent != nullptr)
 	{
-		global *= parent->GetComponent<CTransform>().GetLocalTransform();
-		parent = parent->GetComponent<CTransform>().GetParent();
+		global *= parent->GetComponent<Transform>().GetLocalTransform();
+		parent = parent->GetComponent<Transform>().GetParent();
 	}
 
 	return global;
 }
 
-void CTransform::SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale)
+void Transform::SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale)
 {
 	SetPosition(position);
 	SetRotationByQuat(XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));

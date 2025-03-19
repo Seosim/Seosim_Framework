@@ -6,10 +6,10 @@
 
 class GameObject;
 
-class CTransform final : public IComponent {
+class Transform final : public IComponent {
 public:
-	CTransform() = default;
-	~CTransform() {
+	Transform() = default;
+	~Transform() {
 
 	}
 
@@ -24,8 +24,8 @@ public:
 	XMMATRIX GetLocalTransform() const;
 	XMMATRIX GetWorldTransform() const;
 
+	XMFLOAT3 GetLocalPosition() const;
 	XMFLOAT3 GetPosition() const;
-	XMFLOAT3 GetWorldPosition() const;
 	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
 	void Move(const XMFLOAT3& velocity, Space space = Space::World);
 
@@ -34,6 +34,14 @@ public:
 
 	void Rotate(const float angleX, const float angleY, const float angleZ);
 	void RotateByWorldAxis(const float angleX, const float angleY, const float angleZ);
+
+	XMFLOAT3 GetRight() const;
+	XMFLOAT3 GetUp() const;
+	XMFLOAT3 GetForward() const;
+
+	XMVECTOR GetRightVector() const;
+	XMVECTOR GetUpVector() const;
+	XMVECTOR GetForwardVector() const;
 
 	void SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward);
 	XMFLOAT4 GetRotationQuat() const;

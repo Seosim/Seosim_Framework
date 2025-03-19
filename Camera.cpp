@@ -32,6 +32,11 @@ void Camera::SetPosition(const XMFLOAT3& position)
 	mCameraBuffer.CameraPos = position;
 }
 
+XMFLOAT3 Camera::GetDirection() const
+{
+	return XMFLOAT3();
+}
+
 void Camera::SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj)
 {
 	mCameraBuffer.View = view;

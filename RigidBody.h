@@ -16,9 +16,9 @@ public:
 
 	void AddForce(const XMFLOAT3& force);
 
-	void SetTransform(CTransform* pTransform);
+	void SetTransform(Transform* pTransform);
 private:
-	CTransform* mTransform = nullptr;
+	Transform* mTransform = nullptr;
 	XMFLOAT3 mVelocity = {};
 	XMFLOAT3 mAcceleration = {};
 

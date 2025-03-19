@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "BoxCollider.h"
 
-void BoxCollider::Initialize(CTransform* pTransform, const XMFLOAT3& size)
+void BoxCollider::Initialize(Transform* pTransform, const XMFLOAT3& size)
 {
 	mTransform = pTransform;
 
-	XMFLOAT3 center = mTransform->GetWorldPosition();
+	XMFLOAT3 center = mTransform->GetPosition();
 	XMFLOAT4 rotation = mTransform->GetRotationQuat();
 
 	mBox.Center = center;
@@ -15,7 +15,7 @@ void BoxCollider::Initialize(CTransform* pTransform, const XMFLOAT3& size)
 
 void BoxCollider::UpdateTransform()
 {
-	XMFLOAT3 center = mTransform->GetWorldPosition();
+	XMFLOAT3 center = mTransform->GetPosition();
 	XMFLOAT4 rotation = mTransform->GetRotationQuat();
 
 	mBox.Center = center;
