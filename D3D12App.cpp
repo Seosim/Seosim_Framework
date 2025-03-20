@@ -1752,34 +1752,34 @@ void D3D12App::DownScaling()
 		md3dCommandList->ResourceBarrier(1, &barrier1);
 	}
 
-	////Down Scaling 6x6
-	//{
-	//	mDownSampleShader->SetPipelineState(md3dCommandList);
-	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+	//Down Scaling 6x6
+	{
+		mDownSampleShader->SetPipelineState(md3dCommandList);
+		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
-	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle0.ptr += mDownScaled4x4BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += mDownScaled4x4BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
 
-	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle1.ptr += (mDownScaled16x16BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (mDownScaled16x16BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
 
-	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
-	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-	//	// How many groups do we need to dispatch to cover image, where each
-	//	// group covers 16x16 pixels.
-	//	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
-	//	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
-	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+		// How many groups do we need to dispatch to cover image, where each
+		// group covers 16x16 pixels.
+		UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
-	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	//	md3dCommandList->ResourceBarrier(1, &barrier1);
-	//}
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
 
 	////Down Scaling 6x6
 	//{
@@ -1810,10 +1810,10 @@ void D3D12App::DownScaling()
 	//	md3dCommandList->ResourceBarrier(1, &barrier1);
 	//}
 
-	////Blurring
-	//{
-	//	BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16);
-	//}
+	//Blurring
+	{
+		BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16);
+	}
 
 	////Up Scaling 6x6
 	//{
@@ -1842,32 +1842,32 @@ void D3D12App::DownScaling()
 	//	md3dCommandList->ResourceBarrier(1, &barrier1);
 	//}
 
-	////Up Scaling 6x6
-	//{
-	//	mUpSampleShader->SetPipelineState(md3dCommandList);
-	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+	//Up Scaling 6x6
+	{
+		mUpSampleShader->SetPipelineState(md3dCommandList);
+		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
-	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle0.ptr += mBloom16x16HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += mBloom16x16HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
 
-	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle1.ptr += (mDownScaled4x4BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (mDownScaled4x4BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
 
-	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
-	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-	//	UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
-	//	UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
-	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
-	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	//	md3dCommandList->ResourceBarrier(1, &barrier1);
-	//}
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
 
 	//Blurring
 	{
@@ -1928,7 +1928,7 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+		UINT numGroupsX = (UINT)ceilf(mWidth / sampleSize);
 		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
@@ -1955,7 +1955,7 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
 		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+		UINT numGroupsY = (UINT)ceilf(mHeight / sampleSize);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
@@ -1985,7 +1985,7 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 
 			// How many groups do we need to dispatch to cover image, where each
 			// group covers 16x16 pixels.
-			UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+			UINT numGroupsX = (UINT)ceilf(mWidth / sampleSize);
 			UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
 			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
@@ -2014,7 +2014,7 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 			// How many groups do we need to dispatch to cover image, where each
 			// group covers 16x16 pixels.
 			UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
-			UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+			UINT numGroupsY = (UINT)ceilf(mHeight / sampleSize);
 			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
