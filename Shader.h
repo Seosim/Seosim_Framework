@@ -41,9 +41,6 @@ private:
 };
 
 
-
-
-
 class ComputeShader {
 public:
 	ComputeShader() = default;

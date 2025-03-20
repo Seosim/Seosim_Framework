@@ -399,22 +399,35 @@ void D3D12App::BuildRootSignature()
 
 void D3D12App::BuildComputeRootSignature()
 {
-	CD3DX12_DESCRIPTOR_RANGE srvTable;
-	srvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+	CD3DX12_DESCRIPTOR_RANGE srvTable0;
+	srvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+
+	CD3DX12_DESCRIPTOR_RANGE srvTable1;
+	srvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
 
 	CD3DX12_DESCRIPTOR_RANGE uavTable;
 	uavTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
 	// Perfomance TIP: Order from most frequent to least frequent.
-	slotRootParameter[0].InitAsDescriptorTable(1, &srvTable);
+	slotRootParameter[0].InitAsDescriptorTable(1, &srvTable0);
 	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable);
+	slotRootParameter[2].InitAsDescriptorTable(1, &srvTable1);
+	slotRootParameter[3].InitAsConstants(1, 0);
+
+	CD3DX12_STATIC_SAMPLER_DESC linearSampler(
+		0, 
+		D3D12_FILTER_MIN_MAG_MIP_LINEAR,  // 선형 필터링
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP, // Clamp 모드
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+		D3D12_TEXTURE_ADDRESS_MODE_CLAMP
+	);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter,
-		0, nullptr,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
+		1, &linearSampler,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
@@ -494,12 +507,63 @@ void D3D12App::BuildComputeShader()
 {
 	mComputeShader = new ComputeShader();
 	mComputeShader->Initialize(md3dDevice, mComputeRootSignature, "PostProcessing");
+
+	mBloomShader = new ComputeShader();
+	mBloomShader->Initialize(md3dDevice, mComputeRootSignature, "Bloom");
+
+	mDownSampleShader = new ComputeShader();
+	mDownSampleShader->Initialize(md3dDevice, mComputeRootSignature, "DownScale");
+
+	mUpSampleShader = new ComputeShader();
+	mUpSampleShader->Initialize(md3dDevice, mComputeRootSignature, "UpScale");
+
+	mVBlurShader = new ComputeShader();
+	mVBlurShader->Initialize(md3dDevice, mComputeRootSignature, "VBlur");
+
+	mHBlurShader = new ComputeShader();
+	mHBlurShader->Initialize(md3dDevice, mComputeRootSignature, "HBlur");
 }
 
 void D3D12App::BuildUAVTexture()
 {
 	mPostProcessingTexture = new Texture();
 	mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"PostProcessedTexture", mWidth, mHeight);
+
+	mBloomTexture = new Texture();
+	mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomTexture", mWidth, mHeight);
+
+	mDownScaled4x4BloomTexture = new Texture();
+	mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled4x4BloomTexture", mWidth / 4, mHeight / 4);
+
+	mDownScaled16x16BloomTexture = new Texture();
+	mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled16x16BloomTexture", mWidth / 4 / 4, mHeight / 4 / 4);
+
+	mDownScaled64x64BloomTexture = new Texture();
+	mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled64x64BloomTexture", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
+
+	mBloomHBlurTexture = new Texture();
+	mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomHBlurTexture", mWidth, mHeight);
+
+	mBloomVBlurTexture = new Texture();
+	mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomVBlurTexture", mWidth, mHeight);
+
+	mBloom4x4HBlurTexture = new Texture();
+	mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
+
+	mBloom4x4VBlurTexture = new Texture();
+	mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
+
+	mBloom16x16HBlurTexture = new Texture();
+	mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
+
+	mBloom16x16VBlurTexture = new Texture();
+	mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
+
+	mBloom64x64HBlurTexture = new Texture();
+	mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
+
+	mBloom64x64VBlurTexture = new Texture();
+	mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -896,17 +960,7 @@ void D3D12App::OnResize()
 		md3dDevice->CreateDepthStencilView(mShadowResource, &dsvDesc, dsvHandle);
 	}
 
-
-	//PostProcessing Shader
-
-	if (mPostProcessingTexture)
-	{
-		ID3D12Resource* resource = mPostProcessingTexture->GetResource();
-		RELEASE_COM(resource);
-
-		mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L" ", mWidth, mHeight);
-	}
-	
+	OnResizeUAVTexture();
 
 	HR(md3dCommandList->Close());
 	ID3D12CommandList* cmdsLists[] = { md3dCommandList };
@@ -928,6 +982,113 @@ void D3D12App::OnResize()
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
 	XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), GetAspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
+}
+
+void D3D12App::OnResizeUAVTexture()
+{
+	//PostProcessing Texture
+	if (mPostProcessingTexture)
+	{
+		ID3D12Resource* resource = mPostProcessingTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L" ", mWidth, mHeight);
+	}
+	if (mBloomTexture)
+	{
+		ID3D12Resource* resource = mBloomTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomTexture", mWidth, mHeight);
+	}
+
+	if (mDownScaled4x4BloomTexture)
+	{
+		ID3D12Resource* resource = mDownScaled4x4BloomTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaledBloomTexture", mWidth / 4, mHeight / 4);
+	}
+
+	if (mDownScaled16x16BloomTexture)
+	{
+		ID3D12Resource* resource = mDownScaled16x16BloomTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture0", mWidth / 4 / 6, mHeight / 4 / 6);
+	}
+
+	if (mDownScaled64x64BloomTexture)
+	{
+		ID3D12Resource* resource = mDownScaled64x64BloomTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture1", mWidth / 4 / 6 / 6, mHeight / 4 / 6 / 6);
+	}
+
+	if (mBloomHBlurTexture)
+	{
+		ID3D12Resource* resource = mBloomHBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomHBlurTexture", mWidth, mHeight);
+	}
+
+	if (mBloomVBlurTexture)
+	{
+		ID3D12Resource* resource = mBloomVBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomVBlurTexture", mWidth, mHeight);
+	}
+
+	if (mBloom4x4HBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom4x4HBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
+	}
+
+	if (mBloom4x4VBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom4x4VBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
+	}
+
+	if (mBloom16x16HBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom16x16HBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
+	}
+
+	if (mBloom16x16VBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom16x16VBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
+	}
+
+	if (mBloom64x64HBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom64x64HBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
+	}
+
+	if (mBloom64x64VBlurTexture)
+	{
+		ID3D12Resource* resource = mBloom64x64VBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
+	}
 }
 
 void D3D12App::CollisionCheck()
@@ -1252,11 +1413,16 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
+	//후처리 전 기존 MSAA렌더타겟을 SCREEN으로 옮깁니다.
+	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
+
+	//For Bloom Effect
+	{
+		DownScaling();
+	}
 
 	//Render Screen
 	{
-		md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
-
 		PostProcessing();
 
 		//렌더타겟 상태 변환
@@ -1275,10 +1441,10 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		md3dCommandList->OMSetRenderTargets(1, rtvhandles, false, nullptr);
 		md3dCommandList->ClearRenderTargetView(rtvHandle, clearVal, 0, nullptr);
 
-
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 			texHandle.ptr += mCbvSrvUavDescriptorSize * (mPostProcessingTexture->GetID());
+			//texHandle.ptr += mCbvSrvUavDescriptorSize * (mPostProcessingTexture->GetID());
 			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
 		}
 
@@ -1291,7 +1457,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		mScreenShader->SetPipelineState(md3dCommandList);
 		md3dCommandList->DrawInstanced(6, 1, 0, 0);
 	}
-
 
 	//DSV To SRV
 	{
@@ -1500,8 +1665,12 @@ void D3D12App::PostProcessing()
 	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	handle1.ptr += (mPostProcessingTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
 
+	auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle2.ptr += mBloomHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
 	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
 	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+	md3dCommandList->SetComputeRootDescriptorTable(2, handle2);
 
 	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mPostProcessingTexture->GetResource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -1518,6 +1687,341 @@ void D3D12App::PostProcessing()
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	md3dCommandList->ResourceBarrier(1, &barrier1);
+}
+
+void D3D12App::DownScaling()
+{
+	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
+	md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
+
+	//Get Bloom Map
+	{
+		mBloomShader->SetPipelineState(md3dCommandList);
+		{
+			auto bloomBarrier = CD3DX12_RESOURCE_BARRIER::Transition(mBloomTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &bloomBarrier);
+		}
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += mScreenTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (mBloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+		UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		{
+			auto bloomBarrier = CD3DX12_RESOURCE_BARRIER::Transition(mBloomTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &bloomBarrier);
+		}
+	}
+
+	//Down Scaling 4x4
+	{
+		mDownSampleShader->SetPipelineState(md3dCommandList);
+		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += mBloomTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (mDownScaled4x4BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+
+		// How many groups do we need to dispatch to cover image, where each
+		// group covers 16x16 pixels.
+		UINT numGroupsX = (UINT)ceilf(mWidth / 4.0f / 32.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 4.0f / 32.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	////Down Scaling 6x6
+	//{
+	//	mDownSampleShader->SetPipelineState(md3dCommandList);
+	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mDownScaled4x4BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mDownScaled16x16BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	// How many groups do we need to dispatch to cover image, where each
+	//	// group covers 16x16 pixels.
+	//	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
+	//	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
+	////Down Scaling 6x6
+	//{
+	//	mDownSampleShader->SetPipelineState(md3dCommandList);
+	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mDownScaled16x16BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mDownScaled64x64BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled64x64BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	// How many groups do we need to dispatch to cover image, where each
+	//	// group covers 16x16 pixels.
+	//	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
+	//	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled64x64BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
+	////Blurring
+	//{
+	//	BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16);
+	//}
+
+	////Up Scaling 6x6
+	//{
+	//	mUpSampleShader->SetPipelineState(md3dCommandList);
+	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mDownScaled64x64BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mDownScaled16x16BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	UINT numGroupsX = (UINT)ceilf(mWidth / 4 / 4 / 8.0f);
+	//	UINT numGroupsY = (UINT)ceilf(mHeight / 4 / 4 / 8.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
+	////Up Scaling 6x6
+	//{
+	//	mUpSampleShader->SetPipelineState(md3dCommandList);
+	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mBloom16x16HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mDownScaled4x4BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
+	//	UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
+	//Blurring
+	{
+		BlurTexture(mDownScaled4x4BloomTexture->GetID(), mBloom4x4VBlurTexture, mBloom4x4HBlurTexture, 4, 2);
+	}
+
+	//Up Scaling 4x4
+	{
+		mUpSampleShader->SetPipelineState(md3dCommandList);
+		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += mBloom4x4HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (mBloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mBloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+
+		// How many groups do we need to dispatch to cover image, where each
+		// group covers 16x16 pixels.
+		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mBloomTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	//Blurring
+	{
+		BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 4);
+	}
+}
+
+void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture* hBlurTexture, const int sampleSize, const int bluringCount)
+{
+	//VBlur
+	{
+		mVBlurShader->SetPipelineState(md3dCommandList);
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += originalID * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (vBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+
+		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	//HBlur
+	{
+		mHBlurShader->SetPipelineState(md3dCommandList);
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += vBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (hBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+
+		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+
+	for (int i = 0; i < bluringCount; ++i)
+	{
+		//VBlur
+		{
+			mVBlurShader->SetPipelineState(md3dCommandList);
+
+			auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle0.ptr += hBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+			auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle1.ptr += (vBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+			md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+			md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+
+			// How many groups do we need to dispatch to cover image, where each
+			// group covers 16x16 pixels.
+			UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+			UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier1);
+		}
+
+		//HBlur
+		{
+			mHBlurShader->SetPipelineState(md3dCommandList);
+
+			auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle0.ptr += vBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+			auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle1.ptr += (hBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+			md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+			md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+
+			// How many groups do we need to dispatch to cover image, where each
+			// group covers 16x16 pixels.
+			UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
+			UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
+			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier1);
+		}
+	}
 }
 
 void D3D12App::Finalize()
@@ -1542,6 +2046,11 @@ void D3D12App::Finalize()
 
 	delete mScreenShader;
 	delete mComputeShader;
+	delete mBloomShader;
+	delete mDownSampleShader;
+	delete mUpSampleShader;
+	delete mVBlurShader;
+	delete mHBlurShader;
 
 	for (auto& texturePointer : Texture::TextureList)
 	{

@@ -66,7 +66,7 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 	Texture::TextureList[name] = this;
 }
 
-void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const float width, const float height)
+void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const UINT width, const UINT height)
 {
 	if (CPU_ID == -1)
 	{

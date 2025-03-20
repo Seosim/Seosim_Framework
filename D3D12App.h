@@ -39,6 +39,7 @@ public:
 	void CreateCbvSrvUavDescriptorHeap();
 	
 	void OnResize();
+	void OnResizeUAVTexture();
 
 	void BuildConstantBuffers();
 	void BuildRootSignature();
@@ -81,6 +82,10 @@ public:
 	void RenderObjectForShadow();
 
 	void PostProcessing();
+
+	//Bloom
+	void DownScaling();
+	void BlurTexture(const int originalID, Texture* vBlurTexture, Texture* hBlurTexture, const int sampleSize,  const int bluringCount = 0);
 
 	void Finalize();
 private:
@@ -175,6 +180,11 @@ private:
 	//Shader
 	Shader* mScreenShader = nullptr;
 	ComputeShader* mComputeShader = nullptr;
+	ComputeShader* mBloomShader = nullptr;
+	ComputeShader* mDownSampleShader = nullptr;
+	ComputeShader* mUpSampleShader = nullptr;
+	ComputeShader* mVBlurShader = nullptr;
+	ComputeShader* mHBlurShader = nullptr;
 
 	//Shadow
 	Shadow* mpShadow = nullptr;
@@ -182,4 +192,18 @@ private:
 
 	//UAV Texture
 	Texture* mPostProcessingTexture = nullptr;
+
+	//Bloom
+	Texture* mBloomTexture = nullptr;
+	Texture* mDownScaled4x4BloomTexture = nullptr;
+	Texture* mDownScaled16x16BloomTexture = nullptr;
+	Texture* mDownScaled64x64BloomTexture = nullptr;
+	Texture* mBloomVBlurTexture = nullptr;
+	Texture* mBloomHBlurTexture = nullptr;
+	Texture* mBloom4x4VBlurTexture = nullptr;
+	Texture* mBloom4x4HBlurTexture = nullptr;
+	Texture* mBloom16x16VBlurTexture = nullptr;
+	Texture* mBloom16x16HBlurTexture = nullptr;
+	Texture* mBloom64x64VBlurTexture = nullptr;
+	Texture* mBloom64x64HBlurTexture = nullptr;
 };
