@@ -50,7 +50,7 @@ VertexOut VS(VertexIn vin)
     vout.PosW = posW.xyz;
 
     // Transform normal to world space.
-    vout.NormalW = normalize(mul(float4(vin.Normal, 0.0f), gWorld).xyz);
+    vout.NormalW = mul(vin.Normal, (float3x3)gWorld);
     
     vout.ShadowPosH = mul(posW, ShadowTransform);
 
@@ -105,7 +105,7 @@ PixelOut PS(VertexOut pin)
 
     pixelOut.color = float4(finalColor, 1.0f);
     
-    pixelOut.normal = float4(mul(pin.NormalW, (float3x3) gView), 1.0f);
+    pixelOut.normal = float4(mul(normalize(N), (float3x3) gView), 0.0f);
     
     
     return pixelOut;

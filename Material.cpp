@@ -85,7 +85,7 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 		}
 		case Shader::eType::Skybox:
 		{
-			std::wstring name{ L"sunsetcube1024" };
+			std::wstring name{ L"Skybox" };
 			std::wstring basePath = L"./Assets/Textures/";
 			std::wstring fullPath = basePath + std::wstring(name.begin(), name.end()) + L".dds";
 			Texture* texture = nullptr;

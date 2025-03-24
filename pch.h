@@ -153,7 +153,8 @@ enum class eDescriptorRange {
 	CUBE_MAP,
 	SHADOW_MAP,
 	TEXTURE0,
-	COMPUTED_TEXTURE,
+	TEXTURE1,
+	TEXTURE2,
 	COUNT
 };
 
@@ -166,6 +167,17 @@ enum class eRootParameter {
 	CUBE_MAP,
 	SHADOW_TEXTURE,
 	TEXTURE0,
-	COMPUTED_TEXTURE,
+	TEXTURE1,
+	TEXTURE2,
+	COUNT
+};
+
+enum class eComputeRootParamter {
+	INPUT0,
+	OUTPUT,
+	INPUT1,
+	DOWN_SCALE_SIZE,
+	CAMERA_N_TIMER,
+	INPUT2,
 	COUNT
 };

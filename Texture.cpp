@@ -103,7 +103,7 @@ void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHea
 		&heapProperty,
 		D3D12_HEAP_FLAG_NONE,
 		&texDesc,
-		D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&mpResource)));
 

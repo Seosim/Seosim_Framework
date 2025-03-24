@@ -24,9 +24,12 @@ cbuffer cbPerCamera : register(b3)
 {
     float4x4 gView;
     float4x4 gProj;
+    float4x4 ProjectionTex;
+    float4x4 ProjectionInv;
     float3 cameraPos;
     float ScreenWidth;
     float ScreenHeight;
+    float ElapsedTime;
 }
 
 cbuffer cbPerShadow : register(b4)

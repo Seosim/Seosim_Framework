@@ -8,6 +8,7 @@
 
 Texture2D gInput : register(t0);
 Texture2D gBloomMap : register(t1);
+Texture2D gSSAOMap : register(t2);
 RWTexture2D<float4> gOutput : register(u0);
 
 //ACES TONE MAPPING
@@ -58,8 +59,11 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     // 원본 색상 가져오기
     float4 color = gInput[texCoord];
     float4 bloomColor = gBloomMap[texCoord];
+    float ssao = gSSAOMap[texCoord].x;
     
+    color *= ssao;
     color += bloomColor * bloomColor.a;
+    
     
     // ACES 톤 매핑 적용
     color.rgb = ACESFitted(color.rgb);

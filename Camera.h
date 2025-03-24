@@ -7,9 +7,12 @@ public:
 	struct CameraBuffer {
 		XMFLOAT4X4 View;
 		XMFLOAT4X4 Proj;
+		XMFLOAT4X4 ProjectionTex;
+		XMFLOAT4X4 ProjectionInv;
 		XMFLOAT3 CameraPos;
 		float ScreenWidth;
 		float ScreenHeight;
+		float ElapsedTime;
 	};
 
 	Camera() = default;
@@ -18,7 +21,8 @@ public:
 
 	void Initialize(ID3D12Device* pDevice);
 
-	void Update(ID3D12GraphicsCommandList* pCommandList);
+	void Update(ID3D12GraphicsCommandList* pCommandList, const float deltaTime);
+	void UpdateForComputeShader(ID3D12GraphicsCommandList* pCommandList);
 
 	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position);

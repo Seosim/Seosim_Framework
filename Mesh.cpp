@@ -30,20 +30,25 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 	in.read(reinterpret_cast<char*>(normals.data()), vertexCount * sizeof(XMFLOAT3));
 	in.read(reinterpret_cast<char*>(uvs.data()), vertexCount * sizeof(XMFLOAT2));
 
-	int indexCount = 0;
-	in.read(reinterpret_cast<char*>(&indexCount), sizeof(indexCount));
+	int subMeshCount = 0;
+	in.read(reinterpret_cast<char*>(&subMeshCount), sizeof(subMeshCount));
 
-	std::vector<UINT> indices(indexCount);
-	in.read(reinterpret_cast<char*>(indices.data()), indexCount * sizeof(UINT));
+	int totalIndicesCount = 0;
+	std::vector<UINT> totalIndices;
 
-	//const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	//const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+	for (int i = 0; i < subMeshCount; ++i)
+	{
+		int indexCount = 0;
+		in.read(reinterpret_cast<char*>(&indexCount), sizeof(indexCount));
+		totalIndicesCount = indexCount;
 
-	//HR(D3DCreateBlob(vbByteSize, &mVertexBufferCPU));
-	//CopyMemory(mVertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+		std::vector<UINT> indices(indexCount);
+		in.read(reinterpret_cast<char*>(indices.data()), indexCount * sizeof(UINT));
 
-	//HR(D3DCreateBlob(ibByteSize, &mIndexBufferCPU));
-	//CopyMemory(mIndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+		totalIndices.insert(totalIndices.end(), indices.begin(), indices.end());
+
+		mSubMeshIndex.push_back(totalIndicesCount);
+	}
 
 	mPositionBufferGPU = d3dUtil::CreateDefaultBuffer(pDevice,
 		pCommandList, positions.data(), positions.size() * sizeof(XMFLOAT3), mPositionBufferUploader);
@@ -55,7 +60,7 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 		pCommandList, uvs.data(), uvs.size() * sizeof(XMFLOAT2), mUVBufferUploader);
 
 	mIndexBufferGPU = d3dUtil::CreateDefaultBuffer(pDevice,
-		pCommandList, indices.data(), indices.size() * sizeof(int), mIndexBufferUploader);
+		pCommandList, totalIndices.data(), totalIndices.size() * sizeof(UINT), mIndexBufferUploader);
 
 	mVertexBufferViews[0] =
 	{
@@ -80,14 +85,14 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 	mIndexBufferView =
 	{
 		.BufferLocation = mIndexBufferGPU->GetGPUVirtualAddress(),
-		.SizeInBytes = static_cast<UINT>(sizeof(UINT) * indices.size()),
+		.SizeInBytes = static_cast<UINT>(sizeof(UINT) * totalIndices.size()),
 		.Format = DXGI_FORMAT_R32_UINT,
 	};
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-	DrawArgs["box"] = submesh;
+	//SubmeshGeometry submesh;
+	//submesh.IndexCount = (UINT)totalIndices.size();
+	//submesh.StartIndexLocation = 0;
+	//submesh.BaseVertexLocation = 0;
+	//DrawArgs["box"] = submesh;
 }
 
 void Mesh::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
@@ -211,12 +216,14 @@ void Mesh::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommand
 
 void Mesh::Render(ID3D12GraphicsCommandList* pCommandList)
 {
-	//auto vbv = VertexBufferView();
-	//auto ibv = IndexBufferView();
-
 	pCommandList->IASetVertexBuffers(0, mVertexBufferViews.size(), mVertexBufferViews.data());
 	pCommandList->IASetIndexBuffer(&mIndexBufferView);
 	pCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	pCommandList->DrawIndexedInstanced(DrawArgs["box"].IndexCount, 1, 0, 0, 0);
+	int offset = 0;
+	for (int i = 0; i < mSubMeshIndex.size(); ++i)
+	{
+		pCommandList->DrawIndexedInstanced(mSubMeshIndex[i], 1, offset, 0, 0);
+		offset += mSubMeshIndex[i];
+	}
 }

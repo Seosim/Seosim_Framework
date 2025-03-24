@@ -194,16 +194,7 @@ void D3D12App::CreateRtrAndDsvDescriptorHeap()
 
 void D3D12App::CreateCbvSrvUavDescriptorHeap()
 {
-	////Create CBV Descriptor Heap
-	//D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
-	//cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	//cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	//cbvHeapDesc.NodeMask = 0;
-	//cbvHeapDesc.NumDescriptors = 1;
-
-	//HR(md3dDevice->CreateDescriptorHeap(&cbvHeapDesc, IID_PPV_ARGS(&mCbvHeap)));
-
-	constexpr int MAX_SRV_COUNT = 10000;
+	constexpr int MAX_SRV_COUNT = 1000000;
 
 	//Build SRV Heap.
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
@@ -225,23 +216,23 @@ void D3D12App::BuildRootSignature()
 	D3D12_DESCRIPTOR_RANGE descriptorRange[MAX_TEXTURE_COUNT];
 
 	{
-		constexpr int texture0Index = (int)eDescriptorRange::CUBE_MAP;
+		constexpr int cubemapIndex = (int)eDescriptorRange::CUBE_MAP;
 
-		descriptorRange[texture0Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descriptorRange[texture0Index].NumDescriptors = 1;
-		descriptorRange[texture0Index].BaseShaderRegister = 0;
-		descriptorRange[texture0Index].RegisterSpace = 0;
-		descriptorRange[texture0Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descriptorRange[cubemapIndex].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[cubemapIndex].NumDescriptors = 1;
+		descriptorRange[cubemapIndex].BaseShaderRegister = 0;
+		descriptorRange[cubemapIndex].RegisterSpace = 0;
+		descriptorRange[cubemapIndex].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	}
 
 	{
-		constexpr int texture1Index = (int)eDescriptorRange::SHADOW_MAP;
+		constexpr int shadowmapIndex = (int)eDescriptorRange::SHADOW_MAP;
 
-		descriptorRange[texture1Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-		descriptorRange[texture1Index].NumDescriptors = 1;
-		descriptorRange[texture1Index].BaseShaderRegister = 1;
-		descriptorRange[texture1Index].RegisterSpace = 0;
-		descriptorRange[texture1Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descriptorRange[shadowmapIndex].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[shadowmapIndex].NumDescriptors = 1;
+		descriptorRange[shadowmapIndex].BaseShaderRegister = 1;
+		descriptorRange[shadowmapIndex].RegisterSpace = 0;
+		descriptorRange[shadowmapIndex].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	}
 
 	{
@@ -255,15 +246,24 @@ void D3D12App::BuildRootSignature()
 	}
 
 	{
-		constexpr int computedTextureIndex = (int)eDescriptorRange::COMPUTED_TEXTURE;
+		constexpr int texture1Index = (int)eDescriptorRange::TEXTURE1;
 
-		descriptorRange[computedTextureIndex].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
-		descriptorRange[computedTextureIndex].NumDescriptors = 1;
-		descriptorRange[computedTextureIndex].BaseShaderRegister = 0;
-		descriptorRange[computedTextureIndex].RegisterSpace = 0;
-		descriptorRange[computedTextureIndex].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		descriptorRange[texture1Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[texture1Index].NumDescriptors = 1;
+		descriptorRange[texture1Index].BaseShaderRegister = 3;
+		descriptorRange[texture1Index].RegisterSpace = 0;
+		descriptorRange[texture1Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	}
 
+	{
+		constexpr int texture2Index = (int)eDescriptorRange::TEXTURE2;
+
+		descriptorRange[texture2Index].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+		descriptorRange[texture2Index].NumDescriptors = 1;
+		descriptorRange[texture2Index].BaseShaderRegister = 4;
+		descriptorRange[texture2Index].RegisterSpace = 0;
+		descriptorRange[texture2Index].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+	}
 
 	constexpr int ROOT_PARAMATER_COUNT = (int)eRootParameter::COUNT;
 	D3D12_ROOT_PARAMETER rootParamater[ROOT_PARAMATER_COUNT];
@@ -342,18 +342,27 @@ void D3D12App::BuildRootSignature()
 	}
 
 	{
-		constexpr int computedTextureIndex = (int)eRootParameter::COMPUTED_TEXTURE;
-		constexpr int computedTextureRangeIndex = (int)eDescriptorRange::COMPUTED_TEXTURE;
-		rootParamater[computedTextureIndex].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-		rootParamater[computedTextureIndex].DescriptorTable.NumDescriptorRanges = 1;
-		rootParamater[computedTextureIndex].DescriptorTable.pDescriptorRanges = &descriptorRange[computedTextureRangeIndex];
-		rootParamater[computedTextureIndex].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+		constexpr int texture1Index = (int)eRootParameter::TEXTURE1;
+		constexpr int texture1TextureRangeIndex = (int)eDescriptorRange::TEXTURE1;
+		rootParamater[texture1Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[texture1Index].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[texture1Index].DescriptorTable.pDescriptorRanges = &descriptorRange[texture1TextureRangeIndex];
+		rootParamater[texture1Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	}
+
+	{
+		constexpr int texture2Index = (int)eRootParameter::TEXTURE2;
+		constexpr int texture2TextureRangeIndex = (int)eDescriptorRange::TEXTURE2;
+		rootParamater[texture2Index].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+		rootParamater[texture2Index].DescriptorTable.NumDescriptorRanges = 1;
+		rootParamater[texture2Index].DescriptorTable.pDescriptorRanges = &descriptorRange[texture2TextureRangeIndex];
+		rootParamater[texture2Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	}
 
 
 	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
 
-	pd3dSamplerDescs[0].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	pd3dSamplerDescs[0].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	pd3dSamplerDescs[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	pd3dSamplerDescs[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -405,17 +414,23 @@ void D3D12App::BuildComputeRootSignature()
 	CD3DX12_DESCRIPTOR_RANGE srvTable1;
 	srvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
 
+	CD3DX12_DESCRIPTOR_RANGE srvTable2;
+	srvTable2.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+
 	CD3DX12_DESCRIPTOR_RANGE uavTable;
 	uavTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
 
-	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
-	// Perfomance TIP: Order from most frequent to least frequent.
-	slotRootParameter[0].InitAsDescriptorTable(1, &srvTable0);
-	slotRootParameter[1].InitAsDescriptorTable(1, &uavTable);
-	slotRootParameter[2].InitAsDescriptorTable(1, &srvTable1);
-	slotRootParameter[3].InitAsConstants(1, 0);
+	constexpr int PARAMETER_COUNT = (int)eComputeRootParamter::COUNT;
+	CD3DX12_ROOT_PARAMETER slotRootParameter[PARAMETER_COUNT];
+
+	slotRootParameter[(int)eComputeRootParamter::INPUT0].InitAsDescriptorTable(1, &srvTable0);
+	slotRootParameter[(int)eComputeRootParamter::OUTPUT].InitAsDescriptorTable(1, &uavTable);
+	slotRootParameter[(int)eComputeRootParamter::INPUT1].InitAsDescriptorTable(1, &srvTable1);
+	slotRootParameter[(int)eComputeRootParamter::DOWN_SCALE_SIZE].InitAsConstants(1, 0);
+	slotRootParameter[(int)eComputeRootParamter::CAMERA_N_TIMER].InitAsConstantBufferView(3, 0);
+	slotRootParameter[(int)eComputeRootParamter::INPUT2].InitAsDescriptorTable(1, &srvTable2);
+
 
 	CD3DX12_STATIC_SAMPLER_DESC linearSampler(
 		0, 
@@ -426,7 +441,7 @@ void D3D12App::BuildComputeRootSignature()
 	);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(PARAMETER_COUNT, slotRootParameter,
 		1, &linearSampler,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -483,9 +498,13 @@ void D3D12App::BuildSkybox()
 	Mesh& mesh = skybox->GetComponent<Mesh>();
 
 	material.Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, NULL, Shader::eType::Skybox);
-	mesh.LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/cube.bin");
+	mesh.LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/Cube.bin");
 
 	mSkybox = skybox;
+}
+
+void D3D12App::BuildSSAO()
+{
 }
 
 void D3D12App::BuildResourceTexture()
@@ -494,13 +513,20 @@ void D3D12App::BuildResourceTexture()
 	mDepthTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 
 	mNormalTexture = new Texture();
-	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 	mMSAATexture = new Texture();
 	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R16G16B16A16_FLOAT);
 
 	mScreenTexture = new Texture();
-	mScreenTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	mScreenTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT , false);
+
+	mSSAOTexture = new Texture();
+	mSSAOTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"SSAOTexture", mRenderTargets[(int)eRenderTargetType::SSAO], DXGI_FORMAT_R16_FLOAT, false);
+
+	mNoiseTexture = new Texture();
+	mNoiseTexture->LoadTextureFromDDSFile(md3dDevice, md3dCommandList, L"./Assets/Textures/SsaoNoise.DDS", RESOURCE_TEXTURE2D, 0);
+	mNoiseTexture->CreateSrv(md3dDevice, mSrvHeap, L"SSAONoise");
 }
 
 void D3D12App::BuildComputeShader()
@@ -564,6 +590,12 @@ void D3D12App::BuildUAVTexture()
 
 	mBloom64x64VBlurTexture = new Texture();
 	mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
+
+	mSSAOHBlurTexture = new Texture();
+	mSSAOHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAOHBlurTexture", mWidth, mHeight);
+
+	mSSAOVBlurTexture = new Texture();
+	mSSAOVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAOVBlurTexture", mWidth, mHeight);
 }
 
 void D3D12App::LoadHierarchyData(const std::string& filePath)
@@ -634,7 +666,6 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 		Mesh& mesh = gameObject->GetComponent<Mesh>();
 
 		mesh.LoadMeshData(md3dDevice, md3dCommandList, meshPath);
-		//mMesh.LoadMeshData(pDevice, pCommandList, meshPath);
 	}
 
 	bool bHasMaterial;
@@ -669,14 +700,26 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/TextureH.bin");
+	LoadHierarchyData("Assets/Hierarchies/0321Test.bin");
 
-	Shader::Command command = Shader::DefaultCommand();
-	command.SampleCount = 1;
-	command.DepthEnable = FALSE;
-	command.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	mScreenShader = new Shader();
-	mScreenShader->Initialize(md3dDevice, mRootSignature, "Screen", command);
+	{
+		Shader::Command command = Shader::DefaultCommand();
+		command.SampleCount = 1;
+		command.DepthEnable = FALSE;
+		command.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		mScreenShader = new Shader();
+		mScreenShader->Initialize(md3dDevice, mRootSignature, "Screen", command);
+	}
+
+	{
+		Shader::Command command = Shader::DefaultCommand();
+		command.SampleCount = 1;
+		command.DepthEnable = FALSE;
+		command.Format = DXGI_FORMAT_R16_FLOAT;
+		mSSAO = new Shader();
+		mSSAO->Initialize(md3dDevice, mRootSignature, "SSAO", command);
+	}
+
 }
 
 void D3D12App::OnResize()
@@ -789,7 +832,7 @@ void D3D12App::OnResize()
 			.Height = (UINT)mHeight,
 			.DepthOrArraySize = 1,
 			.MipLevels = 1,
-			.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
 			.SampleDesc = {.Count = MSAA_SAMPLING_COUNT, .Quality = 0 },
 			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
 		};
@@ -817,7 +860,58 @@ void D3D12App::OnResize()
 		rtvHandle.ptr += CAMERA_NORMALS * mRtvDescriptorSize;
 		md3dDevice->CreateRenderTargetView(mRenderTargets[CAMERA_NORMALS], &RTV_DESC, rtvHandle);
 		if (mNormalTexture)
-			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R8G8B8A8_UNORM);
+			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	}
+
+	//Create SSAO Map
+	{
+		constexpr SIZE_T SSAO = SIZE_T(eRenderTargetType::SSAO);
+
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC RT_DESC =
+		{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Width = (UINT)mWidth,
+			.Height = (UINT)mHeight,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R16_FLOAT,
+			.SampleDesc = {.Count = 1, .Quality = 0 },
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		};
+
+		D3D12_CLEAR_VALUE CLEAR_VALUE =
+		{
+			.Format = RT_DESC.Format,
+			.Color = { 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &RT_DESC
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, &CLEAR_VALUE
+			, IID_PPV_ARGS(&mRenderTargets[SSAO])));
+
+		D3D12_RENDER_TARGET_VIEW_DESC RTV_DESC =
+		{
+			.Format = RT_DESC.Format,
+			.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMS
+		};
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+		rtvHandle.ptr += SSAO * mRtvDescriptorSize;
+		md3dDevice->CreateRenderTargetView(mRenderTargets[SSAO], &RTV_DESC, rtvHandle);
+		if (mSSAOTexture)
+			mSSAOTexture->ChangeResource(md3dDevice, mSrvHeap, L"SSAOTexture", mRenderTargets[(int)eRenderTargetType::SSAO], DXGI_FORMAT_R16_FLOAT, false);
 	}
 
 	//Create Screen Map
@@ -868,7 +962,7 @@ void D3D12App::OnResize()
 		rtvHandle.ptr += SCREEN * mRtvDescriptorSize;
 		md3dDevice->CreateRenderTargetView(mRenderTargets[SCREEN], &RTV_DESC, rtvHandle);
 		if (mScreenTexture)
-			mScreenTexture->ChangeResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT);
+			mScreenTexture->ChangeResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 	}
 
 	//Create ShadowMap
@@ -980,7 +1074,7 @@ void D3D12App::OnResize()
 		mpCamera->SetScreenSize(mWidth, mHeight);
 
 	// The window resized, so update the aspect ratio and recompute the projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), GetAspectRatio(), 1.0f, 1000.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(XMConvertToRadians(60.0f), GetAspectRatio(), 0.3f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
@@ -1015,7 +1109,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mDownScaled16x16BloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture0", mWidth / 4 / 6, mHeight / 4 / 6);
+		mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture0", mWidth / 4 / 4, mHeight / 4 / 4);
 	}
 
 	if (mDownScaled64x64BloomTexture)
@@ -1023,7 +1117,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mDownScaled64x64BloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture1", mWidth / 4 / 6 / 6, mHeight / 4 / 6 / 6);
+		mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture1", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
 	}
 
 	if (mBloomHBlurTexture)
@@ -1088,6 +1182,23 @@ void D3D12App::OnResizeUAVTexture()
 		RELEASE_COM(resource);
 
 		mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
+	}
+
+	if (mSSAOVBlurTexture)
+	{
+		ID3D12Resource* resource = mSSAOVBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mSSAOVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAOVBlurTexture", mWidth, mHeight);
+	}
+
+
+	if (mSSAOHBlurTexture)
+	{
+		ID3D12Resource* resource = mSSAOHBlurTexture->GetResource();
+		RELEASE_COM(resource);
+
+		mSSAOHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAO", mWidth, mHeight);
 	}
 }
 
@@ -1309,7 +1420,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Transition.pResource = mDepthTexture->GetResource();
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_READ;
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
@@ -1346,7 +1457,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	//Update Constant Camera Buffer, Light Buffer
-	mpCamera->Update(md3dCommandList);
+	mpCamera->Update(md3dCommandList, mTimer.DeltaTime());
 	mpLight->Update(md3dCommandList);
 
 	//Draw Object.
@@ -1416,9 +1527,26 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	//후처리 전 기존 MSAA렌더타겟을 SCREEN으로 옮깁니다.
 	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
 
+	//DSV To SRV
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Transition.pResource = mDepthTexture->GetResource();
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		md3dCommandList->ResourceBarrier(1, &barrier);
+	}
+
 	//For Bloom Effect
 	{
-		DownScaling();
+		Bloom();
+	}
+
+	//For SSAO
+	{
+		SSAO();
 	}
 
 	//Render Screen
@@ -1444,7 +1572,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 			texHandle.ptr += mCbvSrvUavDescriptorSize * (mPostProcessingTexture->GetID());
-			//texHandle.ptr += mCbvSrvUavDescriptorSize * (mPostProcessingTexture->GetID());
 			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
 		}
 
@@ -1456,18 +1583,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 		mScreenShader->SetPipelineState(md3dCommandList);
 		md3dCommandList->DrawInstanced(6, 1, 0, 0);
-	}
-
-	//DSV To SRV
-	{
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Transition.pResource = mDepthTexture->GetResource();
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_READ;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-		md3dCommandList->ResourceBarrier(1, &barrier);
 	}
 
 	//Draw가 끝난 후 사용한 렌더타겟을 Present로 상태 변환
@@ -1668,9 +1783,13 @@ void D3D12App::PostProcessing()
 	auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	handle2.ptr += mBloomHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
 
-	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
-	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
-	md3dCommandList->SetComputeRootDescriptorTable(2, handle2);
+	auto handle3 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle3.ptr += mSSAOHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT0, handle0);
+	md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle1);
+	md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT1, handle2);
+	md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle3);
 
 	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mPostProcessingTexture->GetResource(),
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -1689,11 +1808,11 @@ void D3D12App::PostProcessing()
 	md3dCommandList->ResourceBarrier(1, &barrier1);
 }
 
-void D3D12App::DownScaling()
+void D3D12App::Bloom()
 {
 	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
 	md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
-
+	mpCamera->UpdateForComputeShader(md3dCommandList);
 	//Get Bloom Map
 	{
 		mBloomShader->SetPipelineState(md3dCommandList);
@@ -1871,7 +1990,7 @@ void D3D12App::DownScaling()
 
 	//Blurring
 	{
-		BlurTexture(mDownScaled4x4BloomTexture->GetID(), mBloom4x4VBlurTexture, mBloom4x4HBlurTexture, 4, 2);
+		BlurTexture(mDownScaled4x4BloomTexture->GetID(), mBloom4x4VBlurTexture, mBloom4x4HBlurTexture, 4, 0);
 	}
 
 	//Up Scaling 4x4
@@ -1905,7 +2024,7 @@ void D3D12App::DownScaling()
 
 	//Blurring
 	{
-		BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 4);
+		BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 0);
 	}
 }
 
@@ -1924,17 +2043,23 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
 		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		md3dCommandList->ResourceBarrier(1, &barrier0);
+		//SRV -> UAV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
 
 		UINT numGroupsX = (UINT)ceilf(mWidth / sampleSize);
 		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f / sampleSize);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
-		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-		md3dCommandList->ResourceBarrier(1, &barrier1);
+		//UAV -> SRV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
 	}
 
 	//HBlur
@@ -1950,17 +2075,23 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
 		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-		auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
-			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-		md3dCommandList->ResourceBarrier(1, &barrier0);
+		//SRV -> UAV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
 
 		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f / sampleSize);
 		UINT numGroupsY = (UINT)ceilf(mHeight / sampleSize);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
-		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-		md3dCommandList->ResourceBarrier(1, &barrier1);
+		//UAV -> SRV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
 	}
 
 
@@ -2024,6 +2155,121 @@ void D3D12App::BlurTexture(const int originalID, Texture* vBlurTexture, Texture*
 	}
 }
 
+void D3D12App::SSAO()
+{
+	//렌더타겟 상태 변환
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::SSAO];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
+	D3D12_CPU_DESCRIPTOR_HANDLE ssaoHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+	ssaoHandle.ptr += mRtvDescriptorSize * (int)eRenderTargetType::SSAO;
+
+	D3D12_CPU_DESCRIPTOR_HANDLE rtvhandles[] = { ssaoHandle };
+	FLOAT clearVal[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	md3dCommandList->OMSetRenderTargets(1, rtvhandles, false, nullptr);
+	md3dCommandList->ClearRenderTargetView(ssaoHandle, clearVal, 0, nullptr);
+
+	mSSAO->SetPipelineState(md3dCommandList);
+
+	// 리소스 바인딩
+	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle0.ptr += mDepthTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle1.ptr += mNormalTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	handle2.ptr += mNoiseTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	md3dCommandList->SetGraphicsRootDescriptorTable((UINT)eRootParameter::TEXTURE0, handle0);
+	md3dCommandList->SetGraphicsRootDescriptorTable((UINT)eRootParameter::TEXTURE1, handle1);
+	md3dCommandList->SetGraphicsRootDescriptorTable((UINT)eRootParameter::TEXTURE2, handle2);
+
+	md3dCommandList->DrawInstanced(6, 1, 0, 0);
+
+	//렌더타겟 상태 변환
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::SSAO];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
+	//Blur
+	{
+		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
+		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
+	}
+
+	//렌더타겟 상태 변환
+	{
+		D3D12_RESOURCE_BARRIER barrier0 = {};
+		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::SSAO];
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+
+	//// 파이프라인 상태 설정 (컴퓨트 쉐이더)
+	//mSSAOShader->SetPipelineState(md3dCommandList);
+
+	//// 리소스 바인딩
+	//auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//handle0.ptr += mDepthTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//handle1.ptr += mNormalTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//handle2.ptr += mNoiseTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//auto handle3 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//handle3.ptr += (mSSAOTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT0, handle0);
+	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT1, handle1);
+	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle2);
+	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle3);
+
+	//{
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+	//}
+
+
+	//UINT threadGroupsX = (UINT)ceil(mWidth / 32.0f);
+	//UINT threadGroupsY = (UINT)ceil(mHeight / 32.0f);
+	//md3dCommandList->Dispatch(threadGroupsX, threadGroupsY, 1);
+
+	//{
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
+	////Blur
+	//{
+	//	BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
+	//}
+}
+
 void D3D12App::Finalize()
 {
 	//mBoxGeo->Finalize();
@@ -2044,13 +2290,17 @@ void D3D12App::Finalize()
 	}
 	Shader::ShaderList.clear();
 
-	delete mScreenShader;
-	delete mComputeShader;
-	delete mBloomShader;
-	delete mDownSampleShader;
-	delete mUpSampleShader;
-	delete mVBlurShader;
-	delete mHBlurShader;
+	//Delete Shaders
+	{
+		delete mScreenShader;
+		delete mSSAO;
+		delete mComputeShader;
+		delete mBloomShader;
+		delete mDownSampleShader;
+		delete mUpSampleShader;
+		delete mVBlurShader;
+		delete mHBlurShader;
+	}
 
 	for (auto& texturePointer : Texture::TextureList)
 	{

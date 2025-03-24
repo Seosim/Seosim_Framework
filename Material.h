@@ -52,7 +52,7 @@ public:
 			}
 			case Shader::eType::Skybox:
 			{
-				std::wstring name(L"sunsetcube1024");
+				std::wstring name(L"Space");
 				std::wstring basePath = L"./Assets/Textures/";
 				std::wstring fullPath = basePath + std::wstring(name.begin(), name.end()) + L".dds";
 

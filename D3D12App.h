@@ -23,6 +23,7 @@ public:
 		FRAME1,
 		MSAA,
 		CAMERA_NORMAL,
+		SSAO,
 		SCREEN,
 		COUNT
 	};
@@ -48,6 +49,7 @@ public:
 	void BuildShadow();
 	void BuildCamera();
 	void BuildSkybox();
+	void BuildSSAO();
 	void BuildResourceTexture();
 	void BuildComputeShader();
 	void BuildUAVTexture();
@@ -84,8 +86,11 @@ public:
 	void PostProcessing();
 
 	//Bloom
-	void DownScaling();
+	void Bloom();
 	void BlurTexture(const int originalID, Texture* vBlurTexture, Texture* hBlurTexture, const int sampleSize,  const int bluringCount = 0);
+
+	//SSAO
+	void SSAO();
 
 	void Finalize();
 private:
@@ -206,4 +211,13 @@ private:
 	Texture* mBloom16x16HBlurTexture = nullptr;
 	Texture* mBloom64x64VBlurTexture = nullptr;
 	Texture* mBloom64x64HBlurTexture = nullptr;
+
+	//SSAO
+
+	//SSAO non ComputeShader
+	Shader* mSSAO = nullptr;
+	Texture* mSSAOTexture = nullptr;
+	Texture* mSSAOVBlurTexture = nullptr;
+	Texture* mSSAOHBlurTexture = nullptr;
+	Texture* mNoiseTexture = nullptr;
 };
