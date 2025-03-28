@@ -510,10 +510,10 @@ void D3D12App::BuildSSAO()
 void D3D12App::BuildResourceTexture()
 {
 	mDepthTexture = new Texture();
-	mDepthTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+	mDepthTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"DepthMap", mResolveCameraDepth, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
 
 	mNormalTexture = new Texture();
-	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
+	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mResolveCameraNormal, DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 
 	mMSAATexture = new Texture();
 	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -748,6 +748,8 @@ void D3D12App::OnResize()
 	}
 
 	RELEASE_COM(mShadowResource);
+	RELEASE_COM(mResolveCameraDepth);
+	RELEASE_COM(mResolveCameraNormal);
 
 	HR(mSwapChain->ResizeBuffers(SwapChainBufferCount, mWidth, mHeight, mBackBufferFormat, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH));
 
@@ -859,8 +861,8 @@ void D3D12App::OnResize()
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
 		rtvHandle.ptr += CAMERA_NORMALS * mRtvDescriptorSize;
 		md3dDevice->CreateRenderTargetView(mRenderTargets[CAMERA_NORMALS], &RTV_DESC, rtvHandle);
-		if (mNormalTexture)
-			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
+		//if (mNormalTexture)
+		//	mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
 	//Create SSAO Map
@@ -965,6 +967,46 @@ void D3D12App::OnResize()
 			mScreenTexture->ChangeResource(md3dDevice, mSrvHeap, L"ScreenMap", mRenderTargets[(int)eRenderTargetType::SCREEN], DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 	}
 
+	//Create Resolve CameraNormal
+	{
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC RT_DESC =
+		{
+			.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+			.Width = (UINT)mWidth,
+			.Height = (UINT)mHeight,
+			.DepthOrArraySize = 1,
+			.MipLevels = 1,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
+			.SampleDesc = {.Count = 1, .Quality = 0 },
+			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
+		};
+
+		D3D12_CLEAR_VALUE CLEAR_VALUE =
+		{
+			.Format = RT_DESC.Format,
+			.Color = { 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &RT_DESC
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, &CLEAR_VALUE
+			, IID_PPV_ARGS(&mResolveCameraNormal)));
+
+		if(mNormalTexture)
+			mNormalTexture->ChangeResource(md3dDevice, mSrvHeap, L"NormalMap", mResolveCameraNormal, DXGI_FORMAT_R16G16B16A16_FLOAT, false);
+	}
+
 	//Create ShadowMap
 	{
 		D3D12_RESOURCE_DESC texDesc;
@@ -994,41 +1036,83 @@ void D3D12App::OnResize()
 	}
 
 	//Create Depth/Stencil Buffer & View.
-	D3D12_RESOURCE_DESC depthStencilDesc = {};
-	depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-	depthStencilDesc.Alignment = 0;
-	depthStencilDesc.Width = mWidth;
-	depthStencilDesc.Height = mHeight;
-	depthStencilDesc.DepthOrArraySize = 1;
-	depthStencilDesc.MipLevels = 1;
-	depthStencilDesc.Format = mDepthStencilFormat;
-	depthStencilDesc.SampleDesc.Count = MSAA_SAMPLING_COUNT;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+	{
+		D3D12_RESOURCE_DESC depthStencilDesc = {};
+		depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		depthStencilDesc.Alignment = 0;
+		depthStencilDesc.Width = mWidth;
+		depthStencilDesc.Height = mHeight;
+		depthStencilDesc.DepthOrArraySize = 1;
+		depthStencilDesc.MipLevels = 1;
+		depthStencilDesc.Format = mDepthStencilFormat;
+		depthStencilDesc.SampleDesc.Count = MSAA_SAMPLING_COUNT;
+		depthStencilDesc.SampleDesc.Quality = 0;
+		depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
-	D3D12_CLEAR_VALUE optClear = {};
-	optClear.Format = mDepthStencilFormat;
-	optClear.DepthStencil.Depth = 1.0f;
-	optClear.DepthStencil.Stencil = 0;
+		D3D12_CLEAR_VALUE optClear = {};
+		optClear.Format = mDepthStencilFormat;
+		optClear.DepthStencil.Depth = 1.0f;
+		optClear.DepthStencil.Stencil = 0;
 
-	D3D12_HEAP_PROPERTIES heapProperties = {};
-	heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
-	heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	heapProperties.CreationNodeMask = 1;
-	heapProperties.VisibleNodeMask = 1;
+		D3D12_HEAP_PROPERTIES heapProperties = {};
+		heapProperties.Type = D3D12_HEAP_TYPE_DEFAULT;
+		heapProperties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+		heapProperties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+		heapProperties.CreationNodeMask = 1;
+		heapProperties.VisibleNodeMask = 1;
 
-	HR(md3dDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_COMMON, &optClear, IID_PPV_ARGS(&mDepthStencilBuffer)));
+		HR(md3dDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_COMMON, &optClear, IID_PPV_ARGS(&mDepthStencilBuffer)));
 
-	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
-	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
-	dsvDesc.Format = mDepthStencilFormat;
-	auto dsvHandle = DepthStencilView();
-	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, dsvHandle);
-	if(mDepthTexture)
-		mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMS;
+		dsvDesc.Format = mDepthStencilFormat;
+		auto dsvHandle = DepthStencilView();
+		md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, &dsvDesc, dsvHandle);
+		//if (mDepthTexture)
+		//	mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mDepthStencilBuffer, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
+	}
+	
+	//Create Resolve CameraDepth
+	{
+		constexpr D3D12_HEAP_PROPERTIES HEAP_PROPERTIES =
+		{
+			.Type = D3D12_HEAP_TYPE_DEFAULT,
+			.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+			.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+			.CreationNodeMask = 1,
+			.VisibleNodeMask = 1
+		};
+
+		D3D12_RESOURCE_DESC depthStencilDesc = {};
+		depthStencilDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+		depthStencilDesc.Alignment = 0;
+		depthStencilDesc.Width = mWidth;
+		depthStencilDesc.Height = mHeight;
+		depthStencilDesc.DepthOrArraySize = 1;
+		depthStencilDesc.MipLevels = 1;
+		depthStencilDesc.Format = mDepthStencilFormat;
+		depthStencilDesc.SampleDesc.Count = 1;
+		depthStencilDesc.SampleDesc.Quality = 0;
+		depthStencilDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+		depthStencilDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+		D3D12_CLEAR_VALUE optClear = {};
+		optClear.Format = mDepthStencilFormat;
+		optClear.DepthStencil.Depth = 1.0f;
+		optClear.DepthStencil.Stencil = 0;
+
+		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
+			, D3D12_HEAP_FLAG_NONE
+			, &depthStencilDesc
+			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, &optClear
+			, IID_PPV_ARGS(&mResolveCameraDepth)));
+
+		if (mDepthTexture)
+			mDepthTexture->ChangeResource(md3dDevice, mSrvHeap, L"DepthMap", mResolveCameraDepth, DXGI_FORMAT_R24_UNORM_X8_TYPELESS, false);
+	}
 
 
 	D3D12_RESOURCE_BARRIER barrier = {};
@@ -1409,18 +1493,18 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
-		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
-	//SRV To DSV
+	//렌더타겟 상태 변환 (CameraDepth)
 	{
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Transition.pResource = mDepthTexture->GetResource();
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_GENERIC_READ;
+		barrier.Transition.pResource = mDepthStencilBuffer;
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
@@ -1508,7 +1592,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		barrier1.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier1.Transition.pResource = mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL];
 		barrier1.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier1);
 	}
@@ -1524,20 +1608,26 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
-	//후처리 전 기존 MSAA렌더타겟을 SCREEN으로 옮깁니다.
-	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
-
-	//DSV To SRV
 	{
 		D3D12_RESOURCE_BARRIER barrier = {};
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Transition.pResource = mDepthTexture->GetResource();
+		barrier.Transition.pResource = mDepthStencilBuffer;
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		md3dCommandList->ResourceBarrier(1, &barrier);
 	}
+
+	
+	//후처리 전 기존 MSAA렌더타겟을 SCREEN으로 옮깁니다.
+	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
+	
+	ID3D12Resource* normalResource = mNormalTexture->GetResource();
+	ID3D12Resource* depthResource = mDepthTexture->GetResource();
+	
+	md3dCommandList->ResolveSubresource(normalResource, 0, mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], 0, normalResource->GetDesc().Format);
+	md3dCommandList->ResolveSubresource(depthResource, 0, mDepthStencilBuffer, 0, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 
 	//For Bloom Effect
 	{
@@ -1781,7 +1871,7 @@ void D3D12App::PostProcessing()
 	handle1.ptr += (mPostProcessingTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
 
 	auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	handle2.ptr += mBloomHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+	handle2.ptr += mBloomTexture->GetID() * mCbvSrvUavDescriptorSize;
 
 	auto handle3 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	handle3.ptr += mSSAOHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -1931,7 +2021,7 @@ void D3D12App::Bloom()
 
 	//Blurring
 	{
-		BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16);
+		BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16, 2);
 	}
 
 	////Up Scaling 6x6
@@ -2024,7 +2114,7 @@ void D3D12App::Bloom()
 
 	//Blurring
 	{
-		BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 0);
+		//BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 0);
 	}
 }
 
@@ -2225,49 +2315,6 @@ void D3D12App::SSAO()
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
-
-	//// 파이프라인 상태 설정 (컴퓨트 쉐이더)
-	//mSSAOShader->SetPipelineState(md3dCommandList);
-
-	//// 리소스 바인딩
-	//auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//handle0.ptr += mDepthTexture->GetID() * mCbvSrvUavDescriptorSize;
-
-	//auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//handle1.ptr += mNormalTexture->GetID() * mCbvSrvUavDescriptorSize;
-
-	//auto handle2 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//handle2.ptr += mNoiseTexture->GetID() * mCbvSrvUavDescriptorSize;
-
-	//auto handle3 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//handle3.ptr += (mSSAOTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
-
-	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT0, handle0);
-	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT1, handle1);
-	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle2);
-	//md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle3);
-
-	//{
-	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//	md3dCommandList->ResourceBarrier(1, &barrier0);
-	//}
-
-
-	//UINT threadGroupsX = (UINT)ceil(mWidth / 32.0f);
-	//UINT threadGroupsY = (UINT)ceil(mHeight / 32.0f);
-	//md3dCommandList->Dispatch(threadGroupsX, threadGroupsY, 1);
-
-	//{
-	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	//	md3dCommandList->ResourceBarrier(1, &barrier1);
-	//}
-
-	////Blur
-	//{
-	//	BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
-	//}
 }
 
 void D3D12App::Finalize()
@@ -2316,6 +2363,10 @@ void D3D12App::Finalize()
 	{
 		RELEASE_COM(mRenderTargets[i]);
 	}
+
+	RELEASE_COM(mRenderTargets[(UINT)eRenderTargetType::CAMERA_NORMAL]);
+	RELEASE_COM(mDepthStencilBuffer);
+
 
 	RELEASE_COM(mFence);
 	RELEASE_COM(md3dCommandQueue);

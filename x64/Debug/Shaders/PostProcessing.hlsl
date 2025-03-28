@@ -59,7 +59,8 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     // 원본 색상 가져오기
     float4 color = gInput[texCoord];
     float4 bloomColor = gBloomMap[texCoord];
-    float ssao = gSSAOMap[texCoord].x;
+    //float ssao = gSSAOMap[texCoord].x;
+    float ssao = gSSAOMap[texCoord];
     
     color *= ssao;
     color += bloomColor * bloomColor.a;

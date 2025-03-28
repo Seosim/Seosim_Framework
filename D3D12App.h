@@ -133,6 +133,10 @@ private:
 	ID3D12Resource* mRenderTargets[(int)eRenderTargetType::COUNT];
 	ID3D12Resource* mDepthStencilBuffer;
 
+	//TEXTURE2DMS -> TEXTURE2D
+	ID3D12Resource* mResolveCameraNormal = nullptr;
+	ID3D12Resource* mResolveCameraDepth = nullptr;
+
 	static constexpr DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	static constexpr DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 

@@ -30,8 +30,8 @@ Output VS(uint id : SV_VertexID)
     return output;
 }
 
-Texture2DMS<float> DepthMap : register(t2);
-Texture2DMS<float4> NormalMap : register(t3);
+Texture2D DepthMap : register(t2);
+Texture2D NormalMap : register(t3);
 Texture2D NoiseMap : register(t4);
 
 struct Input
@@ -80,8 +80,10 @@ float4 PS(Input input) : SV_TARGET0
 
     // UV 좌표와 화면 크기에 맞는 노이즈 스케일링 적용
     float2 clipUV = input.Position.xy;
-    float3 normal = normalize(NormalMap.Load(int2(int(clipUV.x), int(clipUV.y)), 0).xyz);
-    float pz = DepthMap.Load(int2(int(clipUV.x), int(clipUV.y)), 0).r;
+    float3 normal = normalize(NormalMap.SampleLevel(gsamLinear, input.UV, 0.0f).xyz);
+    //float3 normal = normalize(NormalMap.Load(int2(int(clipUV.x), int(clipUV.y)), 0).xyz);
+    float pz = DepthMap.SampleLevel(gsamLinear, input.UV, 0.0f).r;
+    //DepthMap.Load(int2(int(clipUV.x), int(clipUV.y)), 0).r;
     // 깊이값을 뷰 공간으로 변환
     pz = NdcDepthToViewDepth(pz);
     float3 p = (pz / input.PosV.z) * input.PosV;
@@ -106,7 +108,9 @@ float4 PS(Input input) : SV_TARGET0
         clipProjQ.y *= ScreenHeight;
         
         // 비교 샘플 깊이값을 뷰 공간으로 변환
-        float rz = DepthMap.Load(int2(int(clipProjQ.x), int(clipProjQ.y)), 0).r;
+        //float rz = DepthMap.Load(int2(int(clipProjQ.x), int(clipProjQ.y)), 0).r;
+        float rz = DepthMap.SampleLevel(gsamLinear, projQ.xy, 0.0f).r;
+        
         rz = NdcDepthToViewDepth(rz);
         float3 r = (rz / q.z) * q;
 
