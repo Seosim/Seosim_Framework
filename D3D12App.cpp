@@ -548,6 +548,12 @@ void D3D12App::BuildComputeShader()
 
 	mHBlurShader = new ComputeShader();
 	mHBlurShader->Initialize(md3dDevice, mComputeRootSignature, "HBlur");
+
+	mSSAOHBlurShader = new ComputeShader();
+	mSSAOHBlurShader->Initialize(md3dDevice, mComputeRootSignature, "HSsaoBlur");
+
+	mSSAOVBlurShader = new ComputeShader();
+	mSSAOVBlurShader->Initialize(md3dDevice, mComputeRootSignature, "VSsaoBlur");
 }
 
 void D3D12App::BuildUAVTexture()
@@ -2302,6 +2308,7 @@ void D3D12App::SSAO()
 	{
 		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
 		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
+		//BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
 	}
 
 	//·»´õÅ¸°Ù »óÅÂ º¯È¯
@@ -2314,6 +2321,137 @@ void D3D12App::SSAO()
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
+	}
+}
+
+void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Texture* hBlurTexture)
+{
+	//VBlur
+	{
+		mSSAOVBlurShader->SetPipelineState(md3dCommandList);
+
+		auto ssaoHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		ssaoHandle.ptr += originalID * mCbvSrvUavDescriptorSize;
+
+		auto outputHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		outputHandle.ptr += (vBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		auto normalHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		normalHandle.ptr += mNormalTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto depthHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		depthHandle.ptr += mDepthTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT0, normalHandle);
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT1, depthHandle);
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, ssaoHandle);
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, outputHandle);
+
+		//SRV -> UAV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
+
+		UINT numGroupsX = (UINT)ceilf(mWidth);
+		UINT numGroupsY = (UINT)ceilf(mHeight / 16.0f);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		//UAV -> SRV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
+	}
+
+	//HBlur
+	{
+		mSSAOHBlurShader->SetPipelineState(md3dCommandList);
+
+		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle0.ptr += vBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+		auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		handle1.ptr += (hBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle0);
+		md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle1);
+
+		//SRV -> UAV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
+
+		UINT numGroupsX = (UINT)ceilf(mWidth / 16.0f);
+		UINT numGroupsY = (UINT)ceilf(mHeight);
+		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+		//UAV -> SRV
+		{
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+		}
+	}
+
+	constexpr int BLUR_COUNT = 2;
+	for (int i = 0; i < BLUR_COUNT; ++i)
+	{
+		//VBlur
+		{
+			mSSAOVBlurShader->SetPipelineState(md3dCommandList);
+
+			auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle0.ptr += hBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+			auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle1.ptr += (vBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+			md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle0);
+			md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle1);
+
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+
+			UINT numGroupsX = (UINT)ceilf(mWidth);
+			UINT numGroupsY = (UINT)ceilf(mHeight / 16.0f);
+			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier1);
+		}
+
+		//HBlur
+		{
+			mSSAOHBlurShader->SetPipelineState(md3dCommandList);
+
+			auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle0.ptr += vBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+			auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+			handle1.ptr += (hBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+			md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::INPUT2, handle0);
+			md3dCommandList->SetComputeRootDescriptorTable((UINT)eComputeRootParamter::OUTPUT, handle1);
+
+			auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+			md3dCommandList->ResourceBarrier(1, &barrier0);
+
+			UINT numGroupsX = (UINT)ceilf(mWidth / 16.0f);
+			UINT numGroupsY = (UINT)ceilf(mHeight);
+			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+			md3dCommandList->ResourceBarrier(1, &barrier1);
+		}
 	}
 }
 
@@ -2347,6 +2485,8 @@ void D3D12App::Finalize()
 		delete mUpSampleShader;
 		delete mVBlurShader;
 		delete mHBlurShader;
+		delete mSSAOHBlurShader;
+		delete mSSAOVBlurShader;
 	}
 
 	for (auto& texturePointer : Texture::TextureList)

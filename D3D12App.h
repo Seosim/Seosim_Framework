@@ -91,6 +91,8 @@ public:
 
 	//SSAO
 	void SSAO();
+	void BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Texture* hBlurTexture);
+
 
 	void Finalize();
 private:
@@ -220,6 +222,8 @@ private:
 
 	//SSAO non ComputeShader
 	Shader* mSSAO = nullptr;
+	ComputeShader* mSSAOVBlurShader = nullptr;
+	ComputeShader* mSSAOHBlurShader = nullptr;
 	Texture* mSSAOTexture = nullptr;
 	Texture* mSSAOVBlurTexture = nullptr;
 	Texture* mSSAOHBlurTexture = nullptr;

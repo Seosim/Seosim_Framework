@@ -28,7 +28,7 @@ static float BlurWeights[12] =
     0.0
 };
 
-[numthreads(1, 16, 1)]
+[numthreads(16, 1, 1)]
 void CS(uint3 DTid : SV_DispatchThreadID)
 {
     int2 texCoord = int2(DTid.xy);
@@ -41,7 +41,7 @@ void CS(uint3 DTid : SV_DispatchThreadID)
     static const int gBlurRadius = 5;
     
     float4 color = BlurWeights[gBlurRadius] * gInputMap.Load(int3(texCoord, 0)).r;
-    float totalWeight = BlurWeights[gBlurRadius]; 
+    float totalWeight = BlurWeights[gBlurRadius];
     
     float3 centerNormal = gNormalMap.Load(int3(texCoord, 0)).xyz;
     float centerDepth = gDepthMap.Load(int3(texCoord, 0)).r;
@@ -51,7 +51,7 @@ void CS(uint3 DTid : SV_DispatchThreadID)
         if (i == 0)
             continue;
         
-        int2 offsetCoord = texCoord + int2(i, 0);
+        int2 offsetCoord = texCoord + int2(0, i);
         if (offsetCoord.y < 0 || offsetCoord.y >= height)
             continue;
         

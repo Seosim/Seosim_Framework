@@ -205,5 +205,8 @@
     <FxCompile Include="Shaders\VSsaoBlur.hlsl">
       <Filter>소스 파일\Shader</Filter>
     </FxCompile>
+    <FxCompile Include="Shaders\HSsaoBlur.hlsl">
+      <Filter>소스 파일\Shader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
