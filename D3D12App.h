@@ -182,6 +182,7 @@ private:
 
 	//Skybox
 	GameObject* mSkybox = nullptr;
+	Material* mSkyboxMat = nullptr;
 
 	Texture* mDepthTexture = nullptr;
 	Texture* mNormalTexture = nullptr;

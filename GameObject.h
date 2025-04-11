@@ -6,6 +6,7 @@
 #include "Transform.h"
 #include "Material.h"
 #include "RigidBody.h"
+#include "MeshRenderer.h"
 #include "BoxCollider.h"
 #include "d3dUtil.h"
 #include "ComponentManager.h"

@@ -93,6 +93,9 @@
     <ClCompile Include="BoxCollider.cpp">
       <Filter>소스 파일\Component\Collider</Filter>
     </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>소스 파일\Component</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -163,6 +166,9 @@
     </ClInclude>
     <ClInclude Include="BoxCollider.h">
       <Filter>헤더 파일\Component\Collider</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>헤더 파일\Component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

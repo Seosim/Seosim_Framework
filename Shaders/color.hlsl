@@ -62,51 +62,43 @@ VertexOut VS(VertexIn vin)
 PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
-    
-    // 디퓨즈 맵 샘플링
-    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
-    
-    diffuseAlbedo = LinearizeColor(diffuseAlbedo);
-    
-    // Normalized vectors
-    float3 N = normalize(pin.NormalW); // 표면 법선 벡터
-    float3 L = -normalize(lightDir); // 조명 방향
-    float3 V = normalize(cameraPos - pin.PosW); // 카메라 방향 (뷰 벡터)
-    float3 H = normalize(L + V); // Halfway 벡터 (Blinn-Phong)
 
-    // Ambient term
-    float3 ambient = diffuseAlbedo.rgb;
+    float3 albedo = LinearizeColor(BaseColor).rgb;
 
-    // Diffuse term
-    float diff = max(dot(N, L), 0.0);
-    float3 diffuse = diff * diffuseAlbedo.rgb;
+    float3 N = normalize(pin.NormalW);
+    float3 V = normalize(cameraPos - pin.PosW);
+    float3 L = -normalize(lightDir);
+    float3 H = normalize(L + V);
 
-    // Specular term (Blinn-Phong)
-    float shininess = 64.0; // 조명 강도
-    float spec = pow(max(dot(N, H), 0.0), shininess);
-    float3 specular = spec * lightColor;
+    float3 dielectricF0 = float3(0.04, 0.04, 0.04);
+    float3 F0 = lerp(dielectricF0, albedo, Metalic);
 
-    // 그림자 계산
-    float shadowFac = CalcShadowFactor(pin.ShadowPosH);
+    float3 F = F0 + (1.0 - F0) * pow(1.0 - max(dot(H, V), 0.0), 5.0);
 
-    // Fresnel 효과 계산 (Fresnel-Schlick Approximation)
-    float F0 = 0.04; // 기본 반사율
-    float fresnel = F0 + (1.0 - F0) * pow(1.0 - dot(V, N), 5);
+    float NdotL = max(dot(N, L), 0.0);
 
-    // 환경 맵 샘플링
+    float3 diffuse = (1.0 - F) * albedo / 3.141592 * lightColor;
+
+    float roughness = 1.0 - Smoothness;
+    float shininess = lerp(1.0, 256.0, Smoothness);
+    float specularTerm = pow(max(dot(N, H), 0.0), shininess);
+    float3 specular = F * specularTerm * lightColor;
+
     float3 R = reflect(-V, N);
     float3 envColor = gCubeMap.Sample(gsamLinear, R).rgb;
+    float3 environment = lerp(envColor * albedo, envColor * F, Metalic);
+    environment *= Smoothness;
 
-    // Fresnel 효과를 반영하여 환경 맵 색상 조정
-    float3 finalEnvColor = envColor * fresnel;
+    float shadowFac = CalcShadowFactor(pin.ShadowPosH);
 
-    // 최종 색상 조합
-    float3 finalColor = ambient + (diffuse + specular) * shadowFac + finalEnvColor * 0.2f;
+    float3 ambient = albedo * 0.5f;
 
-    pixelOut.color = float4(finalColor, 1.0f);
-    
-    pixelOut.normal = float4(mul(normalize(N), (float3x3) gView), 0.0f);
-    
-    
+    float3 color = ambient + (diffuse + specular) * NdotL * shadowFac + environment * 0.2f;
+
+    color += Emission.rgb;
+
+    pixelOut.color = float4(color, 1.0f);
+    pixelOut.normal = float4(mul(N, (float3x3) gView), 0.0f);
+
     return pixelOut;
 }

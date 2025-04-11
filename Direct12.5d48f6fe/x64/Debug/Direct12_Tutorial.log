@@ -8,34 +8,37 @@ D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(487,34): warning C4244: '인수'
 D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(487,26): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1164,35): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(699,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1164,27): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1199,35): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2149,40): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1199,27): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2182,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2181,40): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2215,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2214,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2244,42): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2247,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2357,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2276,42): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2390,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2389,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2421,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2422,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2448,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2453,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2480,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\memory(3434,56): warning C4267: '인수': 'size_t'에서 'UINT'(으)로 변환하면서 데이터가 손실될 수 있습니다.

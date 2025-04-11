@@ -3,6 +3,8 @@
 #include "Vertex.h"
 #include "d3dUtil.h"
 
+std::unordered_map<std::string, Mesh*> Mesh::MeshList{};
+
 Mesh::~Mesh()
 {
 	RELEASE_COM(mPositionBufferGPU);
@@ -18,7 +20,13 @@ Mesh::~Mesh()
 
 void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::string& filePath)
 {
+	//먼저 MeshList에서 해당 Mesh가 있는지 검사하고 없을 시 이 함수 실행
+	ASSERT(MeshList.find(filePath) == MeshList.end());
+
 	std::ifstream in{ filePath, std::ios::binary };
+
+	MeshList[filePath] = this;
+
 	int vertexCount = 0;
 	in.read(reinterpret_cast<char*>(&vertexCount), sizeof(vertexCount));
 
@@ -88,53 +96,10 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 		.SizeInBytes = static_cast<UINT>(sizeof(UINT) * totalIndices.size()),
 		.Format = DXGI_FORMAT_R32_UINT,
 	};
-	//SubmeshGeometry submesh;
-	//submesh.IndexCount = (UINT)totalIndices.size();
-	//submesh.StartIndexLocation = 0;
-	//submesh.BaseVertexLocation = 0;
-	//DrawArgs["box"] = submesh;
 }
 
 void Mesh::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList)
 {
-	//std::array<Vertex, 8> vertices =
-	//{
-	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::White) }),
-	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Black) }),
-	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, -1.0f), XMFLOAT4(Colors::Red) }),
-	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, -1.0f), XMFLOAT4(Colors::Green) }),
-	//	Vertex({ XMFLOAT3(-1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Blue) }),
-	//	Vertex({ XMFLOAT3(-1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Yellow) }),
-	//	Vertex({ XMFLOAT3(+1.0f, +1.0f, +1.0f), XMFLOAT4(Colors::Cyan) }),
-	//	Vertex({ XMFLOAT3(+1.0f, -1.0f, +1.0f), XMFLOAT4(Colors::Magenta) })
-	//};
-
-	//std::array<std::uint16_t, 36> indices =
-	//{
-	//	// front face
-	//	0, 1, 2,
-	//	0, 2, 3,
-
-	//	// back face
-	//	4, 6, 5,
-	//	4, 7, 6,
-
-	//	// left face
-	//	4, 5, 1,
-	//	4, 1, 0,
-
-	//	// right face
-	//	3, 2, 6,
-	//	3, 6, 7,
-
-	//	// top face
-	//	1, 5, 6,
-	//	1, 6, 2,
-
-	//	// bottom face
-	//	4, 0, 3,
-	//	4, 3, 7
-	//};
 
 	std::ifstream in{ "Capsule.bin", std::ios::binary };
 	int vertexCount = 0;
@@ -216,14 +181,32 @@ void Mesh::Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommand
 
 void Mesh::Render(ID3D12GraphicsCommandList* pCommandList)
 {
+	SetBuffers(pCommandList);
+	RenderSubMeshes(pCommandList);
+}
+
+void Mesh::SetBuffers(ID3D12GraphicsCommandList* pCommandList)
+{
 	pCommandList->IASetVertexBuffers(0, mVertexBufferViews.size(), mVertexBufferViews.data());
 	pCommandList->IASetIndexBuffer(&mIndexBufferView);
 	pCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
 
+void Mesh::RenderSubMeshes(ID3D12GraphicsCommandList* pCommandList, const int subMeshIndex)
+{
 	int offset = 0;
 	for (int i = 0; i < mSubMeshIndex.size(); ++i)
 	{
-		pCommandList->DrawIndexedInstanced(mSubMeshIndex[i], 1, offset, 0, 0);
+		if (i == subMeshIndex)
+		{
+			pCommandList->DrawIndexedInstanced(mSubMeshIndex[subMeshIndex], 1, offset, 0, 0);
+			return;
+		}
 		offset += mSubMeshIndex[i];
 	}
+}
+
+int Mesh::GetSubMeshCount() const
+{
+	return mSubMeshIndex.size();
 }

@@ -491,14 +491,18 @@ void D3D12App::BuildSkybox()
 {
 	GameObject* skybox = new GameObject();
 	skybox->AddComponent<Transform>();
-	skybox->AddComponent<Material>();
-	skybox->AddComponent<Mesh>();
+	//skybox->AddComponent<Material>();
+	skybox->AddComponent<MeshRenderer>();
 	
-	Material& material = skybox->GetComponent<Material>();
-	Mesh& mesh = skybox->GetComponent<Mesh>();
+	mSkyboxMat = new Material;
+	Mesh* mesh = new Mesh;
 
-	material.Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, NULL, Shader::eType::Skybox);
-	mesh.LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/Cube.bin");
+	mSkyboxMat->Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, NULL, Shader::eType::Skybox);
+	mesh->LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/Cube.bin");
+
+	MeshRenderer& meshRenderer = skybox->GetComponent<MeshRenderer>();
+	meshRenderer.SetMesh(mesh);
+	meshRenderer.AddMaterial(mSkyboxMat);
 
 	mSkybox = skybox;
 }
@@ -658,6 +662,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 	if (bHasMesh)
 	{
+
 		int meshLength = 0;
 		char meshName[64] = {};
 
@@ -668,31 +673,61 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 		meshPath += meshName;
 		meshPath += ".bin";
 
-		gameObject->AddComponent<Mesh>();
-		Mesh& mesh = gameObject->GetComponent<Mesh>();
+		Mesh* mesh = nullptr;
+		if (Mesh::MeshList.find(meshPath) != Mesh::MeshList.end())
+		{
+			mesh = Mesh::MeshList[meshPath];
+		}
+		else
+		{
+			mesh = new Mesh;
+			mesh->LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+		}
 
-		mesh.LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+		gameObject->AddComponent<MeshRenderer>();
+		MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
+		meshRenderer.SetMesh(mesh);
 	}
 
 	bool bHasMaterial;
+	UINT materialCount;
 	loader.read(reinterpret_cast<char*>(&bHasMaterial), sizeof(bool));
+	loader.read(reinterpret_cast<char*>(&materialCount), sizeof(UINT));
 
 	if (bHasMaterial)
 	{
-		int materialLength = 0;
-		char materialName[64] = {};
+		for (int i = 0; i < materialCount; ++i)
+		{
+			int materialLength = 0;
+			char materialName[64] = {};
 
-		loader.read(reinterpret_cast<char*>(&materialLength), sizeof(int));
-		loader.read(reinterpret_cast<char*>(materialName), materialLength);
-		materialName[materialLength] = '\0';
-		std::string materialPath = "Assets/Materials/";
-		materialPath += materialName;
-		materialPath += ".bin";
+			loader.read(reinterpret_cast<char*>(&materialLength), sizeof(int));
+			loader.read(reinterpret_cast<char*>(materialName), materialLength);
+			materialName[materialLength] = '\0';
+			std::string materialPath = "Assets/Materials/";
+			materialPath += materialName;
+			materialPath += ".bin";
 
-		gameObject->AddComponent<Material>();
-		Material& cMaterial = gameObject->GetComponent<Material>();
+			Material* material = nullptr;
+			if (Material::MaterialList.find(materialPath) != Material::MaterialList.end())
+			{
+				material = Material::MaterialList[materialPath];
+			}
+			else
+			{
+				material = new Material;
+				material->LoadMaterialData(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, materialPath);
+			}
 
-		cMaterial.LoadMaterialData(md3dDevice,md3dCommandList, mRootSignature, mSrvHeap, materialPath);
+			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
+			meshRenderer.AddMaterial(material);
+
+			//gameObject->AddComponent<Material>();
+			//Material& cMaterial = gameObject->GetComponent<Material>();
+
+			//cMaterial.LoadMaterialData(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, materialPath);
+		}
+
 	} 
 
 	int childCount;
@@ -706,7 +741,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/0321Test.bin");
+	LoadHierarchyData("Assets/Hierarchies/0412Test.bin");
 
 	{
 		Shader::Command command = Shader::DefaultCommand();
@@ -1582,12 +1617,14 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		mObjectCB->CopyData(0, objConstants);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
 
-		Material& skyboxMat = mSkybox->GetComponent<Material>();
-		Mesh& skyboxMesh = mSkybox->GetComponent<Mesh>();
+		MeshRenderer& meshRenderer = mSkybox->GetComponent<MeshRenderer>();
 
-		skyboxMat.SetConstantBufferView(md3dCommandList, mSrvHeap);
-		skyboxMat.UpdateTextureOnSrv(md3dCommandList, mSrvHeap, (UINT)eRootParameter::CUBE_MAP, 0);
-		skyboxMesh.Render(md3dCommandList);
+		Material* skyboxMat = meshRenderer.GetMaterial();
+		Mesh* skyboxMesh = meshRenderer.GetMesh();
+
+		skyboxMat->SetConstantBufferView(md3dCommandList, mSrvHeap);
+		skyboxMat->UpdateTextureOnSrv(md3dCommandList, mSrvHeap, (UINT)eRootParameter::CUBE_MAP, 0);
+		skyboxMesh->Render(md3dCommandList);
 	}
 
 	RenderObject(gameTimer.DeltaTime());
@@ -1780,13 +1817,10 @@ void D3D12App::RenderObject(const float deltaTime)
 		mObjectCB->CopyData(index, objConstants);
 		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
-		if (gameObject->HasComponent<Mesh>())
+		if (gameObject->HasComponent<MeshRenderer>())
 		{
-			Mesh& mesh = gameObject->GetComponent<Mesh>();
-			Material& mat = gameObject->GetComponent<Material>();
-
-			mat.SetConstantBufferView(md3dCommandList, mSrvHeap);
-			mesh.Render(md3dCommandList);
+			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
+			meshRenderer.Render(md3dCommandList, mSrvHeap);
 		}
 	}
 }
@@ -1849,14 +1883,12 @@ void D3D12App::RenderObjectForShadow()
 			mObjectCB->CopyData(index, objConstants);
 			md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
-			if (gameObject->HasComponent<Mesh>())
+			if (gameObject->HasComponent<MeshRenderer>())
 			{
-				Mesh& mesh = gameObject->GetComponent<Mesh>();
-				Material& mat = gameObject->GetComponent<Material>();
+				MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 
-				mat.UpdateTextureOnSrv(md3dCommandList, mSrvHeap);
-
-				mesh.Render(md3dCommandList);
+				Mesh* mesh = meshRenderer.GetMesh();
+				mesh->Render(md3dCommandList);
 			}
 		}
 	}
@@ -2467,6 +2499,7 @@ void D3D12App::Finalize()
 	delete mpCamera;
 	delete mpLight;
 	delete mSkybox;
+	delete mSkyboxMat;
 	delete mpShadow;
 
 	for (auto shaderPointer : Shader::ShaderList)
@@ -2474,6 +2507,18 @@ void D3D12App::Finalize()
 		delete shaderPointer.second;
 	}
 	Shader::ShaderList.clear();
+
+	for (auto materialPointer : Material::MaterialList)
+	{
+		delete materialPointer.second;
+	}
+	Material::MaterialList.clear();
+
+	for (auto meshPointer : Mesh::MeshList)
+	{
+		delete meshPointer.second;
+	}
+	Mesh::MeshList.clear();
 
 	//Delete Shaders
 	{

@@ -1,9 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "IComponent.h"
 
-
-class Mesh final : public IComponent {
+class Mesh {
 public:
 	struct SubmeshGeometry
 	{
@@ -18,12 +16,18 @@ public:
 	~Mesh();
 
 	Mesh(const Mesh& rhs) = delete;
-	virtual void Awake() {}
 
 	void LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::string& filePath);
 
-	virtual void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
+
 	void Render(ID3D12GraphicsCommandList* pCommandList);
+	void SetBuffers(ID3D12GraphicsCommandList* pCommandList);
+	void RenderSubMeshes(ID3D12GraphicsCommandList* pCommandList, const int subMeshIndex = 0);
+
+	int GetSubMeshCount() const;
+
+	static std::unordered_map<std::string, Mesh*> MeshList;
 protected:
 	ID3DBlob* mVertexBufferCPU = nullptr;
 	ID3DBlob* mIndexBufferCPU = nullptr;

@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Material.h"
 
+std::unordered_map<std::string, Material*> Material::MaterialList{};
+
 void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap)
 {
 	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mMaterialCB->Resource()->GetGPUVirtualAddress();
@@ -13,8 +15,10 @@ void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID
 
 void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, const std::string& filePath)
 {
-	std::ifstream in{ filePath, std::ios::binary };
+	//먼저 MaterialList에서 해당 Material이 있는지 검사하고 없을 시 이 함수 실행
+	ASSERT(MaterialList.find(filePath) == MaterialList.end());
 
+	std::ifstream in{ filePath, std::ios::binary };
 
 	//TODO: 쉐이더 이름 별로 받아오는 데이터 다르게 처리
 	struct LitCBuffer {
@@ -120,6 +124,7 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 		Shader::ShaderList[shaderType] = mpShader;
 	}
 
+	MaterialList[filePath] = this;
 
 	//Initialize(pDevice, pCommandList, pRootSignature, pSrvHeap, cBuffer, shaderType);
 }

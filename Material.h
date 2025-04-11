@@ -2,16 +2,15 @@
 
 #include "pch.h"
 
-#include "IComponent.h"
 #include "Shader.h"
 #include "Texture.h"
 #include "UploadBuffer.h"
 
-class Material final : public IComponent {
+class Material {
 public:
+	Material() = default;
 	~Material() {}
-
-	virtual void Awake() {}
+	Material(const Material&) = delete;
 
 	template<typename T>
 	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, const T& data, Shader::eType shaderType)
@@ -104,6 +103,8 @@ public:
 	void UpdateTextureOnSrv(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap);
 
 	void UpdateTextureOnSrv(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap, UINT rootParameterIndex, UINT textureIndex);
+
+	static std::unordered_map<std::string, Material*> MaterialList;
 private:
 	Shader* mpShader = nullptr;
 	std::unique_ptr<UploadBuffer> mMaterialCB = nullptr;
