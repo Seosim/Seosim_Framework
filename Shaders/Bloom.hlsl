@@ -6,7 +6,9 @@ float GetBloomCurve(float x)
     float result = x;
     x *= 2.0f;
     
-    result = x * 0.05f + max(0, x - 1.26f) * 0.5f;
+    float value = 0.16f;
+    
+    result = x * 0.05f + max(0, x - value) * 0.5f;
     return result * 0.5f;
 }
 
@@ -28,9 +30,6 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
     float bloomFactor = GetBloomCurve(luminance);
 
     float3 bloomColor = color.rgb * bloomFactor / luminance;
-    
-    //감마 보정 처리된 값 원상 복구
-    //bloomColor = pow(bloomColor, 1 / 2.2f);
 
     gOutput[uv] = float4(bloomColor, 1.0);
 }

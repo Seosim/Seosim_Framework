@@ -11,7 +11,9 @@ public:
 	~MeshRenderer() {}
 	MeshRenderer(const MeshRenderer&) = delete;
 
-	void Awake() {}
+	virtual void Awake() {}
+
+	virtual void Update(const float deltaTime);
 
 	void SetMesh(Mesh* mesh);
 	void AddMaterial(Material* material);

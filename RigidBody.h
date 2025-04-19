@@ -11,6 +11,7 @@ public:
 
 	virtual void Awake() {}
 	
+	virtual void Update(const float deltaTime);
 
 	void UpdatePhysics(const float deltaTime);
 

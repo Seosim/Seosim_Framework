@@ -62,7 +62,7 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     float ssao = gSSAOMap[texCoord];
     
     color *= ssao;
-    //color += bloomColor * bloomColor.a;
+    color += bloomColor * bloomColor.a;
     
     
     // ACES 톤 매핑 적용

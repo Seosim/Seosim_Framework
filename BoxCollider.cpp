@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "BoxCollider.h"
 
+void BoxCollider::Update(const float deltaTime)
+{
+}
+
 void BoxCollider::Initialize(Transform* pTransform, const XMFLOAT3& size)
 {
 	mTransform = pTransform;

@@ -15,6 +15,8 @@ public:
 
 	virtual void Awake() {}
 
+	virtual void Update(const float deltaTime);
+
 	enum class Space
 	{
 		World,
@@ -28,7 +30,6 @@ public:
 	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position, Space space = Space::Local);
 	void Move(const XMFLOAT3& velocity, Space space = Space::World);
-
 
 	void SetScale(const XMFLOAT3& scale);
 
@@ -49,9 +50,14 @@ public:
 
 	GameObject* GetParent() const;
 	void SetParent(GameObject* parent);
-	XMMATRIX getLocalToWorldTransform() const;
+
+	GameObject* GetChild(int index = 0) const;
+	void AddChild(GameObject* child);
+
+ 	XMMATRIX getLocalToWorldTransform() const;
 
 	void SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale);
+
 private:
 	XMFLOAT4X4 mLocalTransform = MATRIX::Identify4x4();
 
@@ -62,4 +68,5 @@ private:
 	XMFLOAT3 mScale = { 1.0f, 1.0f, 1.0f };
 
 	GameObject* mParent = nullptr;
+	std::vector<GameObject*> mChildren;
 };

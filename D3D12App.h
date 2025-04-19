@@ -55,7 +55,7 @@ public:
 	void BuildUAVTexture();
 
 	void LoadHierarchyData(const std::string& filePath);
-	void LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
+	GameObject* LoadGameObjectData(std::ifstream& loader, GameObject* parent = nullptr);
 	void BuildObjects();
 
 	//Collision Check

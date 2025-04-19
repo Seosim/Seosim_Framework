@@ -24,6 +24,18 @@ public:
 		return componentMangager;
 	}
 
+	void UpdateComponent(const float deltaTime)
+	{
+		for (auto& Components : mComponents)
+		{
+			for (auto& Component : Components.second)
+			{
+				IComponent* component = Component.second;
+				component->Update(deltaTime);
+			}
+		}
+	}
+
 	template<class Component>
 	void AddComponent(int objectID) {
 		static unsigned int componentID = -1;
@@ -31,7 +43,6 @@ public:
 		if (componentID == -1)
 		{
 			componentID = GetID<Component>(mGlobalID++);
-
 		}
 
 		mComponents[objectID][componentID] = new Component();
@@ -65,7 +76,7 @@ public:
 	template<class Component>
 	bool HasComponent(int objectID)
 	{
-		return (mComponents[objectID][GetID<Component>()] != nullptr);
+		return (mComponents[objectID].find(GetID<Component>()) != mComponents[objectID].end());
 	}
 
 private:

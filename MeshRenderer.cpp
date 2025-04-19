@@ -1,6 +1,10 @@
 #include "pch.h"
 #include "MeshRenderer.h"
 
+void MeshRenderer::Update(const float deltaTime)
+{
+}
+
 void MeshRenderer::SetMesh(Mesh* mesh)
 {
 	ASSERT(mMesh == nullptr);	//메쉬가 이미 등록되어 있을 시 사용 x

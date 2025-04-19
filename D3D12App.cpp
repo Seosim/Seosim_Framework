@@ -620,7 +620,7 @@ void D3D12App::LoadHierarchyData(const std::string& filePath)
 	LoadGameObjectData(loader);
 }
 
-void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
+GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
 	GameObject* gameObject = new GameObject();
 
@@ -639,7 +639,7 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	loader.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
 
 	cTransform.SetParent(parent);
-	cTransform.SetTransformData(position, rotation, scale);
+	cTransform.SetTransformData(position, rotation, scale); 
 
 	//TODO: 익스포터에서 RigidBody 사용유무 체크해야함. 현재는 그냥 다 넣는 중
 	{
@@ -649,20 +649,19 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	}
 
 
-	//TODO: 익스포터에서 Collider 사용 유무 체크해야함. 현재는 그냥 다 넣는 중
-	{
-		float size = 0.25f;
-		gameObject->AddComponent<BoxCollider>();
-		BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
-		boxCollider.Initialize(&cTransform, { size, size, size });
-	}
+	////TODO: 익스포터에서 Collider 사용 유무 체크해야함. 현재는 그냥 다 넣는 중
+	//{
+	//	float size = 0.25f;
+	//	gameObject->AddComponent<BoxCollider>();
+	//	BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
+	//	boxCollider.Initialize(&cTransform, { size, size, size });
+	//}
 
 	bool bHasMesh;
 	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
 
 	if (bHasMesh)
 	{
-
 		int meshLength = 0;
 		char meshName[64] = {};
 
@@ -690,12 +689,14 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	}
 
 	bool bHasMaterial;
-	UINT materialCount;
 	loader.read(reinterpret_cast<char*>(&bHasMaterial), sizeof(bool));
-	loader.read(reinterpret_cast<char*>(&materialCount), sizeof(UINT));
 
 	if (bHasMaterial)
 	{
+		UINT materialCount;
+		loader.read(reinterpret_cast<char*>(&materialCount), sizeof(UINT));
+
+
 		for (int i = 0; i < materialCount; ++i)
 		{
 			int materialLength = 0;
@@ -721,11 +722,6 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 
 			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 			meshRenderer.AddMaterial(material);
-
-			//gameObject->AddComponent<Material>();
-			//Material& cMaterial = gameObject->GetComponent<Material>();
-
-			//cMaterial.LoadMaterialData(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, materialPath);
 		}
 
 	} 
@@ -733,15 +729,16 @@ void D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 	int childCount;
 	loader.read(reinterpret_cast<char*>(&childCount), sizeof(int));
 
+
 	for (int i = 0; i < childCount; ++i)
 	{
-		LoadGameObjectData(loader, gameObject);
+		cTransform.AddChild(LoadGameObjectData(loader, gameObject));
 	}
 }
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/0412Test.bin");
+	LoadHierarchyData("Assets/Hierarchies/0413Test.bin");
 
 	{
 		Shader::Command command = Shader::DefaultCommand();
@@ -1464,14 +1461,16 @@ int D3D12App::Update()
 
 void D3D12App::UpdatePhysics()
 {
-	for (GameObject* gameObject : mGameObjects)
-	{
-		if (gameObject->HasComponent<RigidBody>())
-		{
-			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-			rigidBody.UpdatePhysics(mTimer.DeltaTime());
-		}
-	}
+	ComponentManager::Instance().UpdateComponent(mTimer.DeltaTime());
+
+	//for (GameObject* gameObject : mGameObjects)
+	//{
+	//	if (gameObject->HasComponent<RigidBody>())
+	//	{
+	//		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+	//		rigidBody.UpdatePhysics(mTimer.DeltaTime());
+	//	}
+	//}
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
@@ -1779,7 +1778,7 @@ void D3D12App::RenderObject(const float deltaTime)
 		mpCamera->SetMatrix(mView, mProj);
 
 		//HACK: RIGID BODY 테스트
-		if (index == 3)
+		if (index == 1)
 		{
 			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 			float speed = 30.0f;
@@ -1887,7 +1886,9 @@ void D3D12App::RenderObjectForShadow()
 			{
 				MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 
+				Material* material = meshRenderer.GetMaterial();
 				Mesh* mesh = meshRenderer.GetMesh();
+				material->UpdateTextureOnSrv(md3dCommandList, mSrvHeap);
 				mesh->Render(md3dCommandList);
 			}
 		}

@@ -49,8 +49,8 @@ void Shadow::SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList* pCommandL
 
 void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList)
 {
-	float radius = 20.0277557f;
-	//float radius = 3.0f;
+	//float radius = 20.0277557f;
+	float radius = 100.0f;
 
 	// Only the first "main" light casts a shadow.
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);

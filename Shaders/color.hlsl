@@ -59,6 +59,8 @@ VertexOut VS(VertexIn vin)
     return vout;
 }
 
+static const float PI = 3.141592;
+
 PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
@@ -77,7 +79,7 @@ PixelOut PS(VertexOut pin)
 
     float NdotL = max(dot(N, L), 0.0);
 
-    float3 diffuse = (1.0 - F) * albedo / 3.141592 * lightColor;
+    float3 diffuse = (1.0 - F) * albedo / PI * lightColor;
 
     float roughness = 1.0 - Smoothness;
     float shininess = lerp(1.0, 256.0, Smoothness);

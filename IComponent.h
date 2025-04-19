@@ -8,5 +8,7 @@ public:
 	IComponent(const IComponent&) = delete;
 
 	virtual void Awake() = 0;
+
+	virtual void Update(const float deltaTime) = 0;
 private:
 };

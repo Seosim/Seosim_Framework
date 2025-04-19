@@ -2,6 +2,11 @@
 #include "GameObject.h"
 #include "Transform.h"
 
+void Transform::Update(const float deltaTime)
+{
+
+}
+
 //Component Transform
 XMMATRIX Transform::GetLocalTransform() const
 {
@@ -229,6 +234,16 @@ GameObject* Transform::GetParent() const
 void Transform::SetParent(GameObject* parent)
 {
 	mParent = parent;
+}
+
+GameObject* Transform::GetChild(int index) const
+{
+	return mChildren[index];
+}
+
+void Transform::AddChild(GameObject* child)
+{
+	mChildren.push_back(child);
 }
 
 XMMATRIX Transform::getLocalToWorldTransform() const

@@ -11,6 +11,8 @@ public:
 
 	virtual void Awake() {};
 
+	virtual void Update(const float deltaTime);
+
 	void Initialize(Transform* pTransform, const XMFLOAT3& size);
 
 	void UpdateTransform();

@@ -1,6 +1,11 @@
 #include "pch.h"
 #include "RigidBody.h"
 
+void RigidBody::Update(const float deltaTime)
+{
+	UpdatePhysics(deltaTime);
+}
+
 void RigidBody::UpdatePhysics(const float deltaTime)
 {
 	XMFLOAT3 position = mTransform->GetLocalPosition();
