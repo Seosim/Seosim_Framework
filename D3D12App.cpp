@@ -646,6 +646,14 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		gameObject->AddComponent<RigidBody>();
 		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 		rigidBody.SetTransform(&cTransform);
+
+		//HACK: 컨트롤러 테스트
+		if (mGameObjects.size() == 1)
+		{
+			gameObject->AddComponent<PlayerController>();
+			PlayerController& controller = gameObject->GetComponent<PlayerController>();
+			controller.SetRigidBody(&rigidBody);
+		}
 	}
 
 
@@ -1777,39 +1785,38 @@ void D3D12App::RenderObject(const float deltaTime)
 
 		mpCamera->SetMatrix(mView, mProj);
 
-		//HACK: RIGID BODY 테스트
-		if (index == 1)
-		{
-			RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-			float speed = 30.0f;
+		////HACK: RIGID BODY 테스트
+		//if (index == 1)
+		//{
+		//	RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+		//	float speed = 30.0f;
 
-			if (Input::Instance().GetKey('W'))
-			{
-				XMFLOAT3 forwardVector;
-				XMStoreFloat3(&forwardVector, cTransform.GetForwardVector() * speed * deltaTime);
-				rigidBody.AddForce(forwardVector);
-			}
-			if (Input::Instance().GetKey('S'))
-			{
-				XMFLOAT3 backVector;
-				XMStoreFloat3(&backVector, cTransform.GetForwardVector() * -speed * deltaTime);
-				rigidBody.AddForce(backVector);
-			}
-			if (Input::Instance().GetKey('A'))
-			{
-				XMFLOAT3 leftVector;
-				XMStoreFloat3(&leftVector, cTransform.GetRightVector() * -speed * deltaTime);
-				rigidBody.AddForce(leftVector);
-			}
-			if (Input::Instance().GetKey('D'))
-			{
-				XMFLOAT3 rightVector;
-				XMStoreFloat3(&rightVector, cTransform.GetRightVector() * speed * deltaTime);
-				rigidBody.AddForce(rightVector);
-			}
-		}
+		//	if (Input::Instance().GetKey('W'))
+		//	{
+		//		XMFLOAT3 forwardVector;
+		//		XMStoreFloat3(&forwardVector, cTransform.GetForwardVector() * speed * deltaTime);
+		//		rigidBody.AddForce(forwardVector);
+		//	}
+		//	if (Input::Instance().GetKey('S'))
+		//	{
+		//		XMFLOAT3 backVector;
+		//		XMStoreFloat3(&backVector, cTransform.GetForwardVector() * -speed * deltaTime);
+		//		rigidBody.AddForce(backVector);
+		//	}
+		//	if (Input::Instance().GetKey('A'))
+		//	{
+		//		XMFLOAT3 leftVector;
+		//		XMStoreFloat3(&leftVector, cTransform.GetRightVector() * -speed * deltaTime);
+		//		rigidBody.AddForce(leftVector);
+		//	}
+		//	if (Input::Instance().GetKey('D'))
+		//	{
+		//		XMFLOAT3 rightVector;
+		//		XMStoreFloat3(&rightVector, cTransform.GetRightVector() * speed * deltaTime);
+		//		rigidBody.AddForce(rightVector);
+		//	}
+		//}
 
-		// Update the constant buffer with the latest worldViewProj matrix.
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));

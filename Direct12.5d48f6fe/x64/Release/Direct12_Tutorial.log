@@ -1,5 +1,4 @@
-﻿  BoxCollider.cpp
-  D3D12App.cpp
+﻿  D3D12App.cpp
 D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(3,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
@@ -9,37 +8,37 @@ D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(487,34): warning C4244: '인수'
 D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(487,26): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(700,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(708,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1196,35): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1204,35): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1196,27): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1204,27): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2182,40): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2189,40): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2215,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2222,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2248,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2255,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2277,42): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2284,42): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2390,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2397,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2423,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2430,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2454,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2461,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2481,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2488,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
   (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
   
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\memory(3434,56): warning C4267: '인수': 'size_t'에서 'UINT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
@@ -50,17 +49,17 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.3351
   	컴파일되는 함수 템플릿 인스턴스화 'std::unique_ptr<UploadBuffer,std::default_delete<UploadBuffer>> std::make_unique<UploadBuffer,ID3D12Device*&,const int&,bool,size_t,0>(ID3D12Device *&,const int &,bool &&,size_t &&)'에 대한 참조를 확인하세요.
   
   GameObject.cpp
-  MeshRenderer.cpp
-  RigidBody.cpp
-  Transform.cpp
   main.cpp
 D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(3,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
   (소스 파일 '/main.cpp'을(를) 컴파일하는 중)
   
+  PlayerController.cpp
+  RigidBody.cpp
+  Transform.cpp
   코드를 생성하고 있습니다.
-D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(737): warning C4715: 'D3D12App::LoadGameObjectData': 모든 제어 경로에서 값을 반환하지는 않습니다.
-  67 of 2028 functions ( 3.3%) were compiled, the rest were copied from previous compilation.
-    10 functions were new in current compilation
-    45 functions had inline decision re-evaluated but remain unchanged
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(745): warning C4715: 'D3D12App::LoadGameObjectData': 모든 제어 경로에서 값을 반환하지는 않습니다.
+  31 of 2040 functions ( 1.5%) were compiled, the rest were copied from previous compilation.
+    12 functions were new in current compilation
+    35 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
   Direct12_Tutorial.vcxproj -> D:\문서\GitHub\Direct12_Tutorial\x64\Release\Direct12_Tutorial.exe

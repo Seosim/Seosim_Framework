@@ -53,3 +53,8 @@ void RigidBody::SetTransform(Transform* pTransform)
 {
 	mTransform = pTransform;
 }
+
+Transform* RigidBody::GetTransform() const
+{
+	return mTransform;
+}

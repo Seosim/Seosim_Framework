@@ -18,6 +18,7 @@ public:
 	void AddForce(const XMFLOAT3& force);
 
 	void SetTransform(Transform* pTransform);
+	Transform* GetTransform() const;
 private:
 	Transform* mTransform = nullptr;
 	XMFLOAT3 mVelocity = {};

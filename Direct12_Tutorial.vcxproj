@@ -163,6 +163,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PlayerController.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Shadow.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PlayerController.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Shadow.h" />
