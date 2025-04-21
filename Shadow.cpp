@@ -52,9 +52,11 @@ void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList)
 	//float radius = 20.0277557f;
 	float radius = 100.0f;
 
+	constexpr float PIVOT = -1000.0f;
+
 	// Only the first "main" light casts a shadow.
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1);
+	XMVECTOR targetPos = XMVectorSet(PIVOT, 0, PIVOT, 1);
 	XMVECTOR lightPos = (-2.0f * radius * lightDir);
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);

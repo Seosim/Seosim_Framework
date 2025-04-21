@@ -9,6 +9,7 @@
 #include "MeshRenderer.h"
 #include "BoxCollider.h"
 #include "PlayerController.h"
+#include "CameraController.h"
 #include "d3dUtil.h"
 #include "ComponentManager.h"
 

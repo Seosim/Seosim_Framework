@@ -19,9 +19,6 @@
     <Filter Include="헤더 파일\Component">
       <UniqueIdentifier>{2a0ba8ff-6086-4a5e-9bc7-c8285184e32f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\Component">
-      <UniqueIdentifier>{9684c70a-a442-4316-9452-74845da00b00}</UniqueIdentifier>
-    </Filter>
     <Filter Include="헤더 파일\Input">
       <UniqueIdentifier>{6ed7e702-a1cf-4724-bf76-357e7df488c2}</UniqueIdentifier>
     </Filter>
@@ -30,6 +27,9 @@
     </Filter>
     <Filter Include="헤더 파일\Component\Collider">
       <UniqueIdentifier>{c3d888a7-19f5-4f02-90e8-5bf835dddd68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\Component">
+      <UniqueIdentifier>{9684c70a-a442-4316-9452-74845da00b00}</UniqueIdentifier>
     </Filter>
     <Filter Include="소스 파일\Component\Collider">
       <UniqueIdentifier>{ed902407-7eeb-480d-9265-8edb5b0c8c1e}</UniqueIdentifier>
@@ -97,6 +97,9 @@
       <Filter>소스 파일\Component</Filter>
     </ClCompile>
     <ClCompile Include="PlayerController.cpp">
+      <Filter>소스 파일\Component</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraController.cpp">
       <Filter>소스 파일\Component</Filter>
     </ClCompile>
   </ItemGroup>
@@ -174,6 +177,9 @@
       <Filter>헤더 파일\Component</Filter>
     </ClInclude>
     <ClInclude Include="PlayerController.h">
+      <Filter>헤더 파일\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraController.h">
       <Filter>헤더 파일\Component</Filter>
     </ClInclude>
   </ItemGroup>

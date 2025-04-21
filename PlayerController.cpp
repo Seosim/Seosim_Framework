@@ -30,6 +30,23 @@ void PlayerController::Update(const float deltaTime)
 		XMStoreFloat3(&rightVector, transform->GetRightVector() * mSpeed * deltaTime);
 		mRigidBody->AddForce(rightVector);
 	}
+
+	if (Input::Instance().GetKey(VK_LEFT))
+	{
+		transform->Rotate(0.0f, -1.0f, 0.0f);
+	}
+	if (Input::Instance().GetKey(VK_RIGHT))
+	{
+		transform->Rotate(0.0f, 1.0f, 0.0f);
+	}
+	if (Input::Instance().GetKey(VK_UP))
+	{
+		transform->Rotate(-1.0f, 0.0f, 0.0f);
+	}
+	if (Input::Instance().GetKey(VK_DOWN))
+	{
+		transform->Rotate(1.0f, 0.0f, 0.0f);
+	}
 }
 
 void PlayerController::SetRigidBody(RigidBody* rigidBody)

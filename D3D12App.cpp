@@ -485,6 +485,23 @@ void D3D12App::BuildCamera()
 
 	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
 	mpCamera->SetScreenSize(mWidth, mHeight);
+
+	mCamera = new GameObject;
+	mCamera->AddComponent<CameraController>();
+	mCamera->AddComponent<Transform>();
+	mCamera->AddComponent<RigidBody>();
+	CameraController& cameraController = mCamera->GetComponent<CameraController>();
+	Transform& transform = mCamera->GetComponent<Transform>();
+	RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
+	rigidBody.SetTransform(&transform);
+
+	cameraController.Initialize(mpCamera, &transform);
+
+	//HACK: 컨트롤러 테스트
+	mCamera->AddComponent<PlayerController>();
+	PlayerController& controller = mCamera->GetComponent<PlayerController>();
+	controller.SetRigidBody(&rigidBody);
+
 }
 
 void D3D12App::BuildSkybox()
@@ -646,14 +663,6 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		gameObject->AddComponent<RigidBody>();
 		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 		rigidBody.SetTransform(&cTransform);
-
-		//HACK: 컨트롤러 테스트
-		if (mGameObjects.size() == 1)
-		{
-			gameObject->AddComponent<PlayerController>();
-			PlayerController& controller = gameObject->GetComponent<PlayerController>();
-			controller.SetRigidBody(&rigidBody);
-		}
 	}
 
 
@@ -1599,17 +1608,13 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	float y = mRadius * cosf(mPhi);
 
 	// Build the view matrix.
-	mpCamera->SetPosition({ x, y, z }); 
-	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	//mpCamera->SetPosition({ x, y, z }); 
+	XMMATRIX view = mpCamera->GetViewMatrix();
 	XMStoreFloat4x4(&mView, view);
 
 	Transform& skyboxTransform = mSkybox->GetComponent<Transform>();
 
-	skyboxTransform.SetPosition({ x, y, z });
+	skyboxTransform.SetPosition(mpCamera->GetPosition());
 	skyboxTransform.SetScale({ 10, 10, 10 });
 
 	//Render Skybox
@@ -1764,12 +1769,9 @@ void D3D12App::RenderObject(const float deltaTime)
 	float y = mRadius * cosf(mPhi);
 
 	// Build the view matrix.
-	mpCamera->SetPosition({ x, y, z });
-	XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-	XMVECTOR target = XMVectorZero();
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	//mpCamera->SetPosition({ x, y, z });
 
-	XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+	XMMATRIX view = mpCamera->GetViewMatrix();
 	XMStoreFloat4x4(&mView, view);
 
 	int index = 1;
@@ -1783,39 +1785,8 @@ void D3D12App::RenderObject(const float deltaTime)
 		XMMATRIX proj = XMLoadFloat4x4(&mProj);
 		XMMATRIX worldViewProj = world * view * proj;
 
-		mpCamera->SetMatrix(mView, mProj);
-
-		////HACK: RIGID BODY 테스트
-		//if (index == 1)
-		//{
-		//	RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-		//	float speed = 30.0f;
-
-		//	if (Input::Instance().GetKey('W'))
-		//	{
-		//		XMFLOAT3 forwardVector;
-		//		XMStoreFloat3(&forwardVector, cTransform.GetForwardVector() * speed * deltaTime);
-		//		rigidBody.AddForce(forwardVector);
-		//	}
-		//	if (Input::Instance().GetKey('S'))
-		//	{
-		//		XMFLOAT3 backVector;
-		//		XMStoreFloat3(&backVector, cTransform.GetForwardVector() * -speed * deltaTime);
-		//		rigidBody.AddForce(backVector);
-		//	}
-		//	if (Input::Instance().GetKey('A'))
-		//	{
-		//		XMFLOAT3 leftVector;
-		//		XMStoreFloat3(&leftVector, cTransform.GetRightVector() * -speed * deltaTime);
-		//		rigidBody.AddForce(leftVector);
-		//	}
-		//	if (Input::Instance().GetKey('D'))
-		//	{
-		//		XMFLOAT3 rightVector;
-		//		XMStoreFloat3(&rightVector, cTransform.GetRightVector() * speed * deltaTime);
-		//		rigidBody.AddForce(rightVector);
-		//	}
-		//}
+		mpCamera->SetProjMatrix(mProj);
+		//mpCamera->SetMatrix(mView, mProj);
 
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
@@ -1838,18 +1809,10 @@ void D3D12App::RenderObjectForShadow()
 	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(shadowResource, D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_DEPTH_WRITE);
 	md3dCommandList->ResourceBarrier(1, &barrier0);
 
-	//UINT passCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
-
-	// Clear the back buffer and depth buffer.
-
 	auto dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 	dsvHandle.ptr += mDsvDescriptorSize;
 
 	md3dCommandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-
-	// Set null render target because we are only going to draw to
-	// depth buffer.  Setting a null render target will disable color writes.
-	// Note the active PSO also must specify a render target count of 0.
 	md3dCommandList->OMSetRenderTargets(0, nullptr, false, &dsvHandle);
 
 	UpdateShadowTransform();
@@ -1861,12 +1824,8 @@ void D3D12App::RenderObjectForShadow()
 		float y = mRadius * cosf(mPhi);
 
 		// Build the view matrix.
-		mpCamera->SetPosition({ x, y, z });
-		XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-		XMVECTOR target = XMVectorZero();
-		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
+		//mpCamera->SetPosition({ x, y, z });
+		XMMATRIX view = mpCamera->GetViewMatrix();
 		XMStoreFloat4x4(&mView, view);
 
 		int index = 1;
@@ -1880,7 +1839,8 @@ void D3D12App::RenderObjectForShadow()
 			XMMATRIX proj = XMLoadFloat4x4(&mProj);
 			XMMATRIX worldViewProj = world * view * proj;
 
-			mpCamera->SetMatrix(mView, mProj);
+			mpCamera->SetProjMatrix(mProj);
+			//mpCamera->SetMatrix(mView, mProj);
 
 			// Update the constant buffer with the latest worldViewProj matrix.
 			ObjectConstants objConstants;

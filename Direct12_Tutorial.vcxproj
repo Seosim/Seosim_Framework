@@ -146,6 +146,7 @@
     <ClCompile Include="Action.cpp" />
     <ClCompile Include="BoxCollider.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader12.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="Action.h" />
     <ClInclude Include="BoxCollider.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraController.h" />
     <ClInclude Include="ComponentManager.h" />
     <ClInclude Include="D3D12App.h" />
     <ClInclude Include="d3dUtil.h" />

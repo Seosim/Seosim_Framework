@@ -28,7 +28,10 @@ public:
 	void SetPosition(const XMFLOAT3& position);
 
 	XMFLOAT3 GetDirection() const;
+	XMMATRIX GetViewMatrix() const;
 
+	void SetViewMatrix(const XMFLOAT4X4& view);
+	void SetProjMatrix(const XMFLOAT4X4& proj);
 	void SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj);
 
 	void SetScreenSize(float width, float height);

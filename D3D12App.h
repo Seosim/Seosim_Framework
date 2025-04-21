@@ -176,6 +176,7 @@ private:
 
 	//Camera
 	Camera* mpCamera = nullptr;
+	GameObject* mCamera = nullptr;
 
 	//Light
 	Light* mpLight = nullptr;

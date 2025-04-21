@@ -13,7 +13,7 @@ void Camera::Update(ID3D12GraphicsCommandList* pCommandList, const float deltaTi
 	XMMATRIX view = XMLoadFloat4x4(&mCameraBuffer.View);
 	XMMATRIX proj = XMLoadFloat4x4(&mCameraBuffer.Proj);
 
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+	// Transform NDC space [-1,+1]^2 to texture space [0,1]^
 	XMMATRIX T =
 	{
 		0.5f, 0.0f, 0.0f, 0.0f,
@@ -55,6 +55,23 @@ void Camera::SetPosition(const XMFLOAT3& position)
 XMFLOAT3 Camera::GetDirection() const
 {
 	return XMFLOAT3();
+}
+
+XMMATRIX Camera::GetViewMatrix() const
+{
+	XMMATRIX viewMatrix = XMLoadFloat4x4(&mCameraBuffer.View);
+
+	return viewMatrix;
+}
+
+void Camera::SetViewMatrix(const XMFLOAT4X4& view)
+{
+	mCameraBuffer.View = view;
+}
+
+void Camera::SetProjMatrix(const XMFLOAT4X4& proj)
+{
+	mCameraBuffer.Proj = proj;
 }
 
 void Camera::SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj)
