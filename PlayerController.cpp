@@ -6,6 +6,17 @@ void PlayerController::Update(const float deltaTime)
 {
 	Transform* transform = mRigidBody->GetTransform();
 
+	XMFLOAT2 mouseDelta = Input::Instance().GetMouseDelta();
+
+	mYaw += mouseDelta.x * mMouseSensitivity;
+	mPitch += -mouseDelta.y * mMouseSensitivity;
+
+	mPitch = std::clamp(mPitch, -89.0f, 89.0f);
+
+	transform->SetRotatiton({ 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f });
+	transform->RotateByWorldAxis(0.0f, mYaw, 0.0f);
+	transform->Rotate(mPitch, 0.0f, 0.0f);
+
 	if (Input::Instance().GetKey('W'))
 	{
 		XMFLOAT3 forwardVector;
@@ -29,23 +40,6 @@ void PlayerController::Update(const float deltaTime)
 		XMFLOAT3 rightVector;
 		XMStoreFloat3(&rightVector, transform->GetRightVector() * mSpeed * deltaTime);
 		mRigidBody->AddForce(rightVector);
-	}
-
-	if (Input::Instance().GetKey(VK_LEFT))
-	{
-		transform->Rotate(0.0f, -1.0f, 0.0f);
-	}
-	if (Input::Instance().GetKey(VK_RIGHT))
-	{
-		transform->Rotate(0.0f, 1.0f, 0.0f);
-	}
-	if (Input::Instance().GetKey(VK_UP))
-	{
-		transform->Rotate(-1.0f, 0.0f, 0.0f);
-	}
-	if (Input::Instance().GetKey(VK_DOWN))
-	{
-		transform->Rotate(1.0f, 0.0f, 0.0f);
 	}
 }
 

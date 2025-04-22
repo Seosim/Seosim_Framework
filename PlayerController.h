@@ -16,4 +16,9 @@ public:
 private:
 	RigidBody* mRigidBody = nullptr;
 	float mSpeed = 20.0f;
+
+	//Mouse
+	float mYaw = 0.0f;
+	float mPitch = 0.0f;
+	float mMouseSensitivity = 0.15f;
 };

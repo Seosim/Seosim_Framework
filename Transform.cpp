@@ -132,27 +132,43 @@ void Transform::Rotate(const float angleX, const float angleY, const float angle
 
 void Transform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
 {
+	// 월드 기준 축
+	XMVECTOR worldX = XMVectorSet(1, 0, 0, 0);
+	XMVECTOR worldY = XMVectorSet(0, 1, 0, 0);
+	XMVECTOR worldZ = XMVectorSet(0, 0, 1, 0);
+
+	// 회전 행렬을 월드 기준으로 각각 만듦
+	XMMATRIX rotX = XMMatrixRotationAxis(worldX, XMConvertToRadians(angleX));
+	XMMATRIX rotY = XMMatrixRotationAxis(worldY, XMConvertToRadians(angleY));
+	XMMATRIX rotZ = XMMatrixRotationAxis(worldZ, XMConvertToRadians(angleZ));
+
+	// 현재 방향 벡터 가져옴
 	XMVECTOR right = XMLoadFloat3(&mRight);
 	XMVECTOR up = XMLoadFloat3(&mUp);
 	XMVECTOR forward = XMLoadFloat3(&mForward);
-	//XMVECTOR position = XMLoadFloat3(&mPosition);
 
-	XMMATRIX rotation = XMMatrixRotationRollPitchYaw(XMConvertToRadians(angleX), XMConvertToRadians(angleY), XMConvertToRadians(angleZ));
-	right = XMVector3TransformNormal(right, rotation);
-	up = XMVector3TransformNormal(up, rotation);
-	forward = XMVector3TransformNormal(forward, rotation);
-	//position = XMVector3TransformCoord(position, rotation);
+	// 월드 기준 회전을 누적 적용 (Z → Y → X 순서, 필요시 순서 변경 가능)
+	right = XMVector3TransformNormal(right, rotZ);
+	right = XMVector3TransformNormal(right, rotY);
+	right = XMVector3TransformNormal(right, rotX);
 
+	up = XMVector3TransformNormal(up, rotZ);
+	up = XMVector3TransformNormal(up, rotY);
+	up = XMVector3TransformNormal(up, rotX);
+
+	forward = XMVector3TransformNormal(forward, rotZ);
+	forward = XMVector3TransformNormal(forward, rotY);
+	forward = XMVector3TransformNormal(forward, rotX);
+
+	// 직교화
 	forward = XMVector3Normalize(forward);
-	XMStoreFloat3(&mForward, forward);
-
 	right = XMVector3Normalize(XMVector3Cross(up, forward));
-	XMStoreFloat3(&mRight, right);
-
 	up = XMVector3Normalize(XMVector3Cross(forward, right));
-	XMStoreFloat3(&mUp, up);
 
-	//XMStoreFloat3(&mPosition, position);
+	// 저장
+	XMStoreFloat3(&mRight, right);
+	XMStoreFloat3(&mUp, up);
+	XMStoreFloat3(&mForward, forward);
 }
 
 XMFLOAT3 Transform::GetRight() const

@@ -11,6 +11,7 @@ D3D12App& D3D12App::Instance()
 
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	Input::Instance().SetHWND(hwnd);
 	return D3D12App::Instance().MessageProc(hwnd, msg, wParam, lParam);
 }
 
@@ -1464,6 +1465,7 @@ int D3D12App::Update()
 				CollisionCheck();
 				Draw(mTimer);
 				Input::Instance().SaveKeyState();
+				Input::Instance().UpdateMousePosition();
 			}
 			else
 			{
@@ -1492,6 +1494,8 @@ void D3D12App::UpdatePhysics()
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
 {
+
+
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
@@ -2609,6 +2613,9 @@ LRESULT D3D12App::MessageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE) {
+			PostMessage(hwnd, WM_DESTROY, 0, 0);
+		}
 		Input::Instance().KeyDown((int)wParam);
 		break;
 	case WM_KEYUP:

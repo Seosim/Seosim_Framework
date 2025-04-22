@@ -16,6 +16,7 @@ public:
 
 	static Input& Instance();
 
+	void SetHWND(const HWND& hwnd);
 	void SaveKeyState();
 
 	void KeyDown(const int key);
@@ -24,9 +25,19 @@ public:
 	bool GetKeyDown(const int key);
 	bool GetKeyUp(const int key);
 	bool GetKey(const int key);
+
+	void UpdateMousePosition();
+
+	XMFLOAT2 GetMouseDelta() const;
 private:
 	static constexpr int KEY_SIZE = 256;
 
 	bool mKeyState[KEY_SIZE] = {};
 	bool mPrevKeyState[KEY_SIZE] = {};
+
+	XMFLOAT2 mCurrentMousePosition = {};
+	XMFLOAT2 mPrevMousePosition = {};
+	XMFLOAT2 mMouseDelta = {};
+
+	HWND mHWND = {};
 };

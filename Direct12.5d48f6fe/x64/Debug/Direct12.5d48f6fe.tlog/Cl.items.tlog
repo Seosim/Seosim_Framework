@@ -1,6 +1,7 @@
 D:\문서\GitHub\Direct12_Tutorial\Action.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\Action.obj
 D:\문서\GitHub\Direct12_Tutorial\BoxCollider.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\BoxCollider.obj
 D:\문서\GitHub\Direct12_Tutorial\Camera.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\Camera.obj
+D:\문서\GitHub\Direct12_Tutorial\CameraController.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\CameraController.obj
 D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\D3D12App.obj
 D:\문서\GitHub\Direct12_Tutorial\d3dUtil.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\d3dUtil.obj
 D:\문서\GitHub\Direct12_Tutorial\DDSTextureLoader12.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\DDSTextureLoader12.obj
@@ -13,6 +14,7 @@ D:\문서\GitHub\Direct12_Tutorial\Material.cpp;D:\문서\GitHub\Direct12_Tutori
 D:\문서\GitHub\Direct12_Tutorial\Mesh.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\Mesh.obj
 D:\문서\GitHub\Direct12_Tutorial\MeshRenderer.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\MeshRenderer.obj
 D:\문서\GitHub\Direct12_Tutorial\pch.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\pch.obj
+D:\문서\GitHub\Direct12_Tutorial\PlayerController.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\PlayerController.obj
 D:\문서\GitHub\Direct12_Tutorial\RigidBody.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\RigidBody.obj
 D:\문서\GitHub\Direct12_Tutorial\Shader.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\Shader.obj
 D:\문서\GitHub\Direct12_Tutorial\Shadow.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Debug\Shadow.obj
