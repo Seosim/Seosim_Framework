@@ -26,6 +26,7 @@ public:
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);
 
 	static std::unordered_map<eType, Shader*> ShaderList;
+	static Shader* PrevUsedShader;
 private:
 	ID3DBlob* mVertexBlob = nullptr;
 	ID3DBlob* mPixelBlob = nullptr;

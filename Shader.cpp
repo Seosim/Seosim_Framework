@@ -3,6 +3,7 @@
 #include "d3dUtil.h"
 
 std::unordered_map<Shader::eType, Shader*> Shader::ShaderList{};
+Shader* Shader::PrevUsedShader = nullptr;
 
 Shader::~Shader()
 {
@@ -75,7 +76,11 @@ void Shader::SetPipelineState(ID3D12GraphicsCommandList* pCommandList)
 {
 	ASSERT(mPSO);
 
-	pCommandList->SetPipelineState(mPSO);
+	if (this != Shader::PrevUsedShader)
+	{
+		Shader::PrevUsedShader = this;
+		pCommandList->SetPipelineState(mPSO);
+	}
 }
 
 Shader::Command Shader::DefaultCommand()

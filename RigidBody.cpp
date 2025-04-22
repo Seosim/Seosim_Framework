@@ -14,17 +14,18 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	XMVECTOR vAcc = XMLoadFloat3(&mAcceleration);
 	XMVECTOR vPosition = XMLoadFloat3(&position);
 
-	// 최대 속도 제한
-	float maxSpeed = 100.0f;
-	float speed = XMVectorGetX(XMVector3Length(vVel));
-	if (speed > maxSpeed)
-	{
-		vVel = XMVector3Normalize(vVel) * maxSpeed;
-	}
+	//// 최대 속도 제한
+	//float maxSpeed = 100.0f;
+	//float speed = XMVectorGetX(XMVector3Length(vVel));
+	//if (speed > maxSpeed)
+	//{
+	//	vVel = XMVector3Normalize(vVel) * maxSpeed;
+	//}
 
-	//// 중력 적용 (y축 방향으로 -9.81 m/s²)
+	//// 중력 적용 (y축 방향으로 -9.8)
 	//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * deltaTime, 0.0f, 0.0f);
 	//vAcc += gravity;
+
 	mDrag = 5.0f;
 	vVel += vAcc * deltaTime;
 	vVel *= max(1.0f - (mDrag * deltaTime), 0.0f);

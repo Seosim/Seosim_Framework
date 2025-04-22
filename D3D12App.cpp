@@ -714,7 +714,6 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		UINT materialCount;
 		loader.read(reinterpret_cast<char*>(&materialCount), sizeof(UINT));
 
-
 		for (int i = 0; i < materialCount; ++i)
 		{
 			int materialLength = 0;

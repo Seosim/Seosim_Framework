@@ -173,6 +173,8 @@ private:
 
 	//GameObject
 	std::vector<GameObject*> mGameObjects;
+	std::vector<GameObject*> mOpaqueGameObjects;
+	std::vector<GameObject*> mTransparentGameObjects;
 
 	//Camera
 	Camera* mpCamera = nullptr;
@@ -220,7 +222,6 @@ private:
 	Texture* mBloom64x64VBlurTexture = nullptr;
 	Texture* mBloom64x64HBlurTexture = nullptr;
 
-	//SSAO
 
 	//SSAO non ComputeShader
 	Shader* mSSAO = nullptr;
@@ -230,4 +231,5 @@ private:
 	Texture* mSSAOVBlurTexture = nullptr;
 	Texture* mSSAOHBlurTexture = nullptr;
 	Texture* mNoiseTexture = nullptr;
+
 };
