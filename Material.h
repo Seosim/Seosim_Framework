@@ -109,4 +109,5 @@ private:
 	Shader* mpShader = nullptr;
 	std::unique_ptr<UploadBuffer> mMaterialCB = nullptr;
 	std::array<Texture*, MAX_TEXTURE_COUNT> mTextures = {};
+	static Material* mPrevUsedMaterial;
 };

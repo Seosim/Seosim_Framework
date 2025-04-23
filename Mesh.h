@@ -19,8 +19,6 @@ public:
 
 	void LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, const std::string& filePath);
 
-	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList);
-
 	void Render(ID3D12GraphicsCommandList* pCommandList);
 	void SetBuffers(ID3D12GraphicsCommandList* pCommandList);
 	void RenderSubMeshes(ID3D12GraphicsCommandList* pCommandList, const int subMeshIndex = 0);
@@ -50,26 +48,6 @@ protected:
 	std::array<D3D12_VERTEX_BUFFER_VIEW, 3> mVertexBufferViews = {};
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};
 	std::vector<UINT> mSubMeshIndex = {};
-
-	std::unordered_map<std::string, SubmeshGeometry> DrawArgs;
 private:
-	D3D12_VERTEX_BUFFER_VIEW VertexBufferView() const
-	{
-		D3D12_VERTEX_BUFFER_VIEW vbv;
-		vbv.BufferLocation = mPositionBufferGPU->GetGPUVirtualAddress();
-		vbv.StrideInBytes = mVertexByteStride;
-		vbv.SizeInBytes = mVertexBufferByteSize;
-
-		return vbv;
-	}
-
-	D3D12_INDEX_BUFFER_VIEW IndexBufferView() const
-	{
-		D3D12_INDEX_BUFFER_VIEW ibv;
-		ibv.BufferLocation = mIndexBufferGPU->GetGPUVirtualAddress();
-		ibv.Format = mIndexFormat;
-		ibv.SizeInBytes = mIndexBufferByteSize;
-
-		return ibv;
-	}
+	static Mesh* mPrevUsedMesh;
 };

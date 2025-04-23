@@ -1,9 +1,6 @@
 #include "pch.h"
 #include "MeshRenderer.h"
 
-Material* MeshRenderer::PrevUsedMaterial = nullptr;
-Mesh* MeshRenderer::PrevUsedMesh = nullptr;
-
 void MeshRenderer::Update(const float deltaTime)
 {
 }
@@ -33,23 +30,11 @@ Mesh* MeshRenderer::GetMesh() const
 
 void MeshRenderer::Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap)
 {
-	if (mMesh != MeshRenderer::PrevUsedMesh)
-	{
-		MeshRenderer::PrevUsedMesh = mMesh;
-		mMesh->SetBuffers(pCommandList);
-	}
+	mMesh->SetBuffers(pCommandList);
 
 	for (int i = 0; i < mSubMeshCount; ++i)
 	{
-		if (mMaterials[i] != MeshRenderer::PrevUsedMaterial)
-		{
-			mMaterials[i]->SetConstantBufferView(pCommandList, pSrvHeap);
-			MeshRenderer::PrevUsedMaterial = mMaterials[i];
-		}
-		else
-		{
-			int a = 10;
-		}
+		mMaterials[i]->SetConstantBufferView(pCommandList, pSrvHeap);
 		mMesh->RenderSubMeshes(pCommandList, i);
 	}
 }

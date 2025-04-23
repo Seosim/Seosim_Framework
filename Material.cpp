@@ -2,15 +2,19 @@
 #include "Material.h"
 
 std::unordered_map<std::string, Material*> Material::MaterialList{};
+Material* Material::mPrevUsedMaterial = nullptr;
 
 void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap)
 {
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mMaterialCB->Resource()->GetGPUVirtualAddress();
+	if (mPrevUsedMaterial != this)
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mMaterialCB->Resource()->GetGPUVirtualAddress();
 
-	mpShader->SetPipelineState(pCommandList);
-	pCommandList->SetGraphicsRootConstantBufferView(1, cbAddress);
+		mpShader->SetPipelineState(pCommandList);
+		pCommandList->SetGraphicsRootConstantBufferView(1, cbAddress);
 
-	UpdateTextureOnSrv(pCommandList, srvHeap);
+		UpdateTextureOnSrv(pCommandList, srvHeap);
+	}
 }
 
 void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, const std::string& filePath)

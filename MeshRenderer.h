@@ -22,9 +22,6 @@ public:
 	Mesh* GetMesh() const;
 
 	void Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap);
-
-	static Material* PrevUsedMaterial;
-	static Mesh* PrevUsedMesh;
 private:
 	Mesh* mMesh = nullptr;
 	std::vector<Material*> mMaterials = {};
