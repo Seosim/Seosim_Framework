@@ -3,15 +3,6 @@
 
 class Mesh {
 public:
-	struct SubmeshGeometry
-	{
-		UINT IndexCount = 0;
-		UINT StartIndexLocation = 0;
-		INT BaseVertexLocation = 0;
-
-		DirectX::BoundingBox Bounds;
-	};
-
 	Mesh() = default;
 	~Mesh();
 
@@ -39,11 +30,6 @@ protected:
 	ID3D12Resource* mNormalBufferUploader = nullptr;
 	ID3D12Resource* mUVBufferUploader = nullptr;
 	ID3D12Resource* mIndexBufferUploader = nullptr;
-
-	UINT mVertexByteStride = 0;
-	UINT mVertexBufferByteSize = 0;
-	DXGI_FORMAT mIndexFormat = DXGI_FORMAT_R16_UINT;
-	UINT mIndexBufferByteSize = 0;
 
 	std::array<D3D12_VERTEX_BUFFER_VIEW, 3> mVertexBufferViews = {};
 	D3D12_INDEX_BUFFER_VIEW mIndexBufferView = {};

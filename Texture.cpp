@@ -34,9 +34,9 @@ void Texture::CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, c
 
 
 	const int textureIndex = Texture::TextureList.size();
-	CPU_ID = textureIndex;
+	ID = textureIndex;
 
-	hDescriptor.ptr += 32 * CPU_ID;
+	hDescriptor.ptr += 32 * ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -56,10 +56,10 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	const int textureIndex = Texture::TextureList.size();
-	CPU_ID = textureIndex;
+	ID = textureIndex;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * CPU_ID;
+	hDescriptor.ptr += 32 * ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -68,10 +68,10 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 
 void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, const DXGI_FORMAT format, const std::wstring& name, const UINT width, const UINT height)
 {
-	if (CPU_ID == -1)
+	if (ID == -1)
 	{
 		const int textureIndex = Texture::TextureList.size();
-		CPU_ID = textureIndex;
+		ID = textureIndex;
 
 		Texture::TextureList[name] = this;
 
@@ -81,7 +81,7 @@ void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHea
 	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * CPU_ID;
+	hDescriptor.ptr += 32 * ID;
 
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -146,7 +146,7 @@ void Texture::ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHe
 	srvDesc.Texture2D.MipLevels = mpResource->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	hDescriptor.ptr += 32 * CPU_ID;
+	hDescriptor.ptr += 32 * ID;
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
 	Texture::TextureList[name] = this;
@@ -159,5 +159,5 @@ ID3D12Resource* Texture::GetResource()
 
 int Texture::GetID() const
 {
-	return CPU_ID;
+	return ID;
 }

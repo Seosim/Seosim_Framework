@@ -26,7 +26,6 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * deltaTime, 0.0f, 0.0f);
 	//vAcc += gravity;
 
-	mDrag = 5.0f;
 	vVel += vAcc * deltaTime;
 	vVel *= max(1.0f - (mDrag * deltaTime), 0.0f);
 

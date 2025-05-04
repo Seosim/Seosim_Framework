@@ -129,8 +129,6 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 	}
 
 	MaterialList[filePath] = this;
-
-	//Initialize(pDevice, pCommandList, pRootSignature, pSrvHeap, cBuffer, shaderType);
 }
 
 void Material::SetTexture(Texture* texture, UINT index)

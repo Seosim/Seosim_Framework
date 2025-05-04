@@ -24,5 +24,5 @@ private:
 	XMFLOAT3 mVelocity = {};
 	XMFLOAT3 mAcceleration = {};
 
-	float mDrag = 1.0f;
+	float mDrag = 5.0f;
 };

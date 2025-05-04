@@ -360,8 +360,8 @@ void D3D12App::BuildRootSignature()
 		rootParamater[texture2Index].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	}
 
-
-	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[2];
+	constexpr int SAMPLER_COUNT = 4;
+	D3D12_STATIC_SAMPLER_DESC pd3dSamplerDescs[SAMPLER_COUNT];
 
 	pd3dSamplerDescs[0].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 	pd3dSamplerDescs[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
@@ -389,6 +389,34 @@ void D3D12App::BuildRootSignature()
 	pd3dSamplerDescs[1].ShaderRegister = 1;
 	pd3dSamplerDescs[1].RegisterSpace = 0;
 	pd3dSamplerDescs[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dSamplerDescs[2].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	pd3dSamplerDescs[2].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[2].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[2].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	pd3dSamplerDescs[2].MipLODBias = 0.0f;
+	pd3dSamplerDescs[2].MaxAnisotropy = 16;
+	pd3dSamplerDescs[2].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	pd3dSamplerDescs[2].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	pd3dSamplerDescs[2].MinLOD = 0;
+	pd3dSamplerDescs[2].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[2].ShaderRegister = 2;
+	pd3dSamplerDescs[2].RegisterSpace = 0;
+	pd3dSamplerDescs[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	pd3dSamplerDescs[3].Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	pd3dSamplerDescs[3].AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[3].AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[3].AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	pd3dSamplerDescs[3].MipLODBias = 0.0f;
+	pd3dSamplerDescs[3].MaxAnisotropy = 0;
+	pd3dSamplerDescs[3].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	pd3dSamplerDescs[3].BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	pd3dSamplerDescs[3].MinLOD = 0;
+	pd3dSamplerDescs[3].MaxLOD = D3D12_FLOAT32_MAX;
+	pd3dSamplerDescs[3].ShaderRegister = 3;
+	pd3dSamplerDescs[3].RegisterSpace = 0;
+	pd3dSamplerDescs[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
@@ -498,18 +526,15 @@ void D3D12App::BuildCamera()
 
 	cameraController.Initialize(mpCamera, &transform);
 
-	//HACK: 컨트롤러 테스트
 	mCamera->AddComponent<PlayerController>();
 	PlayerController& controller = mCamera->GetComponent<PlayerController>();
 	controller.SetRigidBody(&rigidBody);
-
 }
 
 void D3D12App::BuildSkybox()
 {
 	GameObject* skybox = new GameObject();
 	skybox->AddComponent<Transform>();
-	//skybox->AddComponent<Material>();
 	skybox->AddComponent<MeshRenderer>();
 	
 	mSkyboxMat = new Material;
@@ -553,8 +578,8 @@ void D3D12App::BuildResourceTexture()
 
 void D3D12App::BuildComputeShader()
 {
-	mComputeShader = new ComputeShader();
-	mComputeShader->Initialize(md3dDevice, mComputeRootSignature, "PostProcessing");
+	mPostProcessingShader = new ComputeShader();
+	mPostProcessingShader->Initialize(md3dDevice, mComputeRootSignature, "PostProcessing");
 
 	mBloomShader = new ComputeShader();
 	mBloomShader->Initialize(md3dDevice, mComputeRootSignature, "Bloom");
@@ -665,15 +690,6 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 		rigidBody.SetTransform(&cTransform);
 	}
-
-
-	////TODO: 익스포터에서 Collider 사용 유무 체크해야함. 현재는 그냥 다 넣는 중
-	//{
-	//	float size = 0.25f;
-	//	gameObject->AddComponent<BoxCollider>();
-	//	BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
-	//	boxCollider.Initialize(&cTransform, { size, size, size });
-	//}
 
 	bool bHasMesh;
 	loader.read(reinterpret_cast<char*>(&bHasMesh), sizeof(bool));
@@ -903,7 +919,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &RT_DESC
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_SOURCE
 			, &CLEAR_VALUE
 			, IID_PPV_ARGS(&mRenderTargets[CAMERA_NORMALS])));
 
@@ -1460,8 +1476,8 @@ int D3D12App::Update()
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
-				UpdatePhysics();
 				CollisionCheck();
+				UpdateComponents();
 				Draw(mTimer);
 				Input::Instance().SaveKeyState();
 				Input::Instance().UpdateMousePosition();
@@ -1477,24 +1493,13 @@ int D3D12App::Update()
 	return (int)msg.wParam;
 }
 
-void D3D12App::UpdatePhysics()
+void D3D12App::UpdateComponents()
 {
 	ComponentManager::Instance().UpdateComponent(mTimer.DeltaTime());
-
-	//for (GameObject* gameObject : mGameObjects)
-	//{
-	//	if (gameObject->HasComponent<RigidBody>())
-	//	{
-	//		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-	//		rigidBody.UpdatePhysics(mTimer.DeltaTime());
-	//	}
-	//}
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
 {
-
-
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
@@ -1679,11 +1684,10 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	
 	//후처리 전 기존 MSAA렌더타겟을 SCREEN으로 옮깁니다.
-	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
-	
 	ID3D12Resource* normalResource = mNormalTexture->GetResource();
 	ID3D12Resource* depthResource = mDepthTexture->GetResource();
-	
+
+	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
 	md3dCommandList->ResolveSubresource(normalResource, 0, mRenderTargets[(int)eRenderTargetType::CAMERA_NORMAL], 0, normalResource->GetDesc().Format);
 	md3dCommandList->ResolveSubresource(depthResource, 0, mDepthStencilBuffer, 0, DXGI_FORMAT_R24_UNORM_X8_TYPELESS);
 
@@ -1871,7 +1875,7 @@ void D3D12App::RenderObjectForShadow()
 void D3D12App::PostProcessing()
 {
 	md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
-	mComputeShader->SetPipelineState(md3dCommandList);
+	mPostProcessingShader->SetPipelineState(md3dCommandList);
 
 	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	handle0.ptr += mScreenTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -1895,8 +1899,6 @@ void D3D12App::PostProcessing()
 
 	md3dCommandList->ResourceBarrier(1, &barrier0);
 
-	// How many groups do we need to dispatch to cover image, where each
-	// group covers 16x16 pixels.
 	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
 	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
 	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
@@ -1909,7 +1911,7 @@ void D3D12App::PostProcessing()
 
 void D3D12App::Bloom()
 {
-	md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
+	//md3dCommandList->ResolveSubresource(mRenderTargets[(int)eRenderTargetType::SCREEN], 0, mRenderTargets[(int)eRenderTargetType::MSAA], 0, mRenderTargets[(int)eRenderTargetType::SCREEN]->GetDesc().Format);
 	md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
 	mpCamera->UpdateForComputeShader(md3dCommandList);
 	//Get Bloom Map
@@ -1930,8 +1932,8 @@ void D3D12App::Bloom()
 		md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
 		md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
 
-		UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+		UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f);
+		UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		{
@@ -1944,7 +1946,6 @@ void D3D12App::Bloom()
 	//Down Scaling 4x4
 	{
 		mDownSampleShader->SetPipelineState(md3dCommandList);
-		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
 		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 		handle0.ptr += mBloomTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -1959,10 +1960,8 @@ void D3D12App::Bloom()
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-		// How many groups do we need to dispatch to cover image, where each
-		// group covers 16x16 pixels.
-		UINT numGroupsX = (UINT)ceilf(mWidth / 4.0f / 32.0f);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 4.0f / 32.0f);
+		UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f / 4.0f);
+		UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f / 4.0f);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
@@ -1970,10 +1969,9 @@ void D3D12App::Bloom()
 		md3dCommandList->ResourceBarrier(1, &barrier1);
 	}
 
-	//Down Scaling 6x6
+	//Down Scaling 4x4
 	{
 		mDownSampleShader->SetPipelineState(md3dCommandList);
-		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
 		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 		handle0.ptr += mDownScaled4x4BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -1988,10 +1986,8 @@ void D3D12App::Bloom()
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-		// How many groups do we need to dispatch to cover image, where each
-		// group covers 16x16 pixels.
-		UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
+		UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f / 4.0f / 4.0f);
+		UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f / 4.0f / 4.0f);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
@@ -1999,71 +1995,15 @@ void D3D12App::Bloom()
 		md3dCommandList->ResourceBarrier(1, &barrier1);
 	}
 
-	////Down Scaling 6x6
-	//{
-	//	mDownSampleShader->SetPipelineState(md3dCommandList);
-	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
-
-	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle0.ptr += mDownScaled16x16BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
-
-	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle1.ptr += (mDownScaled64x64BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
-
-	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
-	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
-
-	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled64x64BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//	md3dCommandList->ResourceBarrier(1, &barrier0);
-
-	//	// How many groups do we need to dispatch to cover image, where each
-	//	// group covers 16x16 pixels.
-	//	UINT numGroupsX = (UINT)ceilf(mWidth / 32.0f);
-	//	UINT numGroupsY = (UINT)ceilf(mHeight / 32.0f);
-	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
-
-	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled64x64BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	//	md3dCommandList->ResourceBarrier(1, &barrier1);
-	//}
-
 	//Blurring
 	{
 		BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16, 2);
 	}
 
-	////Up Scaling 6x6
-	//{
-	//	mUpSampleShader->SetPipelineState(md3dCommandList);
-	//	md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
-	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle0.ptr += mDownScaled64x64BloomTexture->GetID() * mCbvSrvUavDescriptorSize;
-
-	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-	//	handle1.ptr += (mDownScaled16x16BloomTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
-
-	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
-	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
-
-	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	//	md3dCommandList->ResourceBarrier(1, &barrier0);
-
-	//	UINT numGroupsX = (UINT)ceilf(mWidth / 4 / 4 / 8.0f);
-	//	UINT numGroupsY = (UINT)ceilf(mHeight / 4 / 4 / 8.0f);
-	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
-
-	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled16x16BloomTexture->GetResource(),
-	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
-	//	md3dCommandList->ResourceBarrier(1, &barrier1);
-	//}
-
-	//Up Scaling 6x6
+	//Up Scaling 4x4
 	{
 		mUpSampleShader->SetPipelineState(md3dCommandList);
-		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
 		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 		handle0.ptr += mBloom16x16HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -2078,8 +2018,8 @@ void D3D12App::Bloom()
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
+		UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f / 4.0f);
+		UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f / 4.0f);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mDownScaled4x4BloomTexture->GetResource(),
@@ -2095,7 +2035,6 @@ void D3D12App::Bloom()
 	//Up Scaling 4x4
 	{
 		mUpSampleShader->SetPipelineState(md3dCommandList);
-		md3dCommandList->SetComputeRoot32BitConstant(3, 4, 0);
 
 		auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 		handle0.ptr += mBloom4x4HBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
@@ -2110,20 +2049,13 @@ void D3D12App::Bloom()
 			D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 
-		// How many groups do we need to dispatch to cover image, where each
-		// group covers 16x16 pixels.
-		UINT numGroupsX = (UINT)ceilf(mWidth / 8.0f);
-		UINT numGroupsY = (UINT)ceilf(mHeight / 8.0f);
+		UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f);
+		UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f);
 		md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 		auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mBloomTexture->GetResource(),
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
 		md3dCommandList->ResourceBarrier(1, &barrier1);
-	}
-
-	//Blurring
-	{
-		//BlurTexture(mBloomTexture->GetID(), mBloomVBlurTexture, mBloomHBlurTexture, 1, 0);
 	}
 }
 
@@ -2310,8 +2242,8 @@ void D3D12App::SSAO()
 	//Blur
 	{
 		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
-		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
-		//BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
+		BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
+		//BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
 	}
 
 	//렌더타겟 상태 변환
@@ -2460,8 +2392,6 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 
 void D3D12App::Finalize()
 {
-	//mBoxGeo->Finalize();
-
 	for (auto gameObject : mGameObjects)
 	{
 		delete gameObject;
@@ -2495,7 +2425,7 @@ void D3D12App::Finalize()
 	{
 		delete mScreenShader;
 		delete mSSAO;
-		delete mComputeShader;
+		delete mPostProcessingShader;
 		delete mBloomShader;
 		delete mDownSampleShader;
 		delete mUpSampleShader;

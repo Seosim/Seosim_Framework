@@ -11,11 +11,12 @@ void MeshRenderer::SetMesh(Mesh* mesh)
 
 	mMesh = mesh;
 	mSubMeshCount = mMesh->GetSubMeshCount();
+	mMaterials.reserve(mSubMeshCount);
 }
 
 void MeshRenderer::AddMaterial(Material* material)
 {
-	mMaterials.push_back(material);
+	mMaterials.emplace_back(material);
 }
 
 Material* MeshRenderer::GetMaterial(int index) const

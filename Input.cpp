@@ -52,11 +52,30 @@ void Input::UpdateMousePosition()
     GetCursorPos(&pt);
     ScreenToClient(mHWND, &pt);
 
-    mMouseDelta.x = (float)(pt.x - center.x);
-    mMouseDelta.y = (float)(center.y - pt.y);
+	XMFLOAT2 newPos = { (float)pt.x, (float)pt.y };
 
-    ClientToScreen(mHWND, &center);
-    SetCursorPos(center.x, center.y);
+	//HACK: 화면 잠금
+	bool bLock = false;
+
+	if (bLock)
+	{
+		mMouseDelta.x = (float)(pt.x - center.x);
+		mMouseDelta.y = (float)(center.y - pt.y);
+
+		ClientToScreen(mHWND, &center);
+		SetCursorPos(center.x, center.y);
+	}
+	else
+	{
+		mMouseDelta.x = newPos.x - mCurrentMousePosition.x;
+		mMouseDelta.y = mCurrentMousePosition.y - newPos.y;
+
+		mCurrentMousePosition = newPos;
+	}
+
+
+
+
 }
 
 XMFLOAT2 Input::GetMouseDelta() const 

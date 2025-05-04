@@ -1,6 +1,8 @@
 
 SamplerState gsamLinear : register(s0);
 SamplerComparisonState gsamShadow : register(s1);
+SamplerState gsamPointClamp : register(s2);
+SamplerState gsamDepth : register(s3);
 
 
 TextureCube gCubeMap : register(t0);

@@ -28,7 +28,8 @@ struct VertexOut
     float4 PosH : SV_POSITION;
     float3 NormalW : NORMAL;
     float3 PosW : POSITION0;
-    float4 ShadowPosH : POSITION1;
+    float3 PosV : POSITION1;
+    float4 ShadowPosH : POSITION2;
     float2 UV : UV;
 };
 
@@ -42,14 +43,14 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
 
-	// Transform to clip space.
     vout.PosH = mul(mul(mul(float4(vin.PosL, 1.0f), gWorld), gView), gProj);
 
-    // Transform to world space.
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
     vout.PosW = posW.xyz;
+    
+    float4 posV = mul(posW, gView);
+    vout.PosV = posV.xyz;
 
-    // Transform normal to world space.
     vout.NormalW = mul(vin.Normal, (float3x3)gWorld);
     
     vout.ShadowPosH = mul(posW, ShadowTransform);

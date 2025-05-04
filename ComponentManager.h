@@ -1,7 +1,6 @@
 #pragma once
 
 #include "pch.h"
-
 #include "IComponent.h"
 
 class ComponentManager final {
@@ -45,6 +44,8 @@ public:
 			componentID = GetID<Component>(mGlobalID++);
 		}
 
+		ASSERT(false == HasComponent<Component>(objectID));
+
 		mComponents[objectID][componentID] = new Component();
 	};
 
@@ -66,7 +67,7 @@ public:
 	{
 		static unsigned int componentID = -1;
 
-		ASSERT(mComponents[objectID][GetID<Component>()] != nullptr);
+		ASSERT(true == HasComponent<Component>(objectID));
 
 		Component& component = *(Component*)(mComponents[objectID][GetID<Component>()]);
 
@@ -84,5 +85,3 @@ private:
 
 	std::unordered_map<unsigned int, std::unordered_map<unsigned int, IComponent*>> mComponents;	// ObjectID , ComponentID, Pointer
 };
-
-

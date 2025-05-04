@@ -24,7 +24,8 @@ VertexOut VS(VertexIn vin)
 	VertexOut vout;
 
     vout.PosL = vin.PosL;
-    vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+    vout.PosH = mul(mul(mul(float4(vin.PosL, 1.0f), gWorld), gView), gProj);
+    //vout.PosH = mul(float4(vin.PosL, 1.0f), gWorldViewProj);
 	//// Use local vertex position as cubemap lookup vector.
 	//vout.PosL = vin.PosL;
 	

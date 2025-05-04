@@ -70,11 +70,13 @@ public:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
 
 	int Update();
-	void UpdatePhysics();
+	void UpdateComponents();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);
+
 	float GetAspectRatio() const;
+
 	void Draw(const GameTimer& gameTimer);
 
 	//Shadow func
@@ -194,7 +196,7 @@ private:
 
 	//Shader
 	Shader* mScreenShader = nullptr;
-	ComputeShader* mComputeShader = nullptr;
+	ComputeShader* mPostProcessingShader = nullptr;
 	ComputeShader* mBloomShader = nullptr;
 	ComputeShader* mDownSampleShader = nullptr;
 	ComputeShader* mUpSampleShader = nullptr;
