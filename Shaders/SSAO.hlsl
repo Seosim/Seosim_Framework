@@ -181,23 +181,26 @@ static const float gOcclusionFadeEnd = 1.0f;
 static const float gOcclusionFadeStart = 0.1f;
 static const float gOcclusionRadius = 0.2f;
 
-static const int NUM_SAMPLES = 14;
+
+static const int NUM_SAMPLES = 16;
 static const float3 sampleKernel[NUM_SAMPLES] =
 {
-   float3(0.144879371, 0.144879371, 0.144879371),
-   float3(-0.388377190, -0.388377190, -0.388377190),
-   float3(-0.228040740, 0.228040740, 0.228040740),
-   float3(0.494532436, -0.494532436, -0.494532436),
-   float3(0.397654027, 0.397654027, -0.397654027),
-   float3(-0.352128685, -0.352128685, 0.352128685),
-   float3(-0.296018183, 0.296018183, -0.296018183),
-   float3(0.532300651, -0.532300651, 0.532300651),
-   float3(-0.867130041, 0.00000000, 0.00000000),
-   float3(0.809953570, 0.00000000, 0.00000000),
-   float3(0.0, -0.380581081, 0.00000000),
-   float3(0.0, 0.894207597, 0.00000000),
-   float3(0.0, 0.00000000, -0.782876074),
-   float3(0.0, 0.00000000, 0.635151207)
+    float3(0.2024537f, 0.8412041f, -0.9060141f),
+    float3(-0.2200423f, 0.6282339f, -0.8275437f),
+    float3(0.3677659f, 0.1086345f, -0.4468777f),
+    float3(0.8775568f, 0.4617546f, -0.6427657f),
+    float3(0.7867436f, -0.1414791f, -0.1567593f),
+    float3(0.4893565f, -0.8253108f, -0.1563844f),
+    float3(0.4401554f, -0.4228428f, -0.3300181f),
+    float3(0.0011931f, -0.8048453f, 0.0726584f),
+    float3(-0.7578573f, -0.5583061f, 0.2347527f),
+    float3(-0.4540417f, -0.252365f, 0.0694318f),
+    float3(-0.0489351f, -0.2522794f, 0.5924745f),
+    float3(-0.4193292f, 0.2820481f, 0.6832647f),
+    float3(-0.8433998f, 0.1451271f, 0.2269872f),
+    float3(-0.4037157f, -0.6253081f, 0.6364237f),
+    float3(-0.6657394f, 0.6296575f, 0.5249437f),
+    float3(-0.0011783f, 0.2834622f, 0.8343929f)
 };
 
 float OcclusionFunction(float distZ)
@@ -228,34 +231,33 @@ float4 PS(VertexOut pin) : SV_Target
 
     float3 p = (pz / pin.PosV.z) * pin.PosV;
 
-    float3 randVec = RandomNormal(pin.TexC);
-    //float3 randVec = 2.0f * gRandomVecMap.SampleLevel(gsamLinearWrap, 4.0f * pin.TexC, 0.0f).rgb - 1.0f;
+    float3 randVec = 2.0f * NoiseMap.SampleLevel(gsamLinear, float2(ScreenWidth / 4.0f, ScreenHeight / 4.0f) * pin.TexC, 0.0f).rgb - 1.0f;
+
+    // TBN »ý¼º
+    float3 tangent = normalize(randVec - n * dot(randVec, n));
+    float3 bitangent = cross(n, tangent);
+    float3x3 TBN = float3x3(tangent, bitangent, n);
 
     float occlusionSum = 0.0f;
-	
+
     for (int i = 0; i < NUM_SAMPLES; ++i)
     {
-        float3 offset = reflect(sampleKernel[i].xyz, randVec);
-	
-        float flip = sign(dot(offset, n));
-		
-        float3 q = p + flip * gOcclusionRadius * offset;
-		
+        float3 sampleVec = mul(sampleKernel[i], TBN);
+        float3 q = p + gOcclusionRadius * sampleVec;
+
         float4 projQ = mul(float4(q, 1.0f), ProjectionTex);
         projQ /= projQ.w;
-		
-        float a = projQ.x * projQ.y;
-		
+
         float rz = DepthMap.SampleLevel(gsamDepth, projQ.xy, 0.0f).r;
         rz = NdcDepthToViewDepth(rz);
-
         float3 r = (rz / q.z) * q;
-		
-        float distZ = p.z - r.z;
-        float dp = max(dot(n, normalize(r - p)), 0.0f);
 
-        float occlusion = dp * OcclusionFunction(distZ);
+        float3 diff = r - p;
+        float dist2 = dot(diff, diff);
+        float dp = max(dot(n, normalize(diff)), 0.0f);
+        float rangeCheck = smoothstep(0.0f, 1.0f, gOcclusionRadius * gOcclusionRadius / (dist2 + 1e-4f));
 
+        float occlusion = dp * rangeCheck;
         occlusionSum += occlusion;
     }
 	

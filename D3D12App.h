@@ -233,5 +233,4 @@ private:
 	Texture* mSSAOVBlurTexture = nullptr;
 	Texture* mSSAOHBlurTexture = nullptr;
 	Texture* mNoiseTexture = nullptr;
-
 };

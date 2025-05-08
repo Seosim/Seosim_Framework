@@ -1,9 +1,3 @@
-cbuffer cbSsao : register(b0)
-{
-    float4 gBlurWeights[3];
-    float2 gInvRenderTargetSize;
-};
-
 // Input textures
 Texture2D gNormalMap : register(t0);
 Texture2D gDepthMap : register(t1);
@@ -35,8 +29,8 @@ void CS(uint3 DTid : SV_DispatchThreadID)
     int width, height;
     gInputMap.GetDimensions(width, height);
     
-    if (texCoord.x >= width || texCoord.y >= height)
-        return;
+    //if (texCoord.x >= width || texCoord.y >= height)
+    //    return;
     
     static const int gBlurRadius = 5;
     

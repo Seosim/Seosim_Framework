@@ -35,8 +35,8 @@ void CS(uint3 DTid : SV_DispatchThreadID)
     int width, height;
     gInputMap.GetDimensions(width, height);
     
-    if (texCoord.x >= width || texCoord.y >= height)
-        return;
+    //if (texCoord.x >= width || texCoord.y >= height)
+    //    return;
     
     static const int gBlurRadius = 5;
     

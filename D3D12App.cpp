@@ -1353,7 +1353,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mSSAOHBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mSSAOHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAO", mWidth, mHeight);
+		mSSAOHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAOHBlurTexture", mWidth, mHeight);
 	}
 }
 
@@ -2239,12 +2239,64 @@ void D3D12App::SSAO()
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
+	////Down Scaling 4x4
+	//{
+	//	mDownSampleShader->SetPipelineState(md3dCommandList);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mSSAOTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mSSAOHBlurTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOHBlurTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f / 4.0f);
+	//	UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f / 4.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOHBlurTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
+
 	//Blur
 	{
 		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
 		BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
-		//BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 1);
+		//BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 3);
 	}
+
+	////Up Scaling 4x4
+	//{
+	//	mUpSampleShader->SetPipelineState(md3dCommandList);
+
+	//	auto handle0 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle0.ptr += mSSAOHBlurTexture->GetID() * mCbvSrvUavDescriptorSize;
+
+	//	auto handle1 = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+	//	handle1.ptr += (mSSAOResultTexture->GetID() + 1) * mCbvSrvUavDescriptorSize;
+
+	//	md3dCommandList->SetComputeRootDescriptorTable(0, handle0);
+	//	md3dCommandList->SetComputeRootDescriptorTable(1, handle1);
+
+	//	auto barrier0 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOResultTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+	//	md3dCommandList->ResourceBarrier(1, &barrier0);
+
+	//	UINT numGroupsX = (UINT)ceilf((float)mWidth / 32.0f);
+	//	UINT numGroupsY = (UINT)ceilf((float)mHeight / 32.0f);
+	//	md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
+
+	//	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(mSSAOResultTexture->GetResource(),
+	//		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ);
+	//	md3dCommandList->ResourceBarrier(1, &barrier1);
+	//}
 
 	//∑ª¥ı≈∏∞Ÿ ªÛ≈¬ ∫Ø»Ø
 	{
@@ -2333,7 +2385,7 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 		}
 	}
 
-	constexpr int BLUR_COUNT = 2;
+	constexpr int BLUR_COUNT = 5;
 	for (int i = 0; i < BLUR_COUNT; ++i)
 	{
 		//VBlur
@@ -2353,8 +2405,8 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			md3dCommandList->ResourceBarrier(1, &barrier0);
 
-			UINT numGroupsX = (UINT)ceilf(mWidth);
-			UINT numGroupsY = (UINT)ceilf(mHeight / 16.0f);
+			UINT numGroupsX = (UINT)ceilf(mWidth / 4.0f);
+			UINT numGroupsY = (UINT)ceilf(mHeight / 4.0f / 16.0f);
 			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(vBlurTexture->GetResource(),
@@ -2379,8 +2431,8 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 			md3dCommandList->ResourceBarrier(1, &barrier0);
 
-			UINT numGroupsX = (UINT)ceilf(mWidth / 16.0f);
-			UINT numGroupsY = (UINT)ceilf(mHeight);
+			UINT numGroupsX = (UINT)ceilf(mWidth / 4.0f / 16.0f);
+			UINT numGroupsY = (UINT)ceilf(mHeight / 4.0f);
 			md3dCommandList->Dispatch(numGroupsX, numGroupsY, 1);
 
 			auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(hBlurTexture->GetResource(),
