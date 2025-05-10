@@ -155,6 +155,7 @@ enum class eDescriptorRange {
 	TEXTURE0,
 	TEXTURE1,
 	TEXTURE2,
+	TEXTURE3,
 	COUNT
 };
 
@@ -169,6 +170,7 @@ enum class eRootParameter {
 	TEXTURE0,
 	TEXTURE1,
 	TEXTURE2,
+	TEXTURE3,
 	COUNT
 };
 
@@ -179,5 +181,6 @@ enum class eComputeRootParamter {
 	DOWN_SCALE_SIZE,
 	CAMERA_N_TIMER,
 	INPUT2,
+	INPUT3,
 	COUNT
 };

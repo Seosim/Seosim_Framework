@@ -51,8 +51,9 @@ void Shader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignatu
 	psoDesc.NumRenderTargets = 1;
 	if (shaderName == "color")
 	{
-		psoDesc.NumRenderTargets = 2;
+		psoDesc.NumRenderTargets = 3;
 		psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		psoDesc.RTVFormats[2] = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	}
 	psoDesc.RTVFormats[0] = command.Format;
 	psoDesc.SampleDesc.Count = command.SampleCount;

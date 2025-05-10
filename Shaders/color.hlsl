@@ -36,7 +36,8 @@ struct VertexOut
 struct PixelOut
 {
     float4 color : SV_TARGET0;
-    float4 normal : SV_TARGET1;
+    float4 position : SV_TARGET1;
+    float4 normal : SV_TARGET2;
 };
 
 VertexOut VS(VertexIn vin)
@@ -101,6 +102,7 @@ PixelOut PS(VertexOut pin)
     color += Emission.rgb;
 
     pixelOut.color = float4(color, 1.0f);
+    pixelOut.position = float4(pin.PosV, 1.0f);
     pixelOut.normal = float4(mul(N, (float3x3) gView), 0.0f);
 
     return pixelOut;

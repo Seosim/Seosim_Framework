@@ -67,9 +67,9 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     
     // ACES 톤 매핑 적용
     color.rgb = ACESFitted(color.rgb);
-
     // sRGB 변환 적용
     color.rgb = ToSRGB(color);
+    
     // 결과를 UAV에 저장
     gOutput[texCoord] = color;
 }

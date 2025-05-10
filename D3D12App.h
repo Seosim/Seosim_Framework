@@ -22,6 +22,7 @@ public:
 		FRAME0,
 		FRAME1,
 		MSAA,
+		POSITION,
 		CAMERA_NORMAL,
 		SSAO,
 		SCREEN,
@@ -138,6 +139,7 @@ private:
 	ID3D12Resource* mDepthStencilBuffer;
 
 	//TEXTURE2DMS -> TEXTURE2D
+	ID3D12Resource* mResolvePosition = nullptr;
 	ID3D12Resource* mResolveCameraNormal = nullptr;
 	ID3D12Resource* mResolveCameraDepth = nullptr;
 
@@ -189,6 +191,7 @@ private:
 	GameObject* mSkybox = nullptr;
 	Material* mSkyboxMat = nullptr;
 
+	Texture* mPositionTexture = nullptr;
 	Texture* mDepthTexture = nullptr;
 	Texture* mNormalTexture = nullptr;
 	Texture* mMSAATexture = nullptr;

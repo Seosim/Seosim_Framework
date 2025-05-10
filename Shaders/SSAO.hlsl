@@ -175,11 +175,12 @@ VertexOut VS(uint vid : SV_VertexID)
 Texture2D DepthMap : register(t2);
 Texture2D NormalMap : register(t3);
 Texture2D NoiseMap : register(t4);
+Texture2D PositionMap : register(t5);
 
-static const float gSurfaceEpsilon = 0.1f;
+static const float gSurfaceEpsilon = 0.015f;
 static const float gOcclusionFadeEnd = 1.0f;
 static const float gOcclusionFadeStart = 0.1f;
-static const float gOcclusionRadius = 0.2f;
+static const float gOcclusionRadius = 0.1f;
 
 
 static const int NUM_SAMPLES = 16;
@@ -221,49 +222,89 @@ float NdcDepthToViewDepth(float z_ndc)
     float viewZ = gProj[3][2] / (z_ndc - gProj[2][2]);
     return viewZ;
 }
+
+//#define TEST;
  
 float4 PS(VertexOut pin) : SV_Target
 {
-    float3 n = normalize(NormalMap.SampleLevel(gsamPointClamp, pin.TexC, 0.0f).xyz);
-    float pz = DepthMap.SampleLevel(gsamDepth, pin.TexC, 0.0f).r;
-    pz = NdcDepthToViewDepth(pz);
-
-
-    float3 p = (pz / pin.PosV.z) * pin.PosV;
-
-    float3 randVec = 2.0f * NoiseMap.SampleLevel(gsamLinear, float2(ScreenWidth / 4.0f, ScreenHeight / 4.0f) * pin.TexC, 0.0f).rgb - 1.0f;
-
-    // TBN 持失
-    float3 tangent = normalize(randVec - n * dot(randVec, n));
-    float3 bitangent = cross(n, tangent);
-    float3x3 TBN = float3x3(tangent, bitangent, n);
-
-    float occlusionSum = 0.0f;
+    #ifdef TEST
+    float3 position = PositionMap.Sample(gsamLinear, pin.TexC).xyz;
+    float3 normal = normalize(NormalMap.Sample(gsamPointClamp, pin.TexC).xyz);
+    float3 randVec = 2.0f * NoiseMap.Sample(gsamLinear, float2(ScreenWidth / 4.0f, ScreenHeight / 4.0f) * pin.TexC).rgb - 1.0f;
+    
+    float3 tangent = normalize(randVec - normal * dot(randVec, normal));
+    float3 bitangent = cross(normal, tangent);
+    float3x3 TBN = float3x3(tangent, bitangent, normal);
+    
+    float occlusion = 0.0f;
 
     for (int i = 0; i < NUM_SAMPLES; ++i)
     {
-        float3 sampleVec = mul(sampleKernel[i], TBN);
-        float3 q = p + gOcclusionRadius * sampleVec;
+        
+        float viewZ = abs(position.z);
+        float adaptiveRadius = gOcclusionRadius * saturate(viewZ / 10.0f);
+        float3 sampleVec = mul(TBN, sampleKernel[i]);
+        float3 samplePos = position + adaptiveRadius * sampleVec;
+        
 
-        float4 projQ = mul(float4(q, 1.0f), ProjectionTex);
-        projQ /= projQ.w;
+        float4 offset = float4(samplePos, 1.0f);
+        offset = mul(offset, ProjectionTex);
+        offset.xyz /= offset.w;
 
-        float rz = DepthMap.SampleLevel(gsamDepth, projQ.xy, 0.0f).r;
-        rz = NdcDepthToViewDepth(rz);
-        float3 r = (rz / q.z) * q;
-
-        float3 diff = r - p;
-        float dist2 = dot(diff, diff);
-        float dp = max(dot(n, normalize(diff)), 0.0f);
-        float rangeCheck = smoothstep(0.0f, 1.0f, gOcclusionRadius * gOcclusionRadius / (dist2 + 1e-4f));
-
-        float occlusion = dp * rangeCheck;
-        occlusionSum += occlusion;
+        if (offset.x < 0.0f || offset.x > 1.0f || offset.y < 0.0f || offset.y > 1.0f)
+            continue;
+        
+        float sampleDepth = PositionMap.Sample(gsamLinear, offset.xy).z;
+        
+        float rangeCheck = smoothstep(0.0, 1.0, gOcclusionRadius / abs(position.z - sampleDepth));
+        occlusion += (sampleDepth <= samplePos.z - gSurfaceEpsilon ? 1.0 : 0.0);
     }
-	
-    occlusionSum /= NUM_SAMPLES;
-	
-    float access = 1.0f - occlusionSum;
+    return 1.0f - occlusion / NUM_SAMPLES;
+    #endif
     
-    return saturate(pow(access, 4.0f));
+    {
+        float3 normal = normalize(NormalMap.SampleLevel(gsamPointClamp, pin.TexC, 0.0f).xyz);
+        float pz = DepthMap.SampleLevel(gsamDepth, pin.TexC, 0.0f).r;
+        pz = NdcDepthToViewDepth(pz);
+
+        float3 position = PositionMap.SampleLevel(gsamLinear, pin.TexC, 0); //(pz / pin.PosV.z) * pin.PosV;
+
+        float3 randVec = 2.0f * NoiseMap.SampleLevel(gsamLinear, float2(ScreenWidth / 4.0f, ScreenHeight / 4.0f) * pin.TexC, 0.0f).rgb - 1.0f;
+    
+        // TBN 持失
+        float3 tangent = normalize(randVec - normal * dot(randVec, normal));
+        float3 bitangent = cross(normal, tangent);
+        float3x3 TBN = float3x3(tangent, bitangent, normal);
+
+        float occlusionSum = 0.0f;
+
+        for (int i = 0; i < NUM_SAMPLES; ++i)
+        {
+            float3 sampleVec = mul(TBN, sampleKernel[i]);
+            float3 q = position + gOcclusionRadius * sampleVec;
+
+            float4 projQ = mul(float4(q, 1.0f), ProjectionTex);
+            projQ /= projQ.w;
+
+        
+            float rz = DepthMap.SampleLevel(gsamDepth, projQ.xy, 0.0f).r;
+            rz = NdcDepthToViewDepth(rz);
+            float3 r = (rz / q.z) * q;
+
+            float3 diff = r - position;
+            float dist2 = dot(diff, diff);
+            float dp = max(dot(normal, normalize(diff)), 0.0f);
+       
+            float occlusion = dp;
+            occlusionSum += occlusion;
+        }
+	
+        
+        occlusionSum /= NUM_SAMPLES;
+	
+        float access = 1.0f - occlusionSum;
+    
+        //return access;
+        return saturate(pow(access, 1.5f));
+    }
 }
