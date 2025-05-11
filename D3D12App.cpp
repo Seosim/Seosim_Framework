@@ -748,7 +748,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 			mesh = new Mesh;
 			mesh->LoadMeshData(md3dDevice, md3dCommandList, meshPath);
 
-			//HACK: KDTree Test.
+			//HACK: TerrainMeshCollider Test.
 			{
 				std::string test = "Environment_1";
 				if (name == test)
@@ -1576,12 +1576,9 @@ void D3D12App::CalculateFrameStats()
 		std::wstring fpsStr = std::to_wstring(fps);
 		std::wstring mspfStr = std::to_wstring(mspf);
 
-		float distance = UpdateTerrainDistance();
-
 		std::wstring windowText = mMainWndCaption +
 			L"    fps: " + fpsStr +
-			L"   mspf: " + mspfStr +
-			L"   Distance: " + std::to_wstring(distance);
+			L"   mspf: " + mspfStr;
 
 		SetWindowText(mhMainWnd, windowText.c_str());
 
@@ -1615,7 +1612,7 @@ int D3D12App::Update()
 				CalculateFrameStats();
 				CollisionCheck();
 				UpdateComponents();
-				//UpdateTerrainDistance();
+				UpdateTerrainDistance();
 				Draw(mTimer);
 				Input::Instance().SaveKeyState();
 				Input::Instance().UpdateMousePosition();
@@ -1643,19 +1640,21 @@ float D3D12App::UpdateTerrainDistance()
 		if (!gameObject->HasComponent<TerrainMeshCollider>())
 			continue;
 
-		XMFLOAT3 position = mCamera->GetComponent<Transform>().GetPosition();
+		Transform& transform = mCamera->GetComponent<Transform>();
+
+		XMFLOAT3 position = transform.GetPosition();
 		XMVECTOR pivotPosition = XMLoadFloat3(&position);
 		XMVECTOR UP_VECTOR = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 		TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
 
-		auto node = terrainMeshCollider.FindNode(terrainMeshCollider.mKDTree.get(), position);
-		if (!node) return 0.0f;
+		auto node = terrainMeshCollider.FindNode(position);
+		ASSERT(node);
 
 		float minDistance = std::numeric_limits<float>::max();
 		float distance = 0.0f;
 
-		for (auto& triangle : node->triangles)
+		for (const Triangle& triangle : node->Triangles)
 		{
 			XMVECTOR v0 = XMLoadFloat3(&triangle.v0);
 			XMVECTOR v1 = XMLoadFloat3(&triangle.v1);
@@ -1669,9 +1668,9 @@ float D3D12App::UpdateTerrainDistance()
 			}
 		}
 
-		float answer = minDistance;
-
-		return answer;
+		constexpr float PIVOT = 2.0f;
+		transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
+		return minDistance;
 	}
 }
 

@@ -19,7 +19,7 @@ struct AABB {
 		maxZ = std::max(std::max(std::max(maxZ, triangle.v0.z), triangle.v1.z), triangle.v2.z);
 	}
 
-	bool Intersect(const Triangle& triangle)
+	bool Intersect(const Triangle& triangle) const
 	{
 		float triMinX = std::min({ triangle.v0.x, triangle.v1.x, triangle.v2.x });
 		float triMaxX = std::max({ triangle.v0.x, triangle.v1.x, triangle.v2.x });
@@ -27,24 +27,25 @@ struct AABB {
 		float triMaxZ = std::max({ triangle.v0.z, triangle.v1.z, triangle.v2.z });
 
 		return !(triMaxX < minX || triMinX > maxX || triMaxZ < minZ || triMinZ > maxZ);
+	}
 
-		//return (std::clamp(triangle.v0.x, minX, maxX) == triangle.v0.x && std::clamp(triangle.v0.z, minZ, maxZ) == triangle.v0.z) ||
-		//	(std::clamp(triangle.v1.x, minX, maxX) == triangle.v1.x && std::clamp(triangle.v1.z, minZ, maxZ) == triangle.v1.z) ||
-		//	(std::clamp(triangle.v2.x, minX, maxX) == triangle.v2.x && std::clamp(triangle.v2.z, minZ, maxZ) == triangle.v2.z);
+	bool Intersect(const XMFLOAT3& position) const
+	{
+		return !(position.x < minX || position.x > maxX || position.z < minZ || position.z > maxZ);
 	}
 };
 
-struct KDNode {
-	std::unique_ptr<KDNode> left = nullptr;
-	std::unique_ptr<KDNode> right = nullptr;
+struct TrisNode {
+	std::unique_ptr<TrisNode> Left = nullptr;
+	std::unique_ptr<TrisNode> Right = nullptr;
 
-	int depth = 0;
-	AABB bound = {};
+	int Depth = 0;
+	AABB Bound = {};
 
-	bool splitAxis = true; // true: x축, false: z축
-	float splitValue = 0.0f;
+	bool SplitAxis = true; // true: x축, false: z축
+	float SplitValue = 0.0f;
 
-	std::vector<Triangle> triangles;
+	std::vector<Triangle> Triangles = {};
 };
 
 class TerrainMeshCollider :public IComponent {
@@ -58,10 +59,10 @@ public:
 
 	void SetTriangles(std::vector<Triangle> triangles, XMMATRIX worldMatrix);
 
-	std::unique_ptr<KDNode> BuildKDTree(std::vector<Triangle>& triangles, int depth, int maxDepth = 10, int minTriangles = 30);
-	const KDNode* FindNode(const KDNode* node, const XMFLOAT3& position);
-
-	std::unique_ptr<KDNode> mKDTree = {};
-	std::vector<Triangle> mTriangles = {};
+	std::unique_ptr<TrisNode> BuildTree(std::vector<Triangle>& triangles, int depth, int maxDepth = 10, int minTriangles = 30);
+	const TrisNode* FindNode(const XMFLOAT3& position);
 private:
+	const TrisNode* findNode(const TrisNode* node, const XMFLOAT3& position);
+
+	std::unique_ptr<TrisNode> mRoot = {};
 };

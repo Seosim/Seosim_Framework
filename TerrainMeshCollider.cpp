@@ -18,32 +18,30 @@ void TerrainMeshCollider::SetTriangles(std::vector<Triangle> triangles, XMMATRIX
 		XMStoreFloat3(&triangles[i].v2, v2);
 	}
 
-	mTriangles = triangles;
-	mKDTree = BuildKDTree(triangles, 0);
+	mRoot = BuildTree(triangles, 0);
 }
 
-std::unique_ptr<KDNode> TerrainMeshCollider::BuildKDTree(std::vector<Triangle>& triangles, int depth, int maxDepth, int minTriangles)
+std::unique_ptr<TrisNode> TerrainMeshCollider::BuildTree(std::vector<Triangle>& triangles, int depth, int maxDepth, int minTriangles)
 {
-	std::unique_ptr<KDNode> kdNode = std::make_unique<KDNode>();
-	kdNode->depth = depth;
+	std::unique_ptr<TrisNode> node = std::make_unique<TrisNode>();
+	node->Depth = depth;
 
-	// 전체 AABB 계산
 	AABB aabb = {};
 	for (const auto& tri : triangles)
 	{
 		aabb.Expand(tri);
 	}
-	kdNode->bound = aabb;
+	node->Bound = aabb;
 
 	// 리프 노드 조건
 	if (depth >= maxDepth || triangles.size() <= minTriangles) {
-		kdNode->triangles = std::move(triangles);
-		return kdNode;
+		node->Triangles = std::move(triangles);
+		return node;
 	}
 
 	// 분할 축 선택
 	bool axis = (depth & 1) == 0; // true: x축, false: z축
-	kdNode->splitAxis = axis;
+	node->SplitAxis = axis;
 
 	float splitValue = 0.0f;
 	if (axis)
@@ -51,9 +49,8 @@ std::unique_ptr<KDNode> TerrainMeshCollider::BuildKDTree(std::vector<Triangle>& 
 	else
 		splitValue = (aabb.minZ + aabb.maxZ) * 0.5f;
 
-	kdNode->splitValue = splitValue;
+	node->SplitValue = splitValue;
 
-	// 좌우 Bound 생성
 	AABB leftBound = aabb;
 	AABB rightBound = aabb;
 
@@ -66,7 +63,6 @@ std::unique_ptr<KDNode> TerrainMeshCollider::BuildKDTree(std::vector<Triangle>& 
 		rightBound.minZ = splitValue;
 	}
 
-	// 삼각형 분배
 	std::vector<Triangle> leftTris;
 	std::vector<Triangle> rightTris;
 	leftTris.reserve(triangles.size() / 2);
@@ -81,30 +77,52 @@ std::unique_ptr<KDNode> TerrainMeshCollider::BuildKDTree(std::vector<Triangle>& 
 			rightTris.emplace_back(tri.v0, tri.v1, tri.v2);
 	}
 
-	// 재귀 분할
-	kdNode->left = BuildKDTree(leftTris, depth + 1, maxDepth, minTriangles);
-	kdNode->right = BuildKDTree(rightTris, depth + 1, maxDepth, minTriangles);
+	node->Left = BuildTree(leftTris, depth + 1, maxDepth, minTriangles);
+	node->Right = BuildTree(rightTris, depth + 1, maxDepth, minTriangles);
 
-	return kdNode;
+	return node;
 }
 
-const KDNode* TerrainMeshCollider::FindNode(const KDNode* node, const XMFLOAT3& position)
+const TrisNode* TerrainMeshCollider::FindNode(const XMFLOAT3& position)
+{
+	ASSERT(mRoot.get());
+
+	if (mRoot->SplitAxis) { // x-axis
+		if (position.x < mRoot->SplitValue)
+			return findNode(mRoot->Left.get(), position);
+		else
+			return findNode(mRoot->Right.get(), position);
+	}
+	else { // z-axis
+		if (position.z < mRoot->SplitValue)
+			return findNode(mRoot->Left.get(), position);
+		else
+			return findNode(mRoot->Right.get(), position);
+	}
+}
+
+const TrisNode* TerrainMeshCollider::findNode(const TrisNode* node, const XMFLOAT3& position)
 {
 	ASSERT(node);
 
-	if (!node->left && !node->right)
+	if (!node->Left && !node->Right)
 		return node;
 
-	if (node->splitAxis) { // x-axis
-		if (position.x < node->splitValue)
-			return FindNode(node->left.get(), position);
+	if (false == node->Bound.Intersect(position))
+		return nullptr;
+
+	if (node->SplitAxis) // x-axis
+	{ 
+		if (position.x < node->SplitValue)
+			return findNode(node->Left.get(), position);
 		else
-			return FindNode(node->right.get(), position);
+			return findNode(node->Right.get(), position);
 	}
-	else { // z-axis
-		if (position.z < node->splitValue)
-			return FindNode(node->left.get(), position);
+	else // z-axis
+	{ 
+		if (position.z < node->SplitValue)
+			return findNode(node->Left.get(), position);
 		else
-			return FindNode(node->right.get(), position);
+			return findNode(node->Right.get(), position);
 	}
 }
