@@ -102,6 +102,9 @@
     <ClCompile Include="CameraController.cpp">
       <Filter>소스 파일\Component</Filter>
     </ClCompile>
+    <ClCompile Include="TerrainMeshCollider.cpp">
+      <Filter>소스 파일\Component\Collider</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -181,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="CameraController.h">
       <Filter>헤더 파일\Component</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainMeshCollider.h">
+      <Filter>헤더 파일\Component\Collider</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

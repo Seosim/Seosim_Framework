@@ -1,6 +1,13 @@
 #pragma once
 #include "pch.h"
 
+struct Triangle {
+	Triangle() = default;
+	Triangle(const XMFLOAT3& a, const XMFLOAT3& b, const XMFLOAT3& c) { v0 = a; v1 = b; v2 = c; }
+
+	XMFLOAT3 v0, v1, v2;
+};
+
 class Mesh {
 public:
 	Mesh() = default;
@@ -15,6 +22,7 @@ public:
 	void RenderSubMeshes(ID3D12GraphicsCommandList* pCommandList, const int subMeshIndex = 0);
 
 	int GetSubMeshCount() const;
+	std::vector<Triangle> GetTriangles() const;
 
 	static std::unordered_map<std::string, Mesh*> MeshList;
 protected:
@@ -36,4 +44,6 @@ protected:
 	std::vector<UINT> mSubMeshIndex = {};
 private:
 	static Mesh* mPrevUsedMesh;
+private:
+	std::vector<Triangle> mTriangles = {};
 };

@@ -694,7 +694,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 	GameObject* gameObject = new GameObject();
 
 	gameObject->AddComponent<Transform>();
-    Transform& cTransform = gameObject->GetComponent<Transform>();
+    Transform& transform = gameObject->GetComponent<Transform>();
 
 	mGameObjects.push_back(gameObject);
 
@@ -707,14 +707,14 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 	XMFLOAT3 scale;
 	loader.read(reinterpret_cast<char*>(&scale), sizeof(XMFLOAT3));
 
-	cTransform.SetParent(parent);
-	cTransform.SetTransformData(position, rotation, scale); 
+	transform.SetParent(parent);
+	transform.SetTransformData(position, rotation, scale); 
 
 	//TODO: 익스포터에서 RigidBody 사용유무 체크해야함. 현재는 그냥 다 넣는 중
 	{
 		gameObject->AddComponent<RigidBody>();
 		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-		rigidBody.SetTransform(&cTransform);
+		rigidBody.SetTransform(&transform);
 	}
 
 	bool bHasMesh;
@@ -741,6 +741,17 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		{
 			mesh = new Mesh;
 			mesh->LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+
+			//HACK: KDTree Test.
+			{
+				gameObject->AddComponent<TerrainMeshCollider>();
+				TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
+
+				terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
+
+				terrainMeshCollider.FindNode(terrainMeshCollider.mKDTree.get(), { 0.0f, 0.0f, 0.0f });
+			}
+
 		}
 
 		gameObject->AddComponent<MeshRenderer>();
@@ -791,7 +802,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 	for (int i = 0; i < childCount; ++i)
 	{
-		cTransform.AddChild(LoadGameObjectData(loader, gameObject));
+		transform.AddChild(LoadGameObjectData(loader, gameObject));
 	}
 }
 
@@ -2481,7 +2492,7 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 		}
 	}
 
-	constexpr int BLUR_COUNT = 1;
+	constexpr int BLUR_COUNT = 0;
 	for (int i = 0; i < BLUR_COUNT; ++i)
 	{
 		//VBlur

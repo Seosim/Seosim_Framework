@@ -8,6 +8,7 @@
 #include "RigidBody.h"
 #include "MeshRenderer.h"
 #include "BoxCollider.h"
+#include "TerrainMeshCollider.h"
 #include "PlayerController.h"
 #include "CameraController.h"
 #include "d3dUtil.h"

@@ -44,7 +44,7 @@ void CS(uint3 DTid : SV_DispatchThreadID)
         float3 neighborNormal = gNormalMap.Load(int3(offsetCoord, 0)).xyz;
         float neighborDepth = gDepthMap.Load(int3(offsetCoord, 0)).r;
         
-        if (dot(neighborNormal, centerNormal) >= 0.7f && abs(neighborDepth - centerDepth) <= 0.3f)
+        if (dot(neighborNormal, centerNormal) >= 0.8f && abs(neighborDepth - centerDepth) <= 0.8f)
         {
             float weight = BlurWeights[i + gBlurRadius];
             color += weight * gInputMap.Load(int3(offsetCoord, 0)).r;

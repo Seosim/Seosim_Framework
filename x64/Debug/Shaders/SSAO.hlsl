@@ -177,10 +177,10 @@ Texture2D NormalMap : register(t3);
 Texture2D NoiseMap : register(t4);
 Texture2D PositionMap : register(t5);
 
-static const float gSurfaceEpsilon = 0.025f;
+static const float gSurfaceEpsilon = 0.015f;
 static const float gOcclusionFadeEnd = 1.0f;
 static const float gOcclusionFadeStart = 0.1f;
-static const float gOcclusionRadius = 0.5f;
+static const float gOcclusionRadius = 0.1f;
 
 
 static const int NUM_SAMPLES = 16;
@@ -223,7 +223,7 @@ float NdcDepthToViewDepth(float z_ndc)
     return viewZ;
 }
 
-#define TEST;
+//#define TEST;
  
 float4 PS(VertexOut pin) : SV_Target
 {
@@ -240,19 +240,25 @@ float4 PS(VertexOut pin) : SV_Target
 
     for (int i = 0; i < NUM_SAMPLES; ++i)
     {
-        float3 samplePos = mul(TBN, sampleKernel[i]);
-        samplePos = position + samplePos * gOcclusionRadius;
+        
+        float viewZ = abs(position.z);
+        float adaptiveRadius = gOcclusionRadius * saturate(viewZ / 10.0f);
+        float3 sampleVec = mul(TBN, sampleKernel[i]);
+        float3 samplePos = position + adaptiveRadius * sampleVec;
+        
 
         float4 offset = float4(samplePos, 1.0f);
         offset = mul(offset, ProjectionTex);
         offset.xyz /= offset.w;
+
+        if (offset.x < 0.0f || offset.x > 1.0f || offset.y < 0.0f || offset.y > 1.0f)
+            continue;
         
         float sampleDepth = PositionMap.Sample(gsamLinear, offset.xy).z;
         
         float rangeCheck = smoothstep(0.0, 1.0, gOcclusionRadius / abs(position.z - sampleDepth));
         occlusion += (sampleDepth <= samplePos.z - gSurfaceEpsilon ? 1.0 : 0.0);
     }
-    
     return 1.0f - occlusion / NUM_SAMPLES;
     #endif
     
@@ -289,19 +295,16 @@ float4 PS(VertexOut pin) : SV_Target
             float dist2 = dot(diff, diff);
             float dp = max(dot(normal, normalize(diff)), 0.0f);
        
-            float sampleDepth = PositionMap.Sample(gsamLinear, projQ.xy).z;
-        
-            float rangeCheck = smoothstep(0.0, 1.0, gOcclusionRadius / abs(position.z - sampleDepth));
-            occlusionSum += (sampleDepth <= q.z - gSurfaceEpsilon ? 1.0 : 0.0);
-
-            //float occlusion = dp;
-            //occlusionSum += occlusion;
+            float occlusion = dp;
+            occlusionSum += occlusion;
         }
 	
+        
         occlusionSum /= NUM_SAMPLES;
 	
         float access = 1.0f - occlusionSum;
     
-        return saturate(pow(access, 4.0f));
+        //return access;
+        return saturate(pow(access, 1.5f));
     }
 }

@@ -58,6 +58,12 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 
 		mSubMeshIndex.push_back(totalIndicesCount);
 	}
+	//Save Triangle Data
+	mTriangles.reserve(totalIndices.size() / 3);
+	for (int i = 0; i < totalIndices.size(); i += 3)
+	{
+		mTriangles.emplace_back( positions[totalIndices[i]], positions[totalIndices[i + 1]], positions[totalIndices[i + 2]] );
+	}
 
 	mPositionBufferGPU = d3dUtil::CreateDefaultBuffer(pDevice,
 		pCommandList, positions.data(), positions.size() * sizeof(XMFLOAT3), mPositionBufferUploader);
@@ -133,4 +139,9 @@ void Mesh::RenderSubMeshes(ID3D12GraphicsCommandList* pCommandList, const int su
 int Mesh::GetSubMeshCount() const
 {
 	return mSubMeshIndex.size();
+}
+
+std::vector<Triangle> Mesh::GetTriangles() const
+{
+	return mTriangles;
 }
