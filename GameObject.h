@@ -16,11 +16,8 @@
 
 class GameObject {
 public:
-	struct ObjectConstants {
-		XMFLOAT4X4 WorldViewProj = {};
-	};
-
 	GameObject();
+	GameObject(const std::string& name);
 	~GameObject() {}
 
 	GameObject(const GameObject& rhs) = delete;
@@ -46,4 +43,5 @@ private:
 	static unsigned int globalID;
 
 	unsigned int ID = 0;
+	std::string mName = {"Default_Name"};
 };

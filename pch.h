@@ -1,4 +1,5 @@
 #pragma once
+#define NOMINMAX
 
 #include <windows.h>
 #include <windowsx.h>
@@ -11,6 +12,7 @@
 #include <memory>
 #include <fstream>
 #include <functional>
+#include <chrono>
 
 
 #include <d3d12.h>
@@ -137,7 +139,7 @@ namespace MATRIX {
 namespace MathTool {
 	static float Clamp(float val, float minVal, float maxVal)
 	{
-		return max(min(maxVal, val), minVal);
+		return std::max(std::min(maxVal, val), minVal);
 	}
 
 	constexpr float PI = 3.141597f;

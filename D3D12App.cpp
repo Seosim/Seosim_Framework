@@ -691,7 +691,13 @@ void D3D12App::LoadHierarchyData(const std::string& filePath)
 
 GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* parent)
 {
-	GameObject* gameObject = new GameObject();
+	char nameLength = 0;
+	char name[64] = {};
+
+	loader.read(reinterpret_cast<char*>(&nameLength), sizeof(char));
+	loader.read(reinterpret_cast<char*>(name), nameLength);
+
+	GameObject* gameObject = new GameObject(name);
 
 	gameObject->AddComponent<Transform>();
     Transform& transform = gameObject->GetComponent<Transform>();
@@ -744,12 +750,14 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 			//HACK: KDTree Test.
 			{
-				gameObject->AddComponent<TerrainMeshCollider>();
-				TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
+				std::string test = "Environment_1";
+				if (name == test)
+				{
+					gameObject->AddComponent<TerrainMeshCollider>();
+					TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
 
-				terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
-
-				terrainMeshCollider.FindNode(terrainMeshCollider.mKDTree.get(), { 0.0f, 0.0f, 0.0f });
+					terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
+				}
 			}
 
 		}
@@ -808,7 +816,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/0413Test.bin");
+	LoadHierarchyData("Assets/Hierarchies/0511Test.bin");
 
 	{
 		Shader::Command command = Shader::DefaultCommand();
@@ -1568,9 +1576,12 @@ void D3D12App::CalculateFrameStats()
 		std::wstring fpsStr = std::to_wstring(fps);
 		std::wstring mspfStr = std::to_wstring(mspf);
 
+		float distance = UpdateTerrainDistance();
+
 		std::wstring windowText = mMainWndCaption +
 			L"    fps: " + fpsStr +
-			L"   mspf: " + mspfStr;
+			L"   mspf: " + mspfStr +
+			L"   Distance: " + std::to_wstring(distance);
 
 		SetWindowText(mhMainWnd, windowText.c_str());
 
@@ -1604,6 +1615,7 @@ int D3D12App::Update()
 				CalculateFrameStats();
 				CollisionCheck();
 				UpdateComponents();
+				//UpdateTerrainDistance();
 				Draw(mTimer);
 				Input::Instance().SaveKeyState();
 				Input::Instance().UpdateMousePosition();
@@ -1622,6 +1634,45 @@ int D3D12App::Update()
 void D3D12App::UpdateComponents()
 {
 	ComponentManager::Instance().UpdateComponent(mTimer.DeltaTime());
+}
+
+float D3D12App::UpdateTerrainDistance()
+{
+	for (GameObject* gameObject : mGameObjects)
+	{
+		if (!gameObject->HasComponent<TerrainMeshCollider>())
+			continue;
+
+		XMFLOAT3 position = mCamera->GetComponent<Transform>().GetPosition();
+		XMVECTOR pivotPosition = XMLoadFloat3(&position);
+		XMVECTOR UP_VECTOR = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+		TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
+
+		auto node = terrainMeshCollider.FindNode(terrainMeshCollider.mKDTree.get(), position);
+		if (!node) return 0.0f;
+
+		float minDistance = std::numeric_limits<float>::max();
+		float distance = 0.0f;
+
+		for (auto& triangle : node->triangles)
+		{
+			XMVECTOR v0 = XMLoadFloat3(&triangle.v0);
+			XMVECTOR v1 = XMLoadFloat3(&triangle.v1);
+			XMVECTOR v2 = XMLoadFloat3(&triangle.v2);
+
+			TriangleTests::Intersects(pivotPosition, -UP_VECTOR, v0, v1, v2, distance);
+
+			if (distance != 0.0f && minDistance >= distance)
+			{
+				minDistance = distance;
+			}
+		}
+
+		float answer = minDistance;
+
+		return answer;
+	}
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)

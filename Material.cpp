@@ -24,6 +24,9 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 
 	std::ifstream in{ filePath, std::ios::binary };
 
+	Shader::eType shaderType = {};
+	in.read(reinterpret_cast<char*>(&shaderType), sizeof(int));
+
 	//TODO: 쉐이더 이름 별로 받아오는 데이터 다르게 처리
 	struct LitCBuffer {
 		XMFLOAT4 BaseColor;
@@ -37,9 +40,6 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 
 	mMaterialCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(LitCBuffer));
 	UpdateConstantBuffer(cBuffer);
-
-	Shader::eType shaderType = {};
-	//in.read(reinterpret_cast<char*>(&shaderType), sizeof(int));
 
 	//기존에 있는 쉐이더면 따로 생성하지 않고 재사용 합니다.
 	if (Shader::ShaderList.find(shaderType) != Shader::ShaderList.end())

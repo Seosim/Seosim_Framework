@@ -27,7 +27,7 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	//vAcc += gravity;
 
 	vVel += vAcc * deltaTime;
-	vVel *= max(1.0f - (mDrag * deltaTime), 0.0f);
+	vVel *= std::max(1.0f - (mDrag * deltaTime), 0.0f);
 
 	vPosition += vVel;
 

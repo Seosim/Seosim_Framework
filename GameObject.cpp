@@ -7,3 +7,8 @@ GameObject::GameObject()
 {
 	ID = globalID++;
 }
+
+GameObject::GameObject(const std::string& name) : mName(name)
+{
+	ID = globalID++;
+}

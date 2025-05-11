@@ -72,6 +72,7 @@ public:
 
 	int Update();
 	void UpdateComponents();
+	float UpdateTerrainDistance();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);
