@@ -19,27 +19,54 @@ void PlayerController::Update(const float deltaTime)
 
 	if (Input::Instance().GetKey('W'))
 	{
+		XMVECTOR forward = transform->GetForwardVector();
+		forward = XMVectorSetY(forward, 0.0f);
+		forward = XMVector3Normalize(forward);
+
 		XMFLOAT3 forwardVector;
-		XMStoreFloat3(&forwardVector, transform->GetForwardVector() * mSpeed * deltaTime);
+		XMStoreFloat3(&forwardVector, forward * mSpeed * deltaTime);
 		mRigidBody->AddForce(forwardVector);
 	}
+
 	if (Input::Instance().GetKey('S'))
 	{
+		XMVECTOR back = transform->GetForwardVector();
+		back = XMVectorSetY(back, 0.0f);
+		back = XMVector3Normalize(back);
+
 		XMFLOAT3 backVector;
-		XMStoreFloat3(&backVector, transform->GetForwardVector() * -mSpeed * deltaTime);
+		XMStoreFloat3(&backVector, back * -mSpeed * deltaTime);
 		mRigidBody->AddForce(backVector);
 	}
+
 	if (Input::Instance().GetKey('A'))
 	{
+		XMVECTOR left = transform->GetRightVector();
+		left = XMVectorSetY(left, 0.0f);
+		left = XMVector3Normalize(left);
+
 		XMFLOAT3 leftVector;
-		XMStoreFloat3(&leftVector, transform->GetRightVector() * -mSpeed * deltaTime);
+		XMStoreFloat3(&leftVector, left * -mSpeed * deltaTime);
 		mRigidBody->AddForce(leftVector);
 	}
+
 	if (Input::Instance().GetKey('D'))
 	{
+		XMVECTOR right = transform->GetRightVector();
+		right = XMVectorSetY(right, 0.0f);
+		right = XMVector3Normalize(right);
+
 		XMFLOAT3 rightVector;
-		XMStoreFloat3(&rightVector, transform->GetRightVector() * mSpeed * deltaTime);
+		XMStoreFloat3(&rightVector, right * mSpeed * deltaTime);
 		mRigidBody->AddForce(rightVector);
+	}
+	if (!mbJumping && Input::Instance().GetKey(VK_SPACE))
+	{
+		XMFLOAT3 upVector;
+		constexpr float JUMP_POWER = 15.0f;
+		XMStoreFloat3(&upVector, XMVectorSet(0, 1, 0, 0) * JUMP_POWER);
+		mRigidBody->AddForce(upVector);
+		mbJumping = true;
 	}
 }
 

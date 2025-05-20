@@ -21,4 +21,8 @@ private:
 	float mYaw = 0.0f;
 	float mPitch = 0.0f;
 	float mMouseSensitivity = 0.15f;
+public:
+	//Jump
+	bool mbJumping = false;
+	//bool mbIsGround = false;
 };

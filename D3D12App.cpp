@@ -545,6 +545,7 @@ void D3D12App::BuildCamera()
 	CameraController& cameraController = mCamera->GetComponent<CameraController>();
 	Transform& transform = mCamera->GetComponent<Transform>();
 	RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
+	rigidBody.UseGravity = true;
 	rigidBody.SetTransform(&transform);
 
 	cameraController.Initialize(mpCamera, &transform);
@@ -1643,6 +1644,8 @@ float D3D12App::UpdateTerrainDistance()
 		Transform& transform = mCamera->GetComponent<Transform>();
 
 		XMFLOAT3 position = transform.GetPosition();
+		constexpr float UP = 30.0f;
+		position.y += UP;
 		XMVECTOR pivotPosition = XMLoadFloat3(&position);
 		XMVECTOR UP_VECTOR = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -1668,8 +1671,16 @@ float D3D12App::UpdateTerrainDistance()
 			}
 		}
 
-		constexpr float PIVOT = 2.0f;
-		transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
+		constexpr float PIVOT = 1.0f;
+		if (transform.GetPosition().y < position.y - minDistance + PIVOT)
+		{
+			PlayerController& playerController = mCamera->GetComponent<PlayerController>();
+			playerController.mbJumping = false;
+			RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
+			rigidBody.mGravityAcceleration = { 0,0,0 };
+			transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
+
+		}
 		return minDistance;
 	}
 }

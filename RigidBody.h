@@ -25,4 +25,8 @@ private:
 	XMFLOAT3 mAcceleration = {};
 
 	float mDrag = 5.0f;
+	float mGravityScale = 0.05f;
+public:
+	XMFLOAT3 mGravityAcceleration = {};
+	bool UseGravity = false;
 };
