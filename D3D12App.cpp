@@ -1680,7 +1680,6 @@ float D3D12App::UpdateTerrainDistance()
 			RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
 			rigidBody.mGravityAcceleration = { 0,0,0 };
 			transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
-
 		}
 		return minDistance;
 	}

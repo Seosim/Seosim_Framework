@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "RigidBody.h"
 
 void RigidBody::Update(const float deltaTime)
@@ -8,41 +8,31 @@ void RigidBody::Update(const float deltaTime)
 
 void RigidBody::UpdatePhysics(const float deltaTime)
 {
-	XMFLOAT3 position = mTransform->GetLocalPosition();
+	if (UseGravity)
+	{
+		//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * mGravityScale, 0.0f, 0.0f);
+		XMFLOAT3 gravity = { 0.0f, -9.8f * mGravityScale, 0.0f };
+		AddForce(gravity);
+	}
 
 	XMVECTOR vVel = XMLoadFloat3(&mVelocity);
 	XMVECTOR vAcc = XMLoadFloat3(&mAcceleration);
-	XMVECTOR vGravity = XMLoadFloat3(&mGravityAcceleration);
-	XMVECTOR vPosition = XMLoadFloat3(&position);
-
-	//// ÃÖ´ë ¼Óµµ Á¦ÇÑ
-	//float maxSpeed = 100.0f;
-	//float speed = XMVectorGetX(XMVector3Length(vVel));
-	//if (speed > maxSpeed)
-	//{
-	//	vVel = XMVector3Normalize(vVel) * maxSpeed;
-	//}
-
-	// Áß·Â Àû¿ë (yÃà ¹æÇâÀ¸·Î -9.8)
-	if (UseGravity)
-	{
-		XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * deltaTime * mGravityScale, 0.0f, 0.0f);
-		vGravity += gravity;
-		vAcc += vGravity;
-	}
 
 	vVel += vAcc * deltaTime;
-	vVel *= std::max(1.0f - (mDrag * deltaTime), 0.0f);
 
-	vPosition += vVel;
+	// ë“œëž˜ê·¸ ì ìš©
+	vVel *= std::max(1.0f - mDrag * deltaTime, 0.0f);
 
-	XMStoreFloat3(&mVelocity, vVel);
-	XMStoreFloat3(&mGravityAcceleration, vGravity);
+	// ìœ„ì¹˜ ê°±ì‹ 
+	XMFLOAT3 position = mTransform->GetLocalPosition();
+	XMVECTOR vPosition = XMLoadFloat3(&position);
+	vPosition += vVel * deltaTime; // âœ… ì†ë„ì— deltaTime ê³±í•´ì„œ ì´ë™
+
 	XMStoreFloat3(&position, vPosition);
-
+	XMStoreFloat3(&mVelocity, vVel);
 	mTransform->SetPosition(position);
 
-	mAcceleration = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	mAcceleration = XMFLOAT3(0, 0, 0); // ì™¸ë ¥ ì´ˆê¸°í™”
 }
 
 void RigidBody::AddForce(const XMFLOAT3& force)
@@ -53,6 +43,15 @@ void RigidBody::AddForce(const XMFLOAT3& force)
 	vAcc += vForce;
 
 	XMStoreFloat3(&mAcceleration, vAcc);
+}
+
+void RigidBody::AddImpulse(const XMFLOAT3 force)
+{
+	XMVECTOR vVel = XMLoadFloat3(&mVelocity);
+	XMVECTOR vImpulse = XMLoadFloat3(&force);
+	vVel += vImpulse;
+
+	XMStoreFloat3(&mVelocity, vVel);
 }
 
 void RigidBody::SetTransform(Transform* pTransform)

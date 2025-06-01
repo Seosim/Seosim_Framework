@@ -3,12 +3,24 @@
   "WorkspaceRootPath": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:RigidBody.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:RigidBody.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:PlayerController.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\D3D12App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:D3D12App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:PlayerController.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shader.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -21,10 +33,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\pch.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:pch.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\D3D12App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:D3D12App.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Mesh.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -73,14 +81,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shaders\\color.hlsl||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:Shaders\\color.hlsl||{8B382828-6202-11D1-8870-0000F87579D2}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:RigidBody.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|solutionrelative:PlayerController.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{5D48F6FE-4AAF-4234-A5A3-F16A2787BA85}|Direct12_Tutorial.vcxproj|D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\TerrainMeshCollider.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -292,7 +292,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 10,
+          "SelectedChildIndex": 44,
           "Children": [
             {
               "$type": "Document",
@@ -340,20 +340,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 3,
               "Title": "D3D12App.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\D3D12App.cpp",
               "RelativeDocumentMoniker": "D3D12App.cpp",
               "ToolTip": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\D3D12App.cpp",
               "RelativeToolTip": "D3D12App.cpp",
-              "ViewState": "AQIAALcEAAAAAAAAAAAnwMcEAAATAAAA",
+              "ViewState": "AQIAAHUGAAAAAAAAAAArwIYGAAAbAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2024-11-28T16:38:38.548Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 7,
               "Title": "pch.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\pch.h",
               "RelativeDocumentMoniker": "pch.h",
@@ -366,7 +366,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 13,
               "Title": "CameraController.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\CameraController.cpp",
               "RelativeDocumentMoniker": "CameraController.cpp",
@@ -415,13 +415,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "RigidBody.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.cpp",
               "RelativeDocumentMoniker": "RigidBody.cpp",
               "ToolTip": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.cpp",
               "RelativeToolTip": "RigidBody.cpp",
-              "ViewState": "AQIAABUAAAAAAAAAAAAUwCYAAAAhAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAArwBIAAAAuAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-03-21T12:47:03.893Z",
               "EditorCaption": ""
@@ -440,7 +440,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "Mesh.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Mesh.cpp",
               "RelativeDocumentMoniker": "Mesh.cpp",
@@ -453,7 +453,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "Camera.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Camera.cpp",
               "RelativeDocumentMoniker": "Camera.cpp",
@@ -502,7 +502,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 15,
               "Title": "Mesh.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Mesh.h",
               "RelativeDocumentMoniker": "Mesh.h",
@@ -597,7 +597,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "Shader.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shader.cpp",
               "RelativeDocumentMoniker": "Shader.cpp",
@@ -670,7 +670,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 16,
               "Title": "D3D12App.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\D3D12App.h",
               "RelativeDocumentMoniker": "D3D12App.h",
@@ -695,7 +695,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 19,
               "Title": "color.hlsl",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shaders\\color.hlsl",
               "RelativeDocumentMoniker": "Shaders\\color.hlsl",
@@ -743,7 +743,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 18,
               "Title": "Common.hlsl",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shaders\\Common.hlsl",
               "RelativeDocumentMoniker": "Shaders\\Common.hlsl",
@@ -827,19 +827,20 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 0,
               "Title": "RigidBody.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.h",
               "RelativeDocumentMoniker": "RigidBody.h",
               "ToolTip": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\RigidBody.h",
               "RelativeToolTip": "RigidBody.h",
-              "ViewState": "AQIAAAkAAAAAAAAAAAAAABsAAAAUAAAA",
+              "ViewState": "AQIAAAsAAAAAAAAAAAArwBgAAAAZAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-03-16T09:48:49.902Z"
+              "WhenOpened": "2025-03-16T09:48:49.902Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
               "Title": "Shadow.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Shadow.cpp",
               "RelativeDocumentMoniker": "Shadow.cpp",
@@ -876,7 +877,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 14,
               "Title": "MeshRenderer.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\MeshRenderer.h",
               "RelativeDocumentMoniker": "MeshRenderer.h",
@@ -889,7 +890,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "MeshRenderer.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\MeshRenderer.cpp",
               "RelativeDocumentMoniker": "MeshRenderer.cpp",
@@ -902,25 +903,26 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 4,
               "Title": "PlayerController.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.h",
               "RelativeDocumentMoniker": "PlayerController.h",
               "ToolTip": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.h",
               "RelativeToolTip": "PlayerController.h",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAABkAAAAPAAAA",
+              "ViewState": "AQIAAAAAAAAAAAAAAAArwBEAAAANAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
-              "WhenOpened": "2025-04-19T17:57:23.027Z"
+              "WhenOpened": "2025-04-19T17:57:23.027Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "PlayerController.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.cpp",
               "RelativeDocumentMoniker": "PlayerController.cpp",
               "ToolTip": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\PlayerController.cpp",
               "RelativeToolTip": "PlayerController.cpp",
-              "ViewState": "AQIAAC0AAAAAAAAAAAAAAEMAAAAWAAAA",
+              "ViewState": "AQIAADQAAAAAAAAAAAAiwEcAAAABAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2025-04-19T18:00:23.655Z",
               "EditorCaption": ""
@@ -939,7 +941,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 12,
               "Title": "Transform.cpp",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Transform.cpp",
               "RelativeDocumentMoniker": "Transform.cpp",
@@ -952,7 +954,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 11,
               "Title": "Camera.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\Camera.h",
               "RelativeDocumentMoniker": "Camera.h",
@@ -1081,7 +1083,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 17,
               "Title": "UploadBuffer.h",
               "DocumentMoniker": "D:\\\uBB38\uC11C\\GitHub\\Direct12_Tutorial\\UploadBuffer.h",
               "RelativeDocumentMoniker": "UploadBuffer.h",

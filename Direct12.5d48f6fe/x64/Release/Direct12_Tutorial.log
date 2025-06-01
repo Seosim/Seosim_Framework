@@ -1,7 +1,58 @@
-﻿  RigidBody.cpp
+﻿  D3D12App.cpp
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(3,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(539,34): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(539,26): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(780,21): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1365,35): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(1365,27): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2314,40): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2347,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2380,41): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2409,42): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2526,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(2559,33): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\memory(3434,56): warning C4267: '인수': 'size_t'에서 'UINT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  (소스 파일 '/D3D12App.cpp'을(를) 컴파일하는 중)
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\memory(3434,56):
+  템플릿 인스턴스화 컨텍스트(가장 오래된 인스턴스화 컨텍스트)가
+  	D:\문서\GitHub\Direct12_Tutorial\D3D12App.cpp(211,19):
+  	컴파일되는 함수 템플릿 인스턴스화 'std::unique_ptr<UploadBuffer,std::default_delete<UploadBuffer>> std::make_unique<UploadBuffer,ID3D12Device*&,const int&,bool,size_t,0>(ID3D12Device *&,const int &,bool &&,size_t &&)'에 대한 참조를 확인하세요.
+  
+  GameObject.cpp
+  PlayerController.cpp
+  RigidBody.cpp
+  Transform.cpp
+  main.cpp
+D:\문서\GitHub\Direct12_Tutorial\D3D12App.h(3,10): warning C4067: 전처리기 지시문 다음에 예기치 않은 토큰이 있습니다. 줄 바꿈 문자가 필요합니다.
+  (소스 파일 '/main.cpp'을(를) 컴파일하는 중)
+  
   코드를 생성하고 있습니다.
-  2 of 2199 functions (<0.1%) were compiled, the rest were copied from previous compilation.
+  4 of 2200 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    15 functions had inline decision re-evaluated but remain unchanged
+    23 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
   Direct12_Tutorial.vcxproj -> D:\문서\GitHub\Direct12_Tutorial\x64\Release\Direct12_Tutorial.exe

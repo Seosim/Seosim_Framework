@@ -24,7 +24,7 @@ void PlayerController::Update(const float deltaTime)
 		forward = XMVector3Normalize(forward);
 
 		XMFLOAT3 forwardVector;
-		XMStoreFloat3(&forwardVector, forward * mSpeed * deltaTime);
+		XMStoreFloat3(&forwardVector, forward * mSpeed);
 		mRigidBody->AddForce(forwardVector);
 	}
 
@@ -35,7 +35,7 @@ void PlayerController::Update(const float deltaTime)
 		back = XMVector3Normalize(back);
 
 		XMFLOAT3 backVector;
-		XMStoreFloat3(&backVector, back * -mSpeed * deltaTime);
+		XMStoreFloat3(&backVector, back * -mSpeed);
 		mRigidBody->AddForce(backVector);
 	}
 
@@ -46,7 +46,7 @@ void PlayerController::Update(const float deltaTime)
 		left = XMVector3Normalize(left);
 
 		XMFLOAT3 leftVector;
-		XMStoreFloat3(&leftVector, left * -mSpeed * deltaTime);
+		XMStoreFloat3(&leftVector, left * -mSpeed);
 		mRigidBody->AddForce(leftVector);
 	}
 
@@ -57,15 +57,16 @@ void PlayerController::Update(const float deltaTime)
 		right = XMVector3Normalize(right);
 
 		XMFLOAT3 rightVector;
-		XMStoreFloat3(&rightVector, right * mSpeed * deltaTime);
+		XMStoreFloat3(&rightVector, right * mSpeed);
 		mRigidBody->AddForce(rightVector);
 	}
 	if (!mbJumping && Input::Instance().GetKey(VK_SPACE))
 	{
 		XMFLOAT3 upVector;
-		constexpr float JUMP_POWER = 15.0f;
+		constexpr float JUMP_POWER = 30.0f;
 		XMStoreFloat3(&upVector, XMVectorSet(0, 1, 0, 0) * JUMP_POWER);
-		mRigidBody->AddForce(upVector);
+		mRigidBody->AddImpulse(upVector);
+		mRigidBody->IsGround = false;
 		mbJumping = true;
 	}
 }

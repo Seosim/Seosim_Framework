@@ -16,6 +16,7 @@ public:
 	void UpdatePhysics(const float deltaTime);
 
 	void AddForce(const XMFLOAT3& force);
+	void AddImpulse(const XMFLOAT3 force);
 
 	void SetTransform(Transform* pTransform);
 	Transform* GetTransform() const;
@@ -25,8 +26,9 @@ private:
 	XMFLOAT3 mAcceleration = {};
 
 	float mDrag = 5.0f;
-	float mGravityScale = 0.05f;
+	float mGravityScale = 10.0f;
 public:
 	XMFLOAT3 mGravityAcceleration = {};
 	bool UseGravity = false;
+	bool IsGround = true;
 };
