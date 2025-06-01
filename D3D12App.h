@@ -73,6 +73,7 @@ public:
 	int Update();
 	void UpdateComponents();
 	float UpdateTerrainDistance();
+	void ViewFrustumCulling();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);

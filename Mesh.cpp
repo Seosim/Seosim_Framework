@@ -39,6 +39,26 @@ void Mesh::LoadMeshData(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pComma
 	in.read(reinterpret_cast<char*>(normals.data()), vertexCount * sizeof(XMFLOAT3));
 	in.read(reinterpret_cast<char*>(uvs.data()), vertexCount * sizeof(XMFLOAT2));
 
+	//Find Min & Max Value
+	float minX = std::numeric_limits<float>::max();
+	float minY = std::numeric_limits<float>::max();
+	float minZ = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+	float maxY = std::numeric_limits<float>::lowest();
+	float maxZ = std::numeric_limits<float>::lowest();
+
+	for (const XMFLOAT3& pos : positions)
+	{
+		minX = std::min(minX, pos.x);
+		minY = std::min(minY, pos.y);
+		minZ = std::min(minZ, pos.z);
+
+		maxX = std::max(maxX, pos.x);
+		maxY = std::max(maxY, pos.y);
+		maxZ = std::max(maxZ, pos.z);
+	}
+	createCullingBox(minX, minY, minZ, maxX, maxY, maxZ);
+
 	int subMeshCount = 0;
 	in.read(reinterpret_cast<char*>(&subMeshCount), sizeof(subMeshCount));
 
@@ -144,4 +164,34 @@ int Mesh::GetSubMeshCount() const
 std::vector<Triangle> Mesh::GetTriangles() const
 {
 	return mTriangles;
+}
+
+void Mesh::createCullingBox(float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
+{
+	// 중심과 extents 계산 (AABB 기준)
+	XMFLOAT3 center = {
+		(minX + maxX) * 0.5f,
+		(minY + maxY) * 0.5f,
+		(minZ + maxZ) * 0.5f
+	};
+
+	XMFLOAT3 extents = {
+		(maxX - minX) * 0.5f,
+		(maxY - minY) * 0.5f,
+		(maxZ - minZ) * 0.5f
+	};
+
+	// 기본 쿼터니언 (회전 없음)
+	XMFLOAT4 orientation = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+	mFrustumCullingBox.Center = center;
+	mFrustumCullingBox.Extents = extents;
+	mFrustumCullingBox.Orientation = orientation;
+
+	//XMFLOAT3 points[2] = {};
+
+	//points[0].x = minX; points[0].y = minY; points[0].z = minZ;
+	//points[1].x = maxX; points[1].y = maxY; points[1].z = maxZ;
+
+	//mFrustumCullingBox.CreateFromPoints(mFrustumCullingBox, 2, points, sizeof(XMFLOAT3));
 }

@@ -29,6 +29,8 @@ public:
 
 	XMFLOAT3 GetDirection() const;
 	XMMATRIX GetViewMatrix() const;
+	
+	BoundingFrustum GetBoundingFrustum() const;
 
 	void SetViewMatrix(const XMFLOAT4X4& view);
 	void SetProjMatrix(const XMFLOAT4X4& proj);
@@ -38,5 +40,7 @@ public:
 private:
 	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
 
-	CameraBuffer mCameraBuffer;
+	BoundingFrustum mBoundingFrustum = {};
+
+	CameraBuffer mCameraBuffer = {};
 };

@@ -24,7 +24,6 @@ XMMATRIX Transform::GetLocalTransform() const
 
 XMMATRIX Transform::GetWorldTransform() const
 {
-
 	return GetLocalTransform() * getLocalToWorldTransform();
 }
 

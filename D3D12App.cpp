@@ -766,6 +766,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		gameObject->AddComponent<MeshRenderer>();
 		MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 		meshRenderer.SetMesh(mesh);
+		meshRenderer.SetTransform(&transform);
 	}
 
 	bool bHasMaterial;
@@ -1685,6 +1686,21 @@ float D3D12App::UpdateTerrainDistance()
 	}
 }
 
+void D3D12App::ViewFrustumCulling()
+{
+	auto viewFrustum = mpCamera->GetBoundingFrustum();
+
+	for (GameObject* gameObject : mGameObjects)
+	{
+		if (false == gameObject->HasComponent<MeshRenderer>()) continue;
+
+		auto& meshRenderer = gameObject->GetComponent<MeshRenderer>();
+		Mesh* mesh = meshRenderer.GetMesh();
+
+		
+	}
+}
+
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
@@ -1991,11 +2007,11 @@ void D3D12App::RenderObject(const float deltaTime)
 	float z = mRadius * sinf(mPhi) * sinf(mTheta);
 	float y = mRadius * cosf(mPhi);
 
-	// Build the view matrix.
-	//mpCamera->SetPosition({ x, y, z });
-
 	XMMATRIX view = mpCamera->GetViewMatrix();
 	XMStoreFloat4x4(&mView, view);
+	mpCamera->SetMatrix(mView, mProj);
+
+	auto boundingFrustum = mpCamera->GetBoundingFrustum();
 
 	int index = 1;
 	for (GameObject* gameObject : mGameObjects)
@@ -2008,19 +2024,18 @@ void D3D12App::RenderObject(const float deltaTime)
 		XMMATRIX proj = XMLoadFloat4x4(&mProj);
 		XMMATRIX worldViewProj = world * view * proj;
 
-		mpCamera->SetProjMatrix(mProj);
-		//mpCamera->SetMatrix(mView, mProj);
-
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
 		mObjectCB->CopyData(index, objConstants);
-		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
+		md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::OBJECT, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
 		if (gameObject->HasComponent<MeshRenderer>())
 		{
 			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
-			meshRenderer.Render(md3dCommandList, mSrvHeap);
+
+			if(false == meshRenderer.IsCulled(boundingFrustum))
+				meshRenderer.Render(md3dCommandList, mSrvHeap);
 		}
 	}
 }

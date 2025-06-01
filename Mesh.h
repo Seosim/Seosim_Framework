@@ -25,6 +25,9 @@ public:
 	std::vector<Triangle> GetTriangles() const;
 
 	static std::unordered_map<std::string, Mesh*> MeshList;
+
+private:
+	void createCullingBox(float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
 protected:
 	ID3DBlob* mVertexBufferCPU = nullptr;
 	ID3DBlob* mIndexBufferCPU = nullptr;
@@ -46,4 +49,7 @@ private:
 	static Mesh* mPrevUsedMesh;
 private:
 	std::vector<Triangle> mTriangles = {};
+	BoundingOrientedBox mFrustumCullingBox = {};
+
+	friend class MeshRenderer;
 };

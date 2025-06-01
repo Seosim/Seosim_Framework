@@ -8,10 +8,19 @@ void MeshRenderer::Update(const float deltaTime)
 void MeshRenderer::SetMesh(Mesh* mesh)
 {
 	ASSERT(mMesh == nullptr);	//메쉬가 이미 등록되어 있을 시 사용 x
+	ASSERT(mesh);
 
 	mMesh = mesh;
 	mSubMeshCount = mMesh->GetSubMeshCount();
 	mMaterials.reserve(mSubMeshCount);
+}
+
+void MeshRenderer::SetTransform(Transform* transform)
+{
+	ASSERT(nullptr == mTransform);
+	ASSERT(transform);
+
+	mTransform = transform;
 }
 
 void MeshRenderer::AddMaterial(Material* material)
@@ -27,6 +36,16 @@ Material* MeshRenderer::GetMaterial(int index) const
 Mesh* MeshRenderer::GetMesh() const
 {
 	return mMesh;
+}
+
+bool MeshRenderer::IsCulled(const BoundingFrustum& frustum) const
+{
+	auto worldMatrix = mTransform->GetWorldTransform();
+	auto box = mMesh->mFrustumCullingBox;
+
+	box.Transform(box, worldMatrix);
+
+	return false == frustum.Intersects(box);
 }
 
 void MeshRenderer::Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap)
