@@ -5,12 +5,12 @@ static const int gBlurRadius = 3;
 
 #define N 8
 #define KERNEL_SIZE 7
-#define CacheSize (8 + 2 * gBlurRadius)
+#define CacheSize (N + 2 * gBlurRadius)
 
-static const float BlurWeights[KERNEL_SIZE] = { 0.05, 0.1, 0.15, 0.4, 0.15, 0.1, 0.05 }; // 반지름 1에 맞춘 가중치
+static const float BlurWeights[KERNEL_SIZE] = { 0.05, 0.1, 0.15, 0.4, 0.15, 0.1, 0.05 };
 groupshared float4 gCache[CacheSize];
 
-[numthreads(8, 1, 1)]
+[numthreads(N, 1, 1)]
 void CS(int3 groupThreadID : SV_GroupThreadID, uint3 dispatchThreadID : SV_DispatchThreadID)
 { 
     if (groupThreadID.x < gBlurRadius)
@@ -38,37 +38,4 @@ void CS(int3 groupThreadID : SV_GroupThreadID, uint3 dispatchThreadID : SV_Dispa
     }
 	
     gOutput[dispatchThreadID.xy] = blurColor;
-    
-    //////////////////////
-    
-    //uint2 uv = dispatchThreadID.xy;
-    
-    //uint2 texSize;
-    //gInput.GetDimensions(texSize.x, texSize.y);
-    
-    //uint2 outputSize;
-    //gOutput.GetDimensions(outputSize.x, outputSize.y);
-    
-    //// 출력 텍스처의 해상도에 맞는 입력 텍스처의 좌표 계산
-    //float2 scale = float2(texSize) / float2(outputSize);
-    //float2 inputCoord = (float2(uv) + 0.5) * scale; // 중앙 정렬
-    
-    //// 블러 처리
-    //float4 blurredColor = float4(0, 0, 0, 0);
-    //float totalWeight = 0.0;
-
-    //// 수평 블러
-    //for (int i = -BlurRadius; i <= BlurRadius; i++)
-    //{
-    //    int2 sampleCoord = int2(round(inputCoord.x + i), round(inputCoord.y));
-    //    sampleCoord.x = clamp(sampleCoord.x, 0, texSize.x - 1);
-
-    //    float weight = BlurWeights[i + BlurRadius];
-
-    //    blurredColor += gInput.Load(int3(sampleCoord, 0)) * weight;
-    //    totalWeight += weight;
-    //}
-
-    //// 정규화하여 블러 적용
-    //gOutput[uv] = blurredColor / totalWeight;
 }

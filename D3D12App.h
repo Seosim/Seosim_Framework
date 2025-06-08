@@ -73,7 +73,6 @@ public:
 	int Update();
 	void UpdateComponents();
 	float UpdateTerrainDistance();
-	void ViewFrustumCulling();
 
 	//input Func
 	void OnMouseMove(WPARAM btnState, int x, int y);
@@ -238,4 +237,8 @@ private:
 	Texture* mSSAOVBlurTexture = nullptr;
 	Texture* mSSAOHBlurTexture = nullptr;
 	Texture* mNoiseTexture = nullptr;
+
+	//CullingObject
+	int mMeshObject = 0;
+	int mCullingObject = 0;
 };

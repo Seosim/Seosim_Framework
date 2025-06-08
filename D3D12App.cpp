@@ -90,6 +90,7 @@ bool D3D12App::InitDirect3D()
 	mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	Texture::mCbvSrvUavDescriptorSize = mCbvSrvUavDescriptorSize;
 
 
 	D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS msQualityLevels;
@@ -542,8 +543,10 @@ void D3D12App::BuildCamera()
 	mCamera->AddComponent<CameraController>();
 	mCamera->AddComponent<Transform>();
 	mCamera->AddComponent<RigidBody>();
+	mCamera->AddComponent<BoxCollider>();
 	CameraController& cameraController = mCamera->GetComponent<CameraController>();
 	Transform& transform = mCamera->GetComponent<Transform>();
+	transform.SetPosition({ -10, 0, 0 });
 	RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
 	rigidBody.UseGravity = true;
 	rigidBody.SetTransform(&transform);
@@ -553,6 +556,9 @@ void D3D12App::BuildCamera()
 	mCamera->AddComponent<PlayerController>();
 	PlayerController& controller = mCamera->GetComponent<PlayerController>();
 	controller.SetRigidBody(&rigidBody);
+
+	BoxCollider& boxCollider = mCamera->GetComponent<BoxCollider>();
+	boxCollider.Initialize(&transform, { 1.0f, 1.0f, 1.0f }, &rigidBody);
 }
 
 void D3D12App::BuildSkybox()
@@ -717,11 +723,15 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 	transform.SetParent(parent);
 	transform.SetTransformData(position, rotation, scale); 
 
-	//TODO: 익스포터에서 RigidBody 사용유무 체크해야함. 현재는 그냥 다 넣는 중
+	//TODO: 익스포터에서 RigidBody & BoxCollider 사용유무 체크해야함. 현재는 그냥 다 넣는 중
 	{
 		gameObject->AddComponent<RigidBody>();
 		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
 		rigidBody.SetTransform(&transform);
+
+		gameObject->AddComponent<BoxCollider>();
+		BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
+		boxCollider.Initialize(&transform, { 1.0f, 1.0f, 1.0f }, &rigidBody);
 	}
 
 	bool bHasMesh;
@@ -1495,31 +1505,37 @@ void D3D12App::OnResizeUAVTexture()
 
 void D3D12App::CollisionCheck()
 {
+	BoxCollider& playerBoxCollider = mCamera->GetComponent<BoxCollider>();
+
 	for (GameObject* gameobject : mGameObjects)
 	{
 		if (gameobject->HasComponent<BoxCollider>())
 		{
-			BoxCollider& collider = gameobject->GetComponent <BoxCollider>();
-			collider.UpdateTransform();
-		}
-	}
+			BoxCollider& collider = gameobject->GetComponent<BoxCollider>();
 
-	for (int i = 0; i < mGameObjects.size() - 1; ++i)
-	{
-		for (int j = i + 1; j < mGameObjects.size(); ++j)
-		{
-			if (mGameObjects[i]->HasComponent<BoxCollider>() && mGameObjects[j]->HasComponent<BoxCollider>())
+			if (playerBoxCollider.CollisionCheck(collider))
 			{
-				BoxCollider& colliderA = mGameObjects[i]->GetComponent<BoxCollider>();
-				BoxCollider& colliderB = mGameObjects[j]->GetComponent<BoxCollider>();
 
-				if (colliderA.CollisionCheck(colliderB))
-				{
-
-				}
 			}
 		}
 	}
+
+	//for (int i = 0; i < mGameObjects.size() - 1; ++i)
+	//{
+	//	for (int j = i + 1; j < mGameObjects.size(); ++j)
+	//	{
+	//		if (mGameObjects[i]->HasComponent<BoxCollider>() && mGameObjects[j]->HasComponent<BoxCollider>())
+	//		{
+	//			BoxCollider& colliderA = mGameObjects[i]->GetComponent<BoxCollider>();
+	//			BoxCollider& colliderB = mGameObjects[j]->GetComponent<BoxCollider>();
+
+	//			if (colliderA.CollisionCheck(colliderB))
+	//			{
+
+	//			}
+	//		}
+	//	}
+	//}
 }
 
 void D3D12App::FlushCommandQueue()
@@ -1578,9 +1594,14 @@ void D3D12App::CalculateFrameStats()
 		std::wstring fpsStr = std::to_wstring(fps);
 		std::wstring mspfStr = std::to_wstring(mspf);
 
+		std::wstring meshStr = std::to_wstring(mMeshObject);
+		std::wstring cullingStr = std::to_wstring(mCullingObject);
+
 		std::wstring windowText = mMainWndCaption +
 			L"    fps: " + fpsStr +
-			L"   mspf: " + mspfStr;
+			L"   mspf: " + mspfStr +
+			L"   Object Count: " + meshStr +
+			L"    /   Culling Object Count: " + cullingStr;
 
 		SetWindowText(mhMainWnd, windowText.c_str());
 
@@ -1653,7 +1674,7 @@ float D3D12App::UpdateTerrainDistance()
 		TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
 
 		auto node = terrainMeshCollider.FindNode(position);
-		ASSERT(node);
+		if (nullptr == node) continue;
 
 		float minDistance = std::numeric_limits<float>::max();
 		float distance = 0.0f;
@@ -1672,7 +1693,7 @@ float D3D12App::UpdateTerrainDistance()
 			}
 		}
 
-		constexpr float PIVOT = 1.0f;
+		constexpr float PIVOT = 0.5f;
 		if (transform.GetPosition().y < position.y - minDistance + PIVOT)
 		{
 			PlayerController& playerController = mCamera->GetComponent<PlayerController>();
@@ -1682,21 +1703,6 @@ float D3D12App::UpdateTerrainDistance()
 			transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
 		}
 		return minDistance;
-	}
-}
-
-void D3D12App::ViewFrustumCulling()
-{
-	auto viewFrustum = mpCamera->GetBoundingFrustum();
-
-	for (GameObject* gameObject : mGameObjects)
-	{
-		if (false == gameObject->HasComponent<MeshRenderer>()) continue;
-
-		auto& meshRenderer = gameObject->GetComponent<MeshRenderer>();
-		Mesh* mesh = meshRenderer.GetMesh();
-
-		
 	}
 }
 
@@ -1997,6 +2003,9 @@ void D3D12App::UpdateShadowTransform()
 
 void D3D12App::RenderObject(const float deltaTime)
 {
+	mMeshObject = 0;
+	mCullingObject = 0;
+
 	//Set ShadowTexture
 	mpShadow->SetGraphicsRootDescriptorTable(md3dCommandList, mSrvHeap);
 
@@ -2031,10 +2040,13 @@ void D3D12App::RenderObject(const float deltaTime)
 
 		if (gameObject->HasComponent<MeshRenderer>())
 		{
+			mMeshObject++;
 			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 
-			if(false == meshRenderer.IsCulled(boundingFrustum))
+			if (false == meshRenderer.IsCulled(boundingFrustum))
 				meshRenderer.Render(md3dCommandList, mSrvHeap);
+			else
+				mCullingObject++;
 		}
 	}
 }

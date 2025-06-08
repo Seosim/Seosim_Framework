@@ -2,6 +2,7 @@
 #include "Texture.h"
 
 std::unordered_map<std::wstring, Texture*> Texture::TextureList;
+UINT Texture::mCbvSrvUavDescriptorSize;
 
 void Texture::LoadTextureFromDDSFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, const wchar_t* pszFileName, UINT nResourceType, UINT nIndex)
 {
@@ -36,7 +37,7 @@ void Texture::CreateSrv(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, c
 	const int textureIndex = Texture::TextureList.size();
 	ID = textureIndex;
 
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += mCbvSrvUavDescriptorSize * ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -59,7 +60,7 @@ void Texture::CreateSrvWithResource(ID3D12Device* pDevice, ID3D12DescriptorHeap*
 	ID = textureIndex;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += mCbvSrvUavDescriptorSize * ID;
 
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
@@ -81,7 +82,7 @@ void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHea
 	}
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(pSrvHeap->GetCPUDescriptorHandleForHeapStart());
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += mCbvSrvUavDescriptorSize * ID;
 
 	D3D12_RESOURCE_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
@@ -117,7 +118,7 @@ void Texture::InitializeUAV(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHea
 		srvDesc.Texture2D.MipLevels = 1;
 
 		pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
-		hDescriptor.ptr += 32;
+		hDescriptor.ptr += mCbvSrvUavDescriptorSize;
 	}
 
 	//PostProcessing (UAV)
@@ -146,7 +147,7 @@ void Texture::ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHe
 	srvDesc.Texture2D.MipLevels = mpResource->GetDesc().MipLevels;
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-	hDescriptor.ptr += 32 * ID;
+	hDescriptor.ptr += mCbvSrvUavDescriptorSize * ID;
 	pDevice->CreateShaderResourceView(mpResource, &srvDesc, hDescriptor);
 
 	Texture::TextureList[name] = this;

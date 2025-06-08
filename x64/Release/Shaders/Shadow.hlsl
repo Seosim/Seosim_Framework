@@ -25,11 +25,7 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout = (VertexOut) 0.0f;
 
-    // Transform to world space.
     vout.PosH = mul(mul(mul(float4(vin.PosL, 1.0f), gWorld), ShadowView), ShadowProj);
-
-    // Transform to homogeneous clip space.
-    //vout.PosH = mul(mul(posW, gView), gProj);
     vout.UV = vin.UV;
 	
     return vout;
@@ -37,8 +33,7 @@ VertexOut VS(VertexIn vin)
 
 void PS(VertexOut pin)
 {
-    //float4 diffuseAlbedo = gDiffuseMap.Sample(gsamLinear, pin.UV);
-    //clip(diffuseAlbedo.a - 0.1f);
+    
 }
 
 

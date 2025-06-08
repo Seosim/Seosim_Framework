@@ -12,20 +12,12 @@ Texture2D gInputMap : register(t2);
 // Output texture
 RWTexture2D<float4> gOutputMap : register(u0);
 
-static float BlurWeights[12] =
+static float BlurWeights[17] =
 {
-    0.0221905,
-    0.045589,
-    0.0798114,
-    0.119065,
-    0.151361,
-    0.163967,
-    0.151361,
-    0.119065,
-    0.0798114,
-    0.045589,
-    0.0221905,
-    0.0
+    0.0081, 0.0169, 0.0321, 0.0561, 0.0902,
+    0.1353, 0.1791, 0.2066, 0.2159, 0.2066,
+    0.1791, 0.1353, 0.0902, 0.0561, 0.0321,
+    0.0169, 0.0081
 };
 
 [numthreads(1, 16, 1)]
@@ -35,10 +27,10 @@ void CS(uint3 DTid : SV_DispatchThreadID)
     int width, height;
     gInputMap.GetDimensions(width, height);
     
-    if (texCoord.x >= width || texCoord.y >= height)
-        return;
+    //if (texCoord.x >= width || texCoord.y >= height)
+    //    return;
     
-    static const int gBlurRadius = 5;
+    static const int gBlurRadius = 8;
     
     float4 color = BlurWeights[gBlurRadius] * gInputMap.Load(int3(texCoord, 0)).r;
     float totalWeight = BlurWeights[gBlurRadius]; 

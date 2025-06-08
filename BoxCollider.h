@@ -1,6 +1,7 @@
 #pragma once
 #include "IComponent.h"
 #include "Transform.h"
+#include "RigidBody.h"
 #include "pch.h"
 
 class BoxCollider final : public IComponent {
@@ -13,7 +14,7 @@ public:
 
 	virtual void Update(const float deltaTime);
 
-	void Initialize(Transform* pTransform, const XMFLOAT3& size);
+	void Initialize(Transform* pTransform, const XMFLOAT3& size, RigidBody* pRigidBody = nullptr);
 
 	void UpdateTransform();
 
@@ -21,4 +22,5 @@ public:
 private:
 	BoundingOrientedBox mBox = {};
 	Transform* mTransform = nullptr;
+	RigidBody* mRigidBody = nullptr;
 };

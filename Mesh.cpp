@@ -168,7 +168,6 @@ std::vector<Triangle> Mesh::GetTriangles() const
 
 void Mesh::createCullingBox(float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
 {
-	// 중심과 extents 계산 (AABB 기준)
 	XMFLOAT3 center = {
 		(minX + maxX) * 0.5f,
 		(minY + maxY) * 0.5f,
@@ -181,17 +180,9 @@ void Mesh::createCullingBox(float minX, float minY, float minZ, float maxX, floa
 		(maxZ - minZ) * 0.5f
 	};
 
-	// 기본 쿼터니언 (회전 없음)
 	XMFLOAT4 orientation = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	mFrustumCullingBox.Center = center;
 	mFrustumCullingBox.Extents = extents;
 	mFrustumCullingBox.Orientation = orientation;
-
-	//XMFLOAT3 points[2] = {};
-
-	//points[0].x = minX; points[0].y = minY; points[0].z = minZ;
-	//points[1].x = maxX; points[1].y = maxY; points[1].z = maxZ;
-
-	//mFrustumCullingBox.CreateFromPoints(mFrustumCullingBox, 2, points, sizeof(XMFLOAT3));
 }

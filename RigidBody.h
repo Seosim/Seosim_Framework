@@ -20,6 +20,11 @@ public:
 
 	void SetTransform(Transform* pTransform);
 	Transform* GetTransform() const;
+
+	bool IsColliding() const;
+	void AddColliderTransform(Transform* pTransform);
+private:
+	XMFLOAT3 computeMTV(const XMFLOAT3& minA, const XMFLOAT3& maxA, const XMFLOAT3& minB, const XMFLOAT3& maxB);
 private:
 	Transform* mTransform = nullptr;
 	XMFLOAT3 mVelocity = {};
@@ -27,6 +32,8 @@ private:
 
 	float mDrag = 5.0f;
 	float mGravityScale = 10.0f;
+	
+	std::vector<const Transform*> mCollisionTransforms;
 public:
 	XMFLOAT3 mGravityAcceleration = {};
 	bool UseGravity = false;

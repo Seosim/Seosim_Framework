@@ -44,6 +44,8 @@ public:
 	XMVECTOR GetUpVector() const;
 	XMVECTOR GetForwardVector() const;
 
+	XMFLOAT3 GetScale() const;
+
 	void SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward);
 	XMFLOAT4 GetRotationQuat() const;
 	void SetRotationByQuat(const XMVECTOR quat);

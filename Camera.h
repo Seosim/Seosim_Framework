@@ -40,7 +40,5 @@ public:
 private:
 	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
 
-	BoundingFrustum mBoundingFrustum = {};
-
 	CameraBuffer mCameraBuffer = {};
 };

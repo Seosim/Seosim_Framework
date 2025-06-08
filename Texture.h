@@ -30,6 +30,8 @@ public:
 
     static std::unordered_map<std::wstring, Texture*> TextureList;
 	ID3D12Resource* mpResource = nullptr;
+    
+    static UINT mCbvSrvUavDescriptorSize;
 private:
 	ID3D12Resource* mpUploadBuffer = nullptr;
 	UINT mResourceType = {};

@@ -205,6 +205,26 @@ XMVECTOR Transform::GetForwardVector() const
 	return GetWorldTransform().r[2];
 }
 
+XMFLOAT3 Transform::GetScale() const
+{
+	XMFLOAT3 worldScale = mScale;
+
+	GameObject* parent = mParent;
+
+	while (parent != nullptr)
+	{
+		XMFLOAT3 parentScale = parent->GetComponent<Transform>().mScale;
+
+		worldScale.x *= parentScale.x;
+		worldScale.y *= parentScale.y;
+		worldScale.z *= parentScale.z;
+
+		parent = parent->GetComponent<Transform>().GetParent();
+	}
+
+	return worldScale;
+}
+
 void Transform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XMFLOAT3& forward)
 {
 	mRight = right;

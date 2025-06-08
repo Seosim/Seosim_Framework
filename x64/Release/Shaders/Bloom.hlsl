@@ -6,7 +6,9 @@ float GetBloomCurve(float x)
     float result = x;
     x *= 2.0f;
     
-    result = x * 0.05f + max(0, x - 1.26f) * 0.5f;
+    float value = 0.16f;
+    
+    result = x * 0.05f + max(0, x - value) * 0.5f;
     return result * 0.5f;
 }
 
@@ -17,17 +19,14 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
     
     uint2 texSize;
     gInput.GetDimensions(texSize.x, texSize.y);
-
-    if (uv.x >= texSize.x || uv.y >= texSize.y)
-        return;
     
     float4 color = gInput.Load(int3(uv, 0));
 
-    float luminance = dot(color.rgb, float3(0.3f, 0.3f, 0.3f));
+    float luminance = dot(color.rgb, float3(0.1f, 0.1f, 0.1f));
 
     float bloomFactor = GetBloomCurve(luminance);
 
-    float3 bloomColor = color.rgb * bloomFactor / luminance;
+    float3 bloomColor = color.rgb * bloomFactor / luminance * 1.5f;
 
     gOutput[uv] = float4(bloomColor, 1.0);
 }

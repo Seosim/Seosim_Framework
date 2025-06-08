@@ -10,7 +10,6 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 {
 	if (UseGravity)
 	{
-		//XMVECTOR gravity = XMVectorSet(0.0f, -9.81f * mGravityScale, 0.0f, 0.0f);
 		XMFLOAT3 gravity = { 0.0f, -9.8f * mGravityScale, 0.0f };
 		AddForce(gravity);
 	}
@@ -26,13 +25,15 @@ void RigidBody::UpdatePhysics(const float deltaTime)
 	// 위치 갱신
 	XMFLOAT3 position = mTransform->GetLocalPosition();
 	XMVECTOR vPosition = XMLoadFloat3(&position);
-	vPosition += vVel * deltaTime; // ✅ 속도에 deltaTime 곱해서 이동
+	vPosition += vVel * deltaTime;
 
 	XMStoreFloat3(&position, vPosition);
 	XMStoreFloat3(&mVelocity, vVel);
 	mTransform->SetPosition(position);
 
-	mAcceleration = XMFLOAT3(0, 0, 0); // 외력 초기화
+
+	mAcceleration = XMFLOAT3(0, 0, 0);
+	mCollisionTransforms.clear();
 }
 
 void RigidBody::AddForce(const XMFLOAT3& force)
@@ -62,4 +63,14 @@ void RigidBody::SetTransform(Transform* pTransform)
 Transform* RigidBody::GetTransform() const
 {
 	return mTransform;
+}
+
+bool RigidBody::IsColliding() const
+{
+	return mCollisionTransforms.size();
+}
+
+void RigidBody::AddColliderTransform(Transform* pTransform)
+{
+	mCollisionTransforms.push_back(pTransform);
 }
