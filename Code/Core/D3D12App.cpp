@@ -768,6 +768,11 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 					TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
 
 					terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
+
+					//HACK: Particle Test.
+					gameObject->AddComponent<ParticleGenerator>();
+					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
+					particleGenerator.Initialize(md3dDevice, 10);
 				}
 			}
 
@@ -846,6 +851,11 @@ void D3D12App::BuildObjects()
 		command.Format = DXGI_FORMAT_R16_FLOAT;
 		mSSAO = new Shader();
 		mSSAO->Initialize(md3dDevice, mRootSignature, "SSAO", command);
+	}
+
+	{
+		mParticleShader = new ParticleShader();
+		mParticleShader->Initialize(md3dDevice, mRootSignature, "Particle");
 	}
 }
 
@@ -1871,6 +1881,7 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	}
 
 	RenderObject(gameTimer.DeltaTime());
+	RenderParticles();
 
 	{
 		D3D12_RESOURCE_BARRIER barrier1 = {};
@@ -2111,6 +2122,26 @@ void D3D12App::RenderObjectForShadow()
 
 	auto barrier1 = CD3DX12_RESOURCE_BARRIER::Transition(shadowResource, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_GENERIC_READ);
 	md3dCommandList->ResourceBarrier(1, &barrier1);
+}
+
+void D3D12App::RenderParticles()
+{
+	mParticleShader->SetPipelineState(md3dCommandList);
+
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		texHandle.ptr += mCbvSrvUavDescriptorSize * (mDepthTexture->GetID());
+		md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
+	}
+
+	for (GameObject* gameObject : mGameObjects)
+	{
+		if (true == gameObject->HasComponent<ParticleGenerator>())
+		{
+			auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
+			particleGenerator.Render(md3dCommandList, mSrvHeap);
+		}
+	}
 }
 
 void D3D12App::PostProcessing()
@@ -2470,6 +2501,7 @@ void D3D12App::SSAO()
 	md3dCommandList->SetGraphicsRootDescriptorTable((UINT)eRootParameter::TEXTURE2, handle2);
 	md3dCommandList->SetGraphicsRootDescriptorTable((UINT)eRootParameter::TEXTURE3, handle3);
 
+	md3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	md3dCommandList->DrawInstanced(6, 1, 0, 0);
 
 	//∑ª¥ı≈∏∞Ÿ ªÛ≈¬ ∫Ø»Ø
@@ -2678,6 +2710,7 @@ void D3D12App::Finalize()
 		delete mHBlurShader;
 		delete mSSAOHBlurShader;
 		delete mSSAOVBlurShader;
+		delete mParticleShader;
 	}
 
 	for (auto& texturePointer : Texture::TextureList)

@@ -23,6 +23,7 @@
     <ClCompile Include="Code\Component\Collider\BoxCollider.cpp" />
     <ClCompile Include="Code\Component\Collider\TerrainMeshCollider.cpp" />
     <ClCompile Include="Code\Component\MeshRenderer.cpp" />
+    <ClCompile Include="Code\Component\ParticleGenerator.cpp" />
     <ClCompile Include="Code\Component\PlayerController.cpp" />
     <ClCompile Include="Code\Component\RigidBody.cpp" />
     <ClCompile Include="Code\Component\Transform.cpp" />
@@ -58,6 +59,7 @@
     <ClInclude Include="Code\Component\ComponentManager.h" />
     <ClInclude Include="Code\Component\IComponent.h" />
     <ClInclude Include="Code\Component\MeshRenderer.h" />
+    <ClInclude Include="Code\Component\ParticleGenerator.h" />
     <ClInclude Include="Code\Component\PlayerController.h" />
     <ClInclude Include="Code\Component\RigidBody.h" />
     <ClInclude Include="Code\Component\Transform.h" />

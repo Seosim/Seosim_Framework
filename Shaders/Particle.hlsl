@@ -6,7 +6,7 @@
 
 #include "Common.hlsl"
 
-Texture2D gDiffuseMap : register(t2);
+Texture2D gDepthMap : register(t2);
 
 struct VertexIn
 {

@@ -86,6 +86,7 @@ public:
 
 	void RenderObject(const float deltaTime);
 	void RenderObjectForShadow();
+	void RenderParticles();
 
 	void PostProcessing();
 
@@ -241,4 +242,7 @@ private:
 	//CullingObject
 	int mMeshObject = 0;
 	int mCullingObject = 0;
+
+	//Particle
+	ParticleShader* mParticleShader = nullptr;
 };

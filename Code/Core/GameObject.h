@@ -13,8 +13,9 @@
 #include "Component/Collider/TerrainMeshCollider.h"
 #include "Component/PlayerController.h"
 #include "Component/CameraController.h"
-#include "d3dUtil.h"
 #include "Component/ComponentManager.h"
+#include "Component/ParticleGenerator.h"
+#include "d3dUtil.h"
 
 class GameObject {
 public:
