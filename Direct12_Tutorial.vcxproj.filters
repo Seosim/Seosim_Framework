@@ -94,6 +94,12 @@
     <ClCompile Include="Code\Resource\Shader\ComputeShader.cpp">
       <Filter>Resource\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Resource\Shader\ParticleShader.cpp">
+      <Filter>Resource\Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Resource\Shader\IShader.cpp">
+      <Filter>Resource\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Resource\Material.h">
@@ -181,6 +187,9 @@
     <ClInclude Include="Code\Resource\Shader\ComputeShader.h">
       <Filter>Resource\Shader</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Resource\Shader\ParticleShader.h">
+      <Filter>Resource\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\color.hlsl">
@@ -226,6 +235,9 @@
       <Filter>Shader</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\Bloom.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\Particle.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
   </ItemGroup>

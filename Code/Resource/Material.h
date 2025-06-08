@@ -70,7 +70,7 @@ public:
 				}
 				SetTexture(texture, 0);
 
-				Command command = Shader::DefaultCommand();
+				Shader::Command command = Shader::DefaultCommand();
 				command.CullingMode = D3D12_CULL_MODE_FRONT;
 				command.DepthEnable = FALSE;
 

@@ -46,6 +46,8 @@
     <ClCompile Include="Code\Resource\Material.cpp" />
     <ClCompile Include="Code\Resource\Mesh.cpp" />
     <ClCompile Include="Code\Resource\Shader\ComputeShader.cpp" />
+    <ClCompile Include="Code\Resource\Shader\IShader.cpp" />
+    <ClCompile Include="Code\Resource\Shader\ParticleShader.cpp" />
     <ClCompile Include="Code\Resource\Shader\Shader.cpp" />
     <ClCompile Include="Code\Resource\Texture.cpp" />
   </ItemGroup>
@@ -76,6 +78,7 @@
     <ClInclude Include="Code\Resource\Mesh.h" />
     <ClInclude Include="Code\Resource\Shader\ComputeShader.h" />
     <ClInclude Include="Code\Resource\Shader\IShader.h" />
+    <ClInclude Include="Code\Resource\Shader\ParticleShader.h" />
     <ClInclude Include="Code\Resource\Shader\Shader.h" />
     <ClInclude Include="Code\Resource\Texture.h" />
     <ClInclude Include="Code\Resource\Vertex.h" />
@@ -112,6 +115,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
     <FxCompile Include="Shaders\HSsaoBlur.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\Particle.hlsl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

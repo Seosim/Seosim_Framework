@@ -2,12 +2,20 @@
 #include "pch.h"
 #include "IShader.h"
 
+
 class Shader : public IShader {
 public:
 	enum class eType {
 		Default,
 		Skybox,
 		Count
+	};
+
+	struct Command {
+		UINT SampleCount;
+		D3D12_CULL_MODE CullingMode;
+		BOOL DepthEnable;
+		DXGI_FORMAT Format;
 	};
 
 	Shader() = default;
@@ -22,7 +30,6 @@ public:
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList) override;
 
 	static std::unordered_map<eType, Shader*> ShaderList;
-	static Shader* PrevUsedShader;
 private:
 	ID3DBlob* mVertexBlob = nullptr;
 	ID3DBlob* mPixelBlob = nullptr;

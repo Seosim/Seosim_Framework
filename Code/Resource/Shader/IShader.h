@@ -1,13 +1,6 @@
 #pragma once
 #include "pch.h"
 
-struct Command {
-	UINT SampleCount;
-	D3D12_CULL_MODE CullingMode;
-	BOOL DepthEnable;
-	DXGI_FORMAT Format;
-};
-
 class IShader {
 public:
 	IShader() = default;
@@ -18,4 +11,5 @@ public:
 	virtual void SetPipelineState(ID3D12GraphicsCommandList* pCommandList) = 0;
 protected:
 	ID3D12PipelineState* mPSO = nullptr;
+	static IShader* PrevUsedShader;
 };

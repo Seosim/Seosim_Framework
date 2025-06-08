@@ -26,5 +26,9 @@ void ComputeShader::SetPipelineState(ID3D12GraphicsCommandList* pCommandList)
 {
 	ASSERT(mPSO);
 
-	pCommandList->SetPipelineState(mPSO);
+	if (this != IShader::PrevUsedShader)
+	{
+		IShader::PrevUsedShader = this;
+		pCommandList->SetPipelineState(mPSO);
+	}
 }
