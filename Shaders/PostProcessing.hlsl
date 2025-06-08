@@ -9,6 +9,7 @@
 Texture2D gInput : register(t0);
 Texture2D gBloomMap : register(t1);
 Texture2D gSSAOMap : register(t2);
+Texture2D gMaskMap : register(t3);
 RWTexture2D<float4> gOutput : register(u0);
 
 //ACES TONE MAPPING
@@ -60,8 +61,9 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     float4 color = gInput[texCoord];
     float4 bloomColor = gBloomMap[texCoord];
     float ssao = gSSAOMap[texCoord];
+    float mask = gMaskMap[texCoord];
     
-    color *= ssao;
+    color *= min(ssao + mask, 1.0f);
     color += bloomColor * bloomColor.a;
     
     

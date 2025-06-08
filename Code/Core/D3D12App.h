@@ -24,6 +24,7 @@ public:
 		MSAA,
 		POSITION,
 		CAMERA_NORMAL,
+		TRANSPARENT_MASK,
 		SSAO,
 		SCREEN,
 		COUNT
@@ -144,6 +145,7 @@ private:
 	ID3D12Resource* mResolvePosition = nullptr;
 	ID3D12Resource* mResolveCameraNormal = nullptr;
 	ID3D12Resource* mResolveCameraDepth = nullptr;
+	ID3D12Resource* mResolveTransparentMask = nullptr;
 
 	static constexpr DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	static constexpr DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -198,6 +200,7 @@ private:
 	Texture* mNormalTexture = nullptr;
 	Texture* mMSAATexture = nullptr;
 	Texture* mScreenTexture = nullptr;
+	Texture* mTransparentMaskTexture = nullptr;
 
 	//Shader
 	Shader* mScreenShader = nullptr;

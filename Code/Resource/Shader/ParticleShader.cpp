@@ -50,8 +50,9 @@ void ParticleShader::Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRoo
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-	psoDesc.NumRenderTargets = 1;
+	psoDesc.NumRenderTargets = 2;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	psoDesc.RTVFormats[1] = DXGI_FORMAT_R16_UNORM;
 	psoDesc.SampleDesc.Count = 4;
 	psoDesc.SampleDesc.Quality = 0;
 	psoDesc.DSVFormat = mDepthStencilFormat;

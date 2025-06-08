@@ -228,9 +228,6 @@
     <FxCompile Include="Shaders\SSAO.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
-    <FxCompile Include="Shaders\SSAOO.hlsl">
-      <Filter>Shader</Filter>
-    </FxCompile>
     <FxCompile Include="Shaders\UpScale.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
