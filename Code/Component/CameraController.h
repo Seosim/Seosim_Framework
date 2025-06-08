@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "Camera.h"
+#include "Core/Camera.h"
 #include "Transform.h"
 #include "IComponent.h"
 

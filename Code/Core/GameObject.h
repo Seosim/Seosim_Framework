@@ -1,18 +1,18 @@
 #pragma once
 #include "pch.h"
  
-#include "Mesh.h"
-#include "Shader.h"
-#include "Transform.h"
-#include "Material.h"
-#include "RigidBody.h"
-#include "MeshRenderer.h"
-#include "BoxCollider.h"
-#include "TerrainMeshCollider.h"
-#include "PlayerController.h"
-#include "CameraController.h"
+#include "Resource/Mesh.h"
+#include "Resource/Shader/Shader.h"
+#include "Component/Transform.h"
+#include "Resource/Material.h"
+#include "Component/RigidBody.h"
+#include "Component/MeshRenderer.h"
+#include "Component/Collider/BoxCollider.h"
+#include "Component/Collider/TerrainMeshCollider.h"
+#include "Component/PlayerController.h"
+#include "Component/CameraController.h"
 #include "d3dUtil.h"
-#include "ComponentManager.h"
+#include "Component/ComponentManager.h"
 
 class GameObject {
 public:

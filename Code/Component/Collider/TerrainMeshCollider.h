@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "Mesh.h"
-#include "IComponent.h"
+#include "Resource/Mesh.h"
+#include "../IComponent.h"
 
 struct AABB {
 	AABB() = default;

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Mesh.h"
 #include "Vertex.h"
-#include "d3dUtil.h"
+#include "Core/d3dUtil.h"
 
 std::unordered_map<std::string, Mesh*> Mesh::MeshList{};
 Mesh* Mesh::mPrevUsedMesh = nullptr;

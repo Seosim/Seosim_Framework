@@ -1,7 +1,7 @@
 #pragma once
-#include "IComponent.h"
-#include "Transform.h"
-#include "RigidBody.h"
+#include "../IComponent.h"
+#include "../Transform.h"
+#include "../RigidBody.h"
 #include "pch.h"
 
 class BoxCollider final : public IComponent {

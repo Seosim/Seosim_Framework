@@ -17,7 +17,7 @@ public:
 	};
 
 	Shader() = default;
-	~Shader();
+	virtual ~Shader();
 	Shader(const Shader& rhs) = delete;
 
 	static Command DefaultCommand();
@@ -42,7 +42,7 @@ private:
 };
 
 
-class ComputeShader {
+class ComputeShader : public Shader {
 public:
 	ComputeShader() = default;
 	~ComputeShader() { RELEASE_COM(mPSO); }
@@ -50,7 +50,6 @@ public:
 
 	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, const std::string& shaderName);
 	void SetPipelineState(ID3D12GraphicsCommandList* pCommandList);
-
 private:
 	ID3DBlob* mComputeBlob = nullptr;
 	ID3D12PipelineState* mPSO = nullptr;

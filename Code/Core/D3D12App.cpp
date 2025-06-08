@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "D3D12App.h"
 #include "d3dUtil.h"
-#include "Vertex.h"
+#include "Resource/Vertex.h"
 
 D3D12App& D3D12App::Instance()
 {

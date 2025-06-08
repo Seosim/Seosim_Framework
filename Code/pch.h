@@ -21,9 +21,8 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 #include <D3Dcompiler.h>
-#include "DDSTextureLoader12.h"
-
-#include "d3dx12.h"
+#include "./Core/DDSTextureLoader12.h"
+#include "./Core/d3dx12.h"
 
 
 using namespace DirectX;

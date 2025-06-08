@@ -1,5 +1,5 @@
 #pragma once
-#include "Input.h"
+#include "Input/Input.h"
 #include "GameTimer.h";
 #include "UploadBuffer.h"
 #include "d3dUtil.h"
@@ -7,7 +7,7 @@
 #include "Camera.h"
 #include "Light.h"
 #include "Shadow.h"
-#include "Texture.h"
+#include "Resource/Texture.h"
 
 class D3D12App final
 {

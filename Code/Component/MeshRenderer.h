@@ -1,8 +1,8 @@
 #pragma once
 #include "pch.h"
 #include "IComponent.h"
-#include "Mesh.h"
-#include "Material.h"
+#include "Resource/Mesh.h"
+#include "Resource/Material.h"
 #include "Transform.h"
 
 class MeshRenderer : public IComponent

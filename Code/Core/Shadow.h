@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "Shader.h"
-#include "Texture.h"
+#include "Resource/Shader/Shader.h"
+#include "Resource/Texture.h"
 class Shadow final {
 public:
 	Shadow() = default;

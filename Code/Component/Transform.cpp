@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "GameObject.h"
+#include "Core/GameObject.h"
 #include "Transform.h"
 
 void Transform::Update(const float deltaTime)

@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "UploadBuffer.h"
-#include "DDSTextureLoader12.h"
+#include "Core/UploadBuffer.h"
+#include "Core/DDSTextureLoader12.h"
 
 #define RESOURCE_TEXTURE2D			0x01
 #define RESOURCE_TEXTURE2D_ARRAY	0x02	//[]

@@ -2,9 +2,9 @@
 
 #include "pch.h"
 
-#include "Shader.h"
+#include "Shader/Shader.h"
 #include "Texture.h"
-#include "UploadBuffer.h"
+#include "Core/UploadBuffer.h"
 
 class Material {
 public:
