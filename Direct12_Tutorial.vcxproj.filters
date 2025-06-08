@@ -91,6 +91,9 @@
       <Filter>Component\Collider</Filter>
     </ClCompile>
     <ClCompile Include="Code\pch.cpp" />
+    <ClCompile Include="Code\Resource\Shader\ComputeShader.cpp">
+      <Filter>Resource\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Resource\Material.h">
@@ -172,6 +175,12 @@
       <Filter>Component\Collider</Filter>
     </ClInclude>
     <ClInclude Include="Code\pch.h" />
+    <ClInclude Include="Code\Resource\Shader\IShader.h">
+      <Filter>Resource\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Resource\Shader\ComputeShader.h">
+      <Filter>Resource\Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\color.hlsl">

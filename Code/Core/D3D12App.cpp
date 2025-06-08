@@ -831,7 +831,7 @@ void D3D12App::BuildObjects()
 	LoadHierarchyData("Assets/Hierarchies/0511Test.bin");
 
 	{
-		Shader::Command command = Shader::DefaultCommand();
+		Command command = Shader::DefaultCommand();
 		command.SampleCount = 1;
 		command.DepthEnable = FALSE;
 		command.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -840,7 +840,7 @@ void D3D12App::BuildObjects()
 	}
 
 	{
-		Shader::Command command = Shader::DefaultCommand();
+		Command command = Shader::DefaultCommand();
 		command.SampleCount = 1;
 		command.DepthEnable = FALSE;
 		command.Format = DXGI_FORMAT_R16_FLOAT;

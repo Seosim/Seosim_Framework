@@ -45,6 +45,7 @@
     </ClCompile>
     <ClCompile Include="Code\Resource\Material.cpp" />
     <ClCompile Include="Code\Resource\Mesh.cpp" />
+    <ClCompile Include="Code\Resource\Shader\ComputeShader.cpp" />
     <ClCompile Include="Code\Resource\Shader\Shader.cpp" />
     <ClCompile Include="Code\Resource\Texture.cpp" />
   </ItemGroup>
@@ -73,6 +74,8 @@
     <ClInclude Include="Code\pch.h" />
     <ClInclude Include="Code\Resource\Material.h" />
     <ClInclude Include="Code\Resource\Mesh.h" />
+    <ClInclude Include="Code\Resource\Shader\ComputeShader.h" />
+    <ClInclude Include="Code\Resource\Shader\IShader.h" />
     <ClInclude Include="Code\Resource\Shader\Shader.h" />
     <ClInclude Include="Code\Resource\Texture.h" />
     <ClInclude Include="Code\Resource\Vertex.h" />

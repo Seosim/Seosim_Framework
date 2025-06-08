@@ -3,6 +3,7 @@
  
 #include "Resource/Mesh.h"
 #include "Resource/Shader/Shader.h"
+#include "Resource/Shader/ComputeShader.h"
 #include "Component/Transform.h"
 #include "Resource/Material.h"
 #include "Component/RigidBody.h"

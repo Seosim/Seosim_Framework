@@ -111,7 +111,7 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 			}
 			SetTexture(texture, 0);
 
-			Shader::Command command = Shader::DefaultCommand();
+			Command command = Shader::DefaultCommand();
 			command.CullingMode = D3D12_CULL_MODE_FRONT;
 			command.DepthEnable = FALSE;
 
