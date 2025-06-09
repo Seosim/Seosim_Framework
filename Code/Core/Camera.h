@@ -11,6 +11,7 @@ public:
 		XMFLOAT4X4 ProjectionInv;
 		XMFLOAT3 CameraPos;
 		float ScreenWidth;
+		XMFLOAT3 CameraUpAxis;
 		float ScreenHeight;
 		float ElapsedTime;
 	};
@@ -26,6 +27,8 @@ public:
 
 	XMFLOAT3 GetPosition() const;
 	void SetPosition(const XMFLOAT3& position);
+
+	void SetAxis(const XMFLOAT3 axis);
 
 	XMFLOAT3 GetDirection() const;
 	XMMATRIX GetViewMatrix() const;

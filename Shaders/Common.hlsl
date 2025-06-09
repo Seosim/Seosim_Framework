@@ -28,8 +28,9 @@ cbuffer cbPerCamera : register(b3)
     float4x4 gProj;
     float4x4 ProjectionTex;
     float4x4 ProjectionInv;
-    float3 cameraPos;
+    float3 CameraPos;
     float ScreenWidth;
+    float3 CameraUpAxis;
     float ScreenHeight;
     float ElapsedTime;
 }

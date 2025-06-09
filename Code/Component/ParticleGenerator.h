@@ -10,25 +10,29 @@ private:
 		XMVECTOR Velocity;
 		float Speed;
 		float LifeTime;
+		float MaxLifeTime;
 
 		bool IsActive() const { return LifeTime > 0.0f; }
 	};
 
 	struct Particle {
 		XMFLOAT3 Position;
+		float LifeFactor;
 		XMFLOAT2 Size;
-
-		Particle(const XMFLOAT3& position, const XMFLOAT2& size)
-			: Position(position), Size(size)
-		{
-		}
 	};
 public:
+	enum eShape {
+		Sphere,
+		Cone,
+		Circle,
+		Count
+	};
+
 	ParticleGenerator() = default;
 	~ParticleGenerator() { }
 	ParticleGenerator(const ParticleGenerator&) = delete;
 
-	void Initialize(ID3D12Device* pDevice, const UINT particleCount);
+	void Initialize(ID3D12Device* pDevice, const UINT particleCount, eShape shape);
 
 	virtual void Awake() {}
 	virtual void Update(const float deltaTime) override;
@@ -40,7 +44,9 @@ private:
 	std::vector<Particle> mParticles = {};
 	std::vector<ParticleData> mParticleData = {};
 
-	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
+	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {}; 
 
 	std::unique_ptr<UploadBuffer> mParticleBuffer = nullptr;
+
+	eShape mShape = eShape::Sphere;
 };

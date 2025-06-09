@@ -241,6 +241,7 @@ private:
 	Texture* mSSAOVBlurTexture = nullptr;
 	Texture* mSSAOHBlurTexture = nullptr;
 	Texture* mNoiseTexture = nullptr;
+	Texture* mGlowDustTexture = nullptr;
 
 	//CullingObject
 	int mMeshObject = 0;

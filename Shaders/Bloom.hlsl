@@ -22,7 +22,7 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
     
     float4 color = gInput.Load(int3(uv, 0));
 
-    float luminance = dot(color.rgb, float3(0.1f, 0.1f, 0.1f));
+    float luminance = dot(color.rgb, float3(0.3f, 0.3f, 0.3f));
 
     float bloomFactor = GetBloomCurve(luminance);
 

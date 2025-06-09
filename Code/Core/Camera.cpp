@@ -58,6 +58,11 @@ void Camera::SetPosition(const XMFLOAT3& position)
 	mCameraBuffer.CameraPos = position;
 }
 
+void Camera::SetAxis(const XMFLOAT3 axis)
+{
+	mCameraBuffer.CameraUpAxis = axis;
+}
+
 XMFLOAT3 Camera::GetDirection() const
 {
 	return XMFLOAT3();

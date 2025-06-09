@@ -1,10 +1,12 @@
 #include "Common.hlsl"
 
 Texture2D gDepthMap : register(t2);
+Texture2D gTexture: register(t3);
 
 struct VertexIn
 {
     float3 PosW : POSITION;
+    float LifeFactor : FACTOR;
     float2 Size : SIZE;
 };
 
@@ -15,6 +17,7 @@ struct GeoOut
     float3 NormalW : NORMAL;
     float2 TexC : TEXCOORD;
     uint PrimID : SV_PrimitiveID;
+    float LifeFactor : FACTOR;
 };
 
 struct PixelOut
@@ -31,18 +34,17 @@ VertexIn VS(VertexIn vin)
 [maxvertexcount(4)]
 void GS(point VertexIn gin[1], uint primID : SV_PrimitiveID, inout TriangleStream<GeoOut> triStream)
 {
-    float3 up = float3(0.0f, 1.0f, 0.0f);
-    float3 look = normalize(cameraPos - gin[0].PosW);
-    float3 right = cross(up, look);
+    float3 look = normalize(CameraPos - gin[0].PosW);
+    float3 right = cross(CameraUpAxis, look);
 
-    float halfWidth = 0.5f * gin[0].Size.x;
-    float halfHeight = 0.5f * gin[0].Size.y;
+    float halfWidth = 0.5f * gin[0].Size.x * gin[0].LifeFactor;
+    float halfHeight = 0.5f * gin[0].Size.y * gin[0].LifeFactor;
 
     float4 v[4];
-    v[0] = float4(gin[0].PosW + halfWidth * right - halfHeight * up, 1.0f);
-    v[1] = float4(gin[0].PosW + halfWidth * right + halfHeight * up, 1.0f);
-    v[2] = float4(gin[0].PosW - halfWidth * right - halfHeight * up, 1.0f);
-    v[3] = float4(gin[0].PosW - halfWidth * right + halfHeight * up, 1.0f);
+    v[0] = float4(gin[0].PosW + halfWidth * right - halfHeight * CameraUpAxis, 1.0f);
+    v[1] = float4(gin[0].PosW + halfWidth * right + halfHeight * CameraUpAxis, 1.0f);
+    v[2] = float4(gin[0].PosW - halfWidth * right - halfHeight * CameraUpAxis, 1.0f);
+    v[3] = float4(gin[0].PosW - halfWidth * right + halfHeight * CameraUpAxis, 1.0f);
 
     float2 texC[4] =
     {
@@ -62,6 +64,7 @@ void GS(point VertexIn gin[1], uint primID : SV_PrimitiveID, inout TriangleStrea
         gout.NormalW = look;
         gout.TexC = texC[i];
         gout.PrimID = primID;
+        gout.LifeFactor = gin[0].LifeFactor;
 
         triStream.Append(gout);
     }
@@ -70,7 +73,11 @@ void GS(point VertexIn gin[1], uint primID : SV_PrimitiveID, inout TriangleStrea
 PixelOut PS(GeoOut pin)
 {
     PixelOut pOut;
-    pOut.Color = float4(1, 1, 1, 1);
+    
+    float4 color1 = float4(1.0f, 0.6f, 0.0f, 1.0f);
+    float4 color2 = float4(1.0f, 0.15f, 0.0f, 1.0f);
+    
+    pOut.Color = gTexture.Sample(gsamLinear, pin.TexC) * lerp(color1, color2, pin.LifeFactor);
     pOut.Mask = 1.0f;
 
     return pOut;

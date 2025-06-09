@@ -610,6 +610,10 @@ void D3D12App::BuildResourceTexture()
 	mNoiseTexture = new Texture();
 	mNoiseTexture->LoadTextureFromDDSFile(md3dDevice, md3dCommandList, L"./Assets/Textures/SsaoNoise.DDS", RESOURCE_TEXTURE2D, 0);
 	mNoiseTexture->CreateSrv(md3dDevice, mSrvHeap, L"SSAONoise");
+
+	mGlowDustTexture = new Texture();
+	mGlowDustTexture->LoadTextureFromDDSFile(md3dDevice, md3dCommandList, L"./Assets/Textures/GlowDust.DDS", RESOURCE_TEXTURE2D, 0);
+	mGlowDustTexture->CreateSrv(md3dDevice, mSrvHeap, L"GlowDust");
 }
 
 void D3D12App::BuildComputeShader()
@@ -775,7 +779,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 					//HACK: Particle Test.
 					gameObject->AddComponent<ParticleGenerator>();
 					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
-					particleGenerator.Initialize(md3dDevice, 50);
+					particleGenerator.Initialize(md3dDevice, 1000, ParticleGenerator::Circle);
 				}
 			}
 
@@ -2262,9 +2266,13 @@ void D3D12App::RenderParticles()
 	mParticleShader->SetPipelineState(md3dCommandList);
 
 	{
+		D3D12_GPU_DESCRIPTOR_HANDLE depthHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
+		depthHandle.ptr += mCbvSrvUavDescriptorSize * (mDepthTexture->GetID());
+		md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, depthHandle);
+
 		D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-		texHandle.ptr += mCbvSrvUavDescriptorSize * (mDepthTexture->GetID());
-		md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
+		texHandle.ptr += mCbvSrvUavDescriptorSize * (mGlowDustTexture->GetID());
+		md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE1, texHandle);
 	}
 
 	for (GameObject* gameObject : mGameObjects)
