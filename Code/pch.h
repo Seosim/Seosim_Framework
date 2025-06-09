@@ -13,7 +13,7 @@
 #include <fstream>
 #include <functional>
 #include <chrono>
-
+#include <random>
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -132,6 +132,18 @@ namespace MATRIX {
 			0.0f, 0.0f, 0.0f, 1.0f);
 
 		return I;
+	}
+}
+
+namespace RANDOM {
+	static XMVECTOR InsideUnitSphere() {
+		std::random_device rd;
+		std::uniform_real_distribution<float> uidF(-1.0f, 1.0f);
+		std::default_random_engine dre(rd());
+
+		XMVECTOR vec = XMVectorSet(uidF(dre), uidF(dre), uidF(dre), 0.0f);
+		vec = XMVector3Normalize(vec);
+		return vec;
 	}
 }
 

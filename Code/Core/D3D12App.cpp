@@ -775,7 +775,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 					//HACK: Particle Test.
 					gameObject->AddComponent<ParticleGenerator>();
 					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
-					particleGenerator.Initialize(md3dDevice, 10);
+					particleGenerator.Initialize(md3dDevice, 50);
 				}
 			}
 

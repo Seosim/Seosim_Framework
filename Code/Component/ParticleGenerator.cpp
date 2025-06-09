@@ -12,8 +12,8 @@ void ParticleGenerator::Initialize(ID3D12Device* pDevice, const UINT particleCou
 	//HACK: 초기값 강제 삽입
 	for (int i = 0; i < mCapacity; ++i)
 	{
-		mParticles.emplace_back( Particle(XMFLOAT3(0, 5, 0), XMFLOAT2(1,1)));
-		mParticleData.emplace_back(ParticleData(5.0f, 1.0f));
+		mParticles.emplace_back( Particle(XMFLOAT3(0, 5, 0), XMFLOAT2(0.3f,0.3f)));
+		mParticleData.emplace_back(ParticleData(RANDOM::InsideUnitSphere(), 15.0f, 1.0f));
 	}
 		 
 	mVertexBufferView.BufferLocation = mParticleBuffer->Resource()->GetGPUVirtualAddress();
@@ -23,19 +23,30 @@ void ParticleGenerator::Initialize(ID3D12Device* pDevice, const UINT particleCou
 
 void ParticleGenerator::Update(const float deltaTime)
 {
-	static float timer = 0.0f;
 	int particleIndex = 0;
 	for (int i = 0; i < mCapacity; ++i)
 	{
 		//TODO: Particle Movement Update.
-		mParticles[i].Position.y = std::sin(timer) * 5.0f;
+		XMVECTOR vPosition = XMLoadFloat3(&mParticles[i].Position);
+		vPosition += mParticleData[i].Velocity * mParticleData[i].Speed * deltaTime;
+		XMStoreFloat3(&mParticles[i].Position, vPosition);
+
+		mParticleData[i].LifeTime -= deltaTime;
 
 		//Alive인 Particle만 담아야함.
-		mParticleBuffer->CopyData(particleIndex++, mParticles[i]);
+		if (mParticleData[i].IsActive())
+		{
+			mParticleBuffer->CopyData(particleIndex++, mParticles[i]);
+		}
+		else
+		{
+			mParticleData[i].LifeTime = 1.0f;
+			mParticleData[i].Velocity = RANDOM::InsideUnitSphere();
+			mParticles[i].Position = XMFLOAT3(0, 5.0f, 0);
+		}
 	}
 
 	mAliveCount = particleIndex;
-	timer += deltaTime;
 }
 
 void ParticleGenerator::Render(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap)

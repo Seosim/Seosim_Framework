@@ -7,8 +7,11 @@
 class ParticleGenerator : public IComponent {
 private:
 	struct ParticleData {
+		XMVECTOR Velocity;
 		float Speed;
 		float LifeTime;
+
+		bool IsActive() const { return LifeTime > 0.0f; }
 	};
 
 	struct Particle {
