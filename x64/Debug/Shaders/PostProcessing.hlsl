@@ -50,7 +50,6 @@ float3 ACESFitted(float3 v)
     return mul(aces_output_matrix, v);
 }
 
-
 [numthreads(32, 32, 1)]
 void CS(int3 dispatchThreadID : SV_DispatchThreadID)
 {        
@@ -63,12 +62,12 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     float ssao = gSSAOMap[texCoord];
     float mask = gMaskMap[texCoord];
     
-    color *= min(ssao + mask, 1.0f);
-    //color += bloomColor * bloomColor.a;
+    color *= saturate(ssao + mask);
+    color += bloomColor;
     
     
     // ACES 톤 매핑 적용
-    //color.rgb = ACESFitted(color.rgb);
+    color.rgb = ACESFitted(color.rgb);
     // sRGB 변환 적용
     color.rgb = ToSRGB(color);
     

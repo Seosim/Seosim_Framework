@@ -2665,7 +2665,7 @@ void D3D12App::SSAO()
 	{
 		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
 		//BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
-		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 3);
+		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1);
 	}
 
 	//렌더타겟 상태 변환

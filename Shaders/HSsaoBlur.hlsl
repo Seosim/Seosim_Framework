@@ -1,12 +1,14 @@
-// Input textures
-Texture2D gNormalMap : register(t0);
-Texture2D gDepthMap : register(t1);
-Texture2D gInputMap : register(t2);
+Texture2D<float4> gNormalMap : register(t0);
+Texture2D<float> gDepthMap : register(t1);
+Texture2D<float> gInputMap : register(t2);
 
-// Output texture
 RWTexture2D<float4> gOutputMap : register(u0);
 
-static float BlurWeights[17] =
+static const int gBlurRadius = 8;
+static const float NormalThreshold = 0.8f;
+static const float DepthThreshold = 0.2f;
+
+static const float BlurWeights[17] =
 {
     0.0081, 0.0169, 0.0321, 0.0561, 0.0902,
     0.1353, 0.1791, 0.2066, 0.2159, 0.2066,
@@ -15,42 +17,39 @@ static float BlurWeights[17] =
 };
 
 [numthreads(16, 1, 1)]
-void CS(uint3 DTid : SV_DispatchThreadID)
+void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
 {
-    int2 texCoord = int2(DTid.xy);
-    int width, height;
-    gInputMap.GetDimensions(width, height);
-    
-    //if (texCoord.x >= width || texCoord.y >= height)
-    //    return;
-    
-    static const int gBlurRadius = 8;
-    
-    float4 color = BlurWeights[gBlurRadius] * gInputMap.Load(int3(texCoord, 0)).r;
+    int2 texCoord = dispatchThreadID.xy;
+
+    float centerValue = gInputMap[texCoord];
+    float3 centerNormal = gNormalMap[texCoord].xyz;
+    float centerDepth = gDepthMap[texCoord];
+
+    float result = centerValue * BlurWeights[gBlurRadius];
     float totalWeight = BlurWeights[gBlurRadius];
-    
-    float3 centerNormal = gNormalMap.Load(int3(texCoord, 0)).xyz;
-    float centerDepth = gDepthMap.Load(int3(texCoord, 0)).r;
-    
+
     for (int i = -gBlurRadius; i <= gBlurRadius; ++i)
     {
         if (i == 0)
             continue;
+
+        int2 offsetCoord = texCoord + int2(i, 0);
         
-        int2 offsetCoord = texCoord + int2(0, i);
-        if (offsetCoord.y < 0 || offsetCoord.y >= height)
-            continue;
-        
-        float3 neighborNormal = gNormalMap.Load(int3(offsetCoord, 0)).xyz;
-        float neighborDepth = gDepthMap.Load(int3(offsetCoord, 0)).r;
-        
-        if (dot(neighborNormal, centerNormal) >= 0.8f && abs(neighborDepth - centerDepth) <= 0.8f)
-        {
-            float weight = BlurWeights[i + gBlurRadius];
-            color += weight * gInputMap.Load(int3(offsetCoord, 0)).r;
-            totalWeight += weight;
-        }
+        // clamp instead of discard (branch 제거)
+        offsetCoord = clamp(offsetCoord, int2(0, 0), int2(16384, 16384)); // 큰 값 설정
+
+        float3 neighborNormal = gNormalMap[offsetCoord].xyz;
+        float neighborDepth = gDepthMap[offsetCoord];
+
+        float normalDot = dot(neighborNormal, centerNormal);
+        float depthDiff = abs(neighborDepth - centerDepth);
+        float valid = step(NormalThreshold, normalDot) * step(depthDiff, DepthThreshold); // 분기 제거
+
+        float weight = BlurWeights[i + gBlurRadius] * valid;
+
+        result += gInputMap[offsetCoord] * weight;
+        totalWeight += weight;
     }
-    
-    gOutputMap[texCoord] = color / totalWeight;
+
+    gOutputMap[texCoord] = result / totalWeight;
 }

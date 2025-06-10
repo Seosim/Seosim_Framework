@@ -14,6 +14,7 @@ float GetBloomCurve(float x)
 
 static const float Threshold = 0.2f;
 static const float ThresholdKnee = 0.1f;
+static const float Intensity = 1.1f;
 
 [numthreads(32, 32, 1)]
 void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
@@ -31,6 +32,7 @@ void CS(uint3 dispatchThreadID : SV_DispatchThreadID)
     softness = (softness * softness) / (4.0 * ThresholdKnee + 1e-4);
     float multiplier = max(brightness - Threshold, softness) / max(brightness, 1e-4);
     color *= multiplier;
+    color *= Intensity;
 
     //float luminance = dot(color.rgb, float3(0.15f, 0.15f, 0.15f));
 
