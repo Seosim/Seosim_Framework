@@ -82,7 +82,7 @@ void ParticleGenerator::Update(const float deltaTime)
 			else if (mShape == Cone)
 			{
 				XMVECTOR forward = XMVectorSet(1, 0, 0, 0); // 기준 방향
-				constexpr float coneAngle = XMConvertToRadians(45.0f); // 콘의 반각도
+				constexpr float coneAngle = XMConvertToRadians(23.0f); // 콘의 반각도
 				constexpr float radius = 5.0f;
 				direction = RANDOM::DirectionInCone(forward, coneAngle);
 				XMVECTOR randomPos = direction * radius;
@@ -92,14 +92,14 @@ void ParticleGenerator::Update(const float deltaTime)
 			else if (mShape == Circle)
 			{
 				XMVECTOR axis = XMVectorSet(1, 0, 0, 0); // 기준 방향
-				XMStoreFloat3(&position, RANDOM::CircleEdgePoint(axis, 10.0f, &direction) + XMVectorSet(0, 10, 0, 0));
+				XMStoreFloat3(&position, RANDOM::CircleEdgePoint(axis, 10.0f, &direction) + XMVectorSet(0, 15, 0, 0));
 			}
 			else
 			{
 				ASSERT(false);
 			}
 
-			mParticleData[i].MaxLifeTime = RANDOM::GetRandomValue(0.1f, 1.0f);
+			mParticleData[i].MaxLifeTime = RANDOM::GetRandomValue(0.1f, 1.5f);
 			mParticleData[i].LifeTime = mParticleData[i].MaxLifeTime;
 			mParticleData[i].Velocity = direction;
 			mParticles[i].Position = position;

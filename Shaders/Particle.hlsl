@@ -23,7 +23,7 @@ struct GeoOut
 struct PixelOut
 {
     float4 Color : SV_Target0;
-    float Mask : SV_Target1;
+    float4 Mask : SV_Target1;
 };
 
 VertexIn VS(VertexIn vin)
@@ -74,11 +74,14 @@ PixelOut PS(GeoOut pin)
 {
     PixelOut pOut;
     
-    float4 color1 = float4(1.0f, 0.6f, 0.0f, 1.0f);
-    float4 color2 = float4(1.0f, 0.15f, 0.0f, 1.0f);
+    float4 color1 = float4(8.0f, 2.0f, 1.0f, 1.0f);
+    float4 color2 = float4(8.0f, 2.0f, 1.0f, 1.0f);
+    color1.a = 1.0f;
+    color2.a = 1.0f;
     
+    pOut.Color = lerp(color1, color2, pin.LifeFactor);
     pOut.Color = gTexture.Sample(gsamLinear, pin.TexC) * lerp(color1, color2, pin.LifeFactor);
-    pOut.Mask = 1.0f;
+    pOut.Mask = float4(1, 1, 1, 1);
 
     return pOut;
 }

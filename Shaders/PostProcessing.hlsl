@@ -64,7 +64,7 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     float mask = gMaskMap[texCoord];
     
     color *= min(ssao + mask, 1.0f);
-    color += bloomColor * bloomColor.a;
+    color += bloomColor;
     
     
     // ACES 톤 매핑 적용

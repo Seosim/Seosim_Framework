@@ -596,7 +596,7 @@ void D3D12App::BuildResourceTexture()
 	mNormalTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"NormalMap", mResolveCameraNormal, DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 
 	mTransparentMaskTexture = new Texture();
-	mTransparentMaskTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"TransparentMaskMap", mResolveTransparentMask, DXGI_FORMAT_R16_UNORM, false);
+	mTransparentMaskTexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"TransparentMaskMap", mResolveTransparentMask, DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 
 	mMSAATexture = new Texture();
 	mMSAATexture->CreateSrvWithResource(md3dDevice, mSrvHeap, L"MSAAMap", mRenderTargets[(int)eRenderTargetType::MSAA], DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -649,40 +649,40 @@ void D3D12App::BuildUAVTexture()
 	mPostProcessingTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"PostProcessedTexture", mWidth, mHeight);
 
 	mBloomTexture = new Texture();
-	mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomTexture", mWidth, mHeight);
+	mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomTexture", mWidth, mHeight);
 
 	mDownScaled4x4BloomTexture = new Texture();
-	mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled4x4BloomTexture", mWidth / 4, mHeight / 4);
+	mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaled4x4BloomTexture", mWidth / 4, mHeight / 4);
 
 	mDownScaled16x16BloomTexture = new Texture();
-	mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled16x16BloomTexture", mWidth / 4 / 4, mHeight / 4 / 4);
+	mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaled16x16BloomTexture", mWidth / 4 / 4, mHeight / 4 / 4);
 
 	mDownScaled64x64BloomTexture = new Texture();
-	mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled64x64BloomTexture", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
+	mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaled64x64BloomTexture", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
 
 	mBloomHBlurTexture = new Texture();
-	mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomHBlurTexture", mWidth, mHeight);
+	mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomHBlurTexture", mWidth, mHeight);
 
 	mBloomVBlurTexture = new Texture();
-	mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomVBlurTexture", mWidth, mHeight);
+	mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomVBlurTexture", mWidth, mHeight);
 
 	mBloom4x4HBlurTexture = new Texture();
-	mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
+	mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
 
 	mBloom4x4VBlurTexture = new Texture();
-	mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
+	mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
 
 	mBloom16x16HBlurTexture = new Texture();
-	mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
+	mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
 
 	mBloom16x16VBlurTexture = new Texture();
-	mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
+	mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
 
 	mBloom64x64HBlurTexture = new Texture();
-	mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
+	mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
 
 	mBloom64x64VBlurTexture = new Texture();
-	mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
+	mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
 
 	mSSAOHBlurTexture = new Texture();
 	mSSAOHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16_FLOAT, L"SSAOHBlurTexture", mWidth, mHeight);
@@ -779,7 +779,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 					//HACK: Particle Test.
 					gameObject->AddComponent<ParticleGenerator>();
 					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
-					particleGenerator.Initialize(md3dDevice, 1000, ParticleGenerator::Circle);
+					particleGenerator.Initialize(md3dDevice, 1000, ParticleGenerator::Cone);
 				}
 			}
 
@@ -1078,7 +1078,7 @@ void D3D12App::OnResize()
 			.Height = (UINT)mHeight,
 			.DepthOrArraySize = 1,
 			.MipLevels = 1,
-			.Format = DXGI_FORMAT_R16_UNORM,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
 			.SampleDesc = {.Count = MSAA_SAMPLING_COUNT, .Quality = 0 },
 			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
 		};
@@ -1308,7 +1308,7 @@ void D3D12App::OnResize()
 			.Height = (UINT)mHeight,
 			.DepthOrArraySize = 1,
 			.MipLevels = 1,
-			.Format = DXGI_FORMAT_R16_UNORM,
+			.Format = DXGI_FORMAT_R16G16B16A16_FLOAT,
 			.SampleDesc = {.Count = 1, .Quality = 0 },
 			.Flags = D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET
 		};
@@ -1327,7 +1327,7 @@ void D3D12App::OnResize()
 			, IID_PPV_ARGS(&mResolveTransparentMask)));
 
 		if (mTransparentMaskTexture)
-			mTransparentMaskTexture->ChangeResource(md3dDevice, mSrvHeap, L"TransparentMaskMap", mResolveTransparentMask, DXGI_FORMAT_R16_UNORM, false);
+			mTransparentMaskTexture->ChangeResource(md3dDevice, mSrvHeap, L"TransparentMaskMap", mResolveTransparentMask, DXGI_FORMAT_R16G16B16A16_FLOAT, false);
 	}
 
 	//Create ShadowMap
@@ -1500,7 +1500,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomTexture", mWidth, mHeight);
+		mBloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomTexture", mWidth, mHeight);
 	}
 
 	if (mDownScaled4x4BloomTexture)
@@ -1508,7 +1508,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mDownScaled4x4BloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaledBloomTexture", mWidth / 4, mHeight / 4);
+		mDownScaled4x4BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaledBloomTexture", mWidth / 4, mHeight / 4);
 	}
 
 	if (mDownScaled16x16BloomTexture)
@@ -1516,7 +1516,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mDownScaled16x16BloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture0", mWidth / 4 / 4, mHeight / 4 / 4);
+		mDownScaled16x16BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaled6x6BloomTexture0", mWidth / 4 / 4, mHeight / 4 / 4);
 	}
 
 	if (mDownScaled64x64BloomTexture)
@@ -1524,7 +1524,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mDownScaled64x64BloomTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"DownScaled6x6BloomTexture1", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
+		mDownScaled64x64BloomTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"DownScaled6x6BloomTexture1", mWidth / 4 / 4 / 4, mHeight / 4 / 4 / 4);
 	}
 
 	if (mBloomHBlurTexture)
@@ -1532,7 +1532,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloomHBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomHBlurTexture", mWidth, mHeight);
+		mBloomHBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomHBlurTexture", mWidth, mHeight);
 	}
 
 	if (mBloomVBlurTexture)
@@ -1540,7 +1540,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloomVBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"BloomVBlurTexture", mWidth, mHeight);
+		mBloomVBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"BloomVBlurTexture", mWidth, mHeight);
 	}
 
 	if (mBloom4x4HBlurTexture)
@@ -1548,7 +1548,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom4x4HBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
+		mBloom4x4HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom4x4HBlurTexture", mWidth / 4, mHeight / 4);
 	}
 
 	if (mBloom4x4VBlurTexture)
@@ -1556,7 +1556,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom4x4VBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
+		mBloom4x4VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom4x4VBlurTexture", mWidth / 4, mHeight / 4);
 	}
 
 	if (mBloom16x16HBlurTexture)
@@ -1564,7 +1564,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom16x16HBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
+		mBloom16x16HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom16x16HBlurTexture", mWidth / 16, mHeight / 16);
 	}
 
 	if (mBloom16x16VBlurTexture)
@@ -1572,7 +1572,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom16x16VBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
+		mBloom16x16VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom16x16VBlurTexture", mWidth / 16, mHeight / 16);
 	}
 
 	if (mBloom64x64HBlurTexture)
@@ -1580,7 +1580,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom64x64HBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
+		mBloom64x64HBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom64x64HBlurTexture", mWidth / 64, mHeight / 64);
 	}
 
 	if (mBloom64x64VBlurTexture)
@@ -1588,7 +1588,7 @@ void D3D12App::OnResizeUAVTexture()
 		ID3D12Resource* resource = mBloom64x64VBlurTexture->GetResource();
 		RELEASE_COM(resource);
 
-		mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R8G8B8A8_UNORM, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
+		mBloom64x64VBlurTexture->InitializeUAV(md3dDevice, mSrvHeap, DXGI_FORMAT_R16G16B16A16_FLOAT, L"Bloom64x64VBlurTexture", mWidth / 64, mHeight / 64);
 	}
 
 	if (mSSAOVBlurTexture)

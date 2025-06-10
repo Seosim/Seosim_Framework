@@ -70,7 +70,7 @@ PixelOut PS(VertexOut pin)
     float3 albedo = LinearizeColor(BaseColor).rgb;
 
     float3 N = normalize(pin.NormalW);
-    float3 V = normalize(cameraPos - pin.PosW);
+    float3 V = normalize(CameraPos - pin.PosW);
     float3 L = -normalize(lightDir);
     float3 H = normalize(L + V);
 
