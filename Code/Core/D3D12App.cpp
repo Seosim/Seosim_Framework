@@ -2910,6 +2910,9 @@ LRESULT D3D12App::MessageProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			return 0;
 		}
 		break;
+	case WM_ACTIVATEAPP:
+		Input::Instance().SetWindowState(not (bool)wParam);
+		break;
 	case WM_MOUSEMOVE:
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;

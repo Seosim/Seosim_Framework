@@ -28,6 +28,11 @@ void Input::KeyUp(const int key)
 	mKeyState[key] = false;
 }
 
+void Input::SetWindowState(bool state)
+{
+	mExitWindow = state;
+}
+
 bool Input::GetKeyDown(const int key)
 {
 	return mKeyState[key] && !mPrevKeyState[key];
@@ -45,6 +50,8 @@ bool Input::GetKey(const int key)
 
 void Input::UpdateMousePosition() 
 {
+	if (mExitWindow) return;
+
     RECT rect;
     GetClientRect(mHWND, &rect);
     POINT center = { (rect.right - rect.left) / 2, (rect.bottom - rect.top) / 2 };
@@ -55,7 +62,7 @@ void Input::UpdateMousePosition()
 	XMFLOAT2 newPos = { (float)pt.x, (float)pt.y };
 
 	//HACK: 화면 잠금
-	bool bLock = false;
+	bool bLock = true;
 
 	if (bLock)
 	{
@@ -64,6 +71,7 @@ void Input::UpdateMousePosition()
 
 		ClientToScreen(mHWND, &center);
 		SetCursorPos(center.x, center.y);
+		ShowCursor(false);
 	}
 	else
 	{
@@ -72,10 +80,6 @@ void Input::UpdateMousePosition()
 
 		mCurrentMousePosition = newPos;
 	}
-
-
-
-
 }
 
 XMFLOAT2 Input::GetMouseDelta() const 
