@@ -175,8 +175,8 @@ private:
 	XMFLOAT4X4 mView = MATRIX::Identify4x4();
 	XMFLOAT4X4 mProj = MATRIX::Identify4x4();
 
-	int mWidth = 1600;
-	int mHeight = 900;
+	int mWidth = 1920;
+	int mHeight = 1080;
 	POINT mLastMousePos = {};
 
 	//GameObject

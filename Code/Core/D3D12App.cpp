@@ -1192,7 +1192,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &RT_DESC
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			, &CLEAR_VALUE
 			, IID_PPV_ARGS(&mRenderTargets[SCREEN])));
 
@@ -1241,7 +1241,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &RT_DESC
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			, &CLEAR_VALUE
 			, IID_PPV_ARGS(&mResolvePosition)));
 
@@ -1282,7 +1282,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &RT_DESC
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			, &CLEAR_VALUE
 			, IID_PPV_ARGS(&mResolveCameraNormal)));
 
@@ -1322,7 +1322,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &RT_DESC
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			, &CLEAR_VALUE
 			, IID_PPV_ARGS(&mResolveTransparentMask)));
 
@@ -1385,7 +1385,7 @@ void D3D12App::OnResize()
 		heapProperties.CreationNodeMask = 1;
 		heapProperties.VisibleNodeMask = 1;
 
-		HR(md3dDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_COMMON, &optClear, IID_PPV_ARGS(&mDepthStencilBuffer)));
+		HR(md3dDevice->CreateCommittedResource(&heapProperties, D3D12_HEAP_FLAG_NONE, &depthStencilDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &optClear, IID_PPV_ARGS(&mDepthStencilBuffer)));
 
 		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
 		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
@@ -1429,7 +1429,7 @@ void D3D12App::OnResize()
 		HR(md3dDevice->CreateCommittedResource(&HEAP_PROPERTIES
 			, D3D12_HEAP_FLAG_NONE
 			, &depthStencilDesc
-			, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+			, D3D12_RESOURCE_STATE_RESOLVE_DEST
 			, &optClear
 			, IID_PPV_ARGS(&mResolveCameraDepth)));
 
@@ -1438,14 +1438,14 @@ void D3D12App::OnResize()
 	}
 
 
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = mDepthStencilBuffer;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	md3dCommandList->ResourceBarrier(1, &barrier);
+	//D3D12_RESOURCE_BARRIER barrier = {};
+	//barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	//barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	//barrier.Transition.pResource = mDepthStencilBuffer;
+	//barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+	//barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	//barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	//md3dCommandList->ResourceBarrier(1, &barrier);
 
 	//Shadow Depth
 	{
@@ -1890,18 +1890,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		md3dCommandList->ResourceBarrier(1, &barrier0);
 	}
 
-	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (CameraDepth)
-	{
-		D3D12_RESOURCE_BARRIER barrier = {};
-		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-		barrier.Transition.pResource = mDepthStencilBuffer;
-		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
-		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
-		md3dCommandList->ResourceBarrier(1, &barrier);
-	}
-
 	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (TransparentMask)
 	{
 		D3D12_RESOURCE_BARRIER barrier = {};
@@ -2131,6 +2119,18 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		barrier1.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
 		barrier1.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier1);
+	}
+
+	//·»´õÅ¸°Ù »óÅÂ º¯È¯ (CameraDepth)
+	{
+		D3D12_RESOURCE_BARRIER barrier = {};
+		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+		barrier.Transition.pResource = mDepthStencilBuffer;
+		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
+		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+		md3dCommandList->ResourceBarrier(1, &barrier);
 	}
 
 	HR(md3dCommandList->Close());
@@ -2611,7 +2611,7 @@ void D3D12App::SSAO()
 		barrier0.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier0.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
 		barrier0.Transition.pResource = mRenderTargets[(int)eRenderTargetType::SSAO];
-		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+		barrier0.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
 		barrier0.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 		barrier0.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 		md3dCommandList->ResourceBarrier(1, &barrier0);
