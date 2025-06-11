@@ -14,6 +14,7 @@ cbuffer cbPerMaterial : register(b1)
     float4 Emission;
     float Metalic;
     float Smoothness;
+    float2 padding;
 };
 
 struct VertexIn
@@ -70,11 +71,13 @@ PixelOut PS(VertexOut pin)
 
     float3 albedo = LinearizeColor(gDiffuseMap.Sample(gsamLinear, pin.UV)).rgb;
 
+    float smoothness = 0.5f;
+    
     float3 N = normalize(pin.NormalW);
     float3 V = normalize(CameraPos - pin.PosW);
     float3 L = -normalize(lightDir);
     float3 H = normalize(L + V);
-
+    
     float3 dielectricF0 = float3(0.04, 0.04, 0.04);
     float3 F0 = lerp(dielectricF0, albedo, Metalic);
 
@@ -85,8 +88,9 @@ PixelOut PS(VertexOut pin)
     float3 diffuse = (1.0 - F) * albedo / PI * lightColor;
 
     float roughness = 1.0 - Smoothness;
-    float shininess = lerp(1.0, 256.0, Smoothness);
-    float specularTerm = pow(max(dot(N, H), 0.0), shininess);
+    float shininess = lerp(1.0, 64.0, Smoothness);
+    float NdotH = saturate(dot(N, H)); // 안전하게 고정
+    float specularTerm = pow(NdotH + 1e-5f, shininess);
     float3 specular = F * specularTerm * lightColor;
 
     float3 R = reflect(-V, N);
@@ -95,7 +99,7 @@ PixelOut PS(VertexOut pin)
     environment *= Smoothness;
 
     float shadowFac = CalcShadowFactor(pin.ShadowPosH);
-
+    
     float3 ambient = albedo * 0.15f;
 
     float3 color = ambient + (diffuse + specular) * NdotL * shadowFac + environment * 0.2f;

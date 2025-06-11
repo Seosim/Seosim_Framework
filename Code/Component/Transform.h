@@ -62,6 +62,8 @@ public:
 	void SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale);
 
 	void MarkDirty() const;
+
+	bool IsStatic() const;
 private:
 	XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
 	XMFLOAT3 mUp = { 0.0f, 1.0f, 0.0f };
@@ -75,4 +77,5 @@ private:
 	mutable XMMATRIX mLocalToWorldTransform = {};
 	mutable XMMATRIX mLocalTransform = {};
 	mutable bool mIsDirty = true;
+	bool mIsStatic = true;
 };

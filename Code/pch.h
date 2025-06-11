@@ -225,6 +225,7 @@ namespace MathTool {
 constexpr UINT MAX_TEXTURE_COUNT = 8;
 
 constexpr UINT MSAA_SAMPLING_COUNT = 4;
+constexpr UINT FRAME_RESOURCE_COUNT = 3;
 
 constexpr UINT SHADOW_MAP_SIZE = 4096;
 

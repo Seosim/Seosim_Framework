@@ -3,15 +3,16 @@
 
 std::unordered_map<std::string, Material*> Material::MaterialList{};
 Material* Material::mPrevUsedMaterial = nullptr;
+UINT Material::FrameResourceCount = 0;
 
 void Material::SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap)
 {
 	if (mPrevUsedMaterial != this)
 	{
-		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mMaterialCB->Resource()->GetGPUVirtualAddress();
+		D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mMaterialCB[FrameResourceCount]->Resource()->GetGPUVirtualAddress();
 
 		mpShader->SetPipelineState(pCommandList);
-		pCommandList->SetGraphicsRootConstantBufferView(1, cbAddress);
+		pCommandList->SetGraphicsRootConstantBufferView((UINT)eRootParameter::MATERIAL, cbAddress);
 
 		UpdateTextureOnSrv(pCommandList, srvHeap);
 	}
@@ -38,7 +39,10 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 	LitCBuffer cBuffer;
 	in.read(reinterpret_cast<char*>(&cBuffer), sizeof(LitCBuffer));
 
-	mMaterialCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(LitCBuffer));
+	for (int i = 0; i < FRAME_RESOURCE_COUNT; ++i)
+	{
+		mMaterialCB[i] = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(LitCBuffer));
+	}
 	UpdateConstantBuffer(cBuffer);
 
 	//텍스처가 있다면 로드 현재는 머티리얼 별 최대 텍스처 1개라고 가정

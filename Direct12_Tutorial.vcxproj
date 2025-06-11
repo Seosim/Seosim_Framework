@@ -32,6 +32,7 @@
     <ClCompile Include="Code\Core\D3D12App.cpp" />
     <ClCompile Include="Code\Core\d3dUtil.cpp" />
     <ClCompile Include="Code\Core\DDSTextureLoader12.cpp" />
+    <ClCompile Include="Code\Core\FrameResource.cpp" />
     <ClCompile Include="Code\Core\GameObject.cpp" />
     <ClCompile Include="Code\Core\GameTimer.cpp" />
     <ClCompile Include="Code\Core\Light.cpp" />
@@ -69,6 +70,7 @@
     <ClInclude Include="Code\Core\d3dUtil.h" />
     <ClInclude Include="Code\Core\d3dx12.h" />
     <ClInclude Include="Code\Core\DDSTextureLoader12.h" />
+    <ClInclude Include="Code\Core\FrameResource.h" />
     <ClInclude Include="Code\Core\GameObject.h" />
     <ClInclude Include="Code\Core\GameTimer.h" />
     <ClInclude Include="Code\Core\Light.h" />

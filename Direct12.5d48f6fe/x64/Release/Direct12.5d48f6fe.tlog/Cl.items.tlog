@@ -11,6 +11,7 @@ D:\문서\GitHub\Direct12_Tutorial\Code\Core\Camera.cpp;D:\문서\GitHub\Direct1
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\D3D12App.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\D3D12App.obj
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\d3dUtil.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\d3dUtil.obj
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\DDSTextureLoader12.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\DDSTextureLoader12.obj
+D:\문서\GitHub\Direct12_Tutorial\Code\Core\FrameResource.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\FrameResource.obj
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\GameObject.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\GameObject.obj
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\GameTimer.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\GameTimer.obj
 D:\문서\GitHub\Direct12_Tutorial\Code\Core\Light.cpp;D:\문서\GitHub\Direct12_Tutorial\Direct12.5d48f6fe\x64\Release\Light.obj

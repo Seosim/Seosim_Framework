@@ -109,10 +109,10 @@ bool D3D12App::InitDirect3D()
 
 	OnResize();
 
-
 	HR(md3dCommandList->Reset(md3dCommandAllocator, nullptr));
 
 	CreateCbvSrvUavDescriptorHeap();
+	BuildFrameResource();
 	BuildConstantBuffers();
 	BuildRootSignature();
 	BuildComputeRootSignature();
@@ -204,6 +204,17 @@ void D3D12App::CreateCbvSrvUavDescriptorHeap()
 	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	HR(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvHeap)));
+}
+
+void D3D12App::BuildFrameResource()
+{
+	mFrameResources.reserve(FRAME_RESOURCE_COUNT);
+	for (int i = 0; i < FRAME_RESOURCE_COUNT; ++i)
+	{
+		mFrameResources.emplace_back(std::make_unique<FrameResource>(md3dDevice));
+	}
+
+	mCurrFrameResource = mFrameResources[0].get();
 }
 
 void D3D12App::BuildConstantBuffers()
@@ -519,8 +530,7 @@ void D3D12App::BuildComputeRootSignature()
 void D3D12App::BuildLight()
 {
 	mpLight = new Light();
-	mpLight->Initialize(md3dDevice);
-
+	mpLight->SetUploadBuffer(mCurrFrameResource->LightCB.get());
 	mpLight->SetDirection(mpShadow->GetShadowDirection());
 	mpLight->SetColor({ 1.0f, 0.9568627f, 0.8392157f });
 }
@@ -534,8 +544,8 @@ void D3D12App::BuildShadow()
 void D3D12App::BuildCamera()
 {
 	mpCamera = new Camera();
-	mpCamera->Initialize(md3dDevice);
 
+	mpCamera->SetUploadBuffer(mCurrFrameResource->CameraCB.get());
 	mpCamera->SetPosition({ 0.5f, 0.5f, 0.5f });
 	mpCamera->SetScreenSize(mWidth, mHeight);
 
@@ -575,9 +585,8 @@ void D3D12App::BuildSkybox()
 
 	Transform& transform = skybox->GetComponent<Transform>();
 	MeshRenderer& meshRenderer = skybox->GetComponent<MeshRenderer>();
-	meshRenderer.SetMesh(mesh);
+	meshRenderer.SetOtherComponent(mesh, &transform);
 	meshRenderer.AddMaterial(mSkyboxMat);
-	meshRenderer.SetTransform(&transform);
 
 	mSkybox = skybox;
 }
@@ -804,8 +813,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 		gameObject->AddComponent<MeshRenderer>();
 		MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
-		meshRenderer.SetMesh(mesh);
-		meshRenderer.SetTransform(&transform);
+		meshRenderer.SetOtherComponent(mesh, &transform);
 	}
 
 	bool bHasMaterial;
@@ -1658,7 +1666,7 @@ void D3D12App::FlushCommandQueue()
 
 		HR(mFence->SetEventOnCompletion(mFenceValue, eventHandle));
 		WaitForSingleObject(eventHandle, INFINITE);
-		CloseHandle(eventHandle);
+		//CloseHandle(eventHandle);
 	}
 }
 
@@ -1739,6 +1747,20 @@ int D3D12App::Update()
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
+
+				//TODO: 프레임 리소스 관리
+				mCurrFrameResourceIndex = (mCurrFrameResourceIndex + 1) % FRAME_RESOURCE_COUNT;
+				Material::FrameResourceCount = mCurrFrameResourceIndex;
+				mCurrFrameResource = mFrameResources[mCurrFrameResourceIndex].get();
+
+				if (mCurrFrameResource->Fence != 0 && mFence->GetCompletedValue() < mCurrFrameResource->Fence)
+				{
+					HANDLE eventHandle = CreateEventEx(nullptr, (LPCWSTR)false, false, EVENT_ALL_ACCESS);
+					HR(mFence->SetEventOnCompletion(mCurrFrameResource->Fence, eventHandle));
+					WaitForSingleObject(eventHandle, INFINITE);
+					CloseHandle(eventHandle);
+				}
+
 				CollisionCheck();
 				UpdateComponents();
 				UpdateTerrainDistance();
@@ -1864,8 +1886,10 @@ float D3D12App::GetAspectRatio() const
 
 void D3D12App::Draw(const GameTimer& gameTimer)
 {
-	HR(md3dCommandAllocator->Reset());
-	HR(md3dCommandList->Reset(md3dCommandAllocator, nullptr));
+	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+
+	HR(cmdListAlloc->Reset());
+	HR(md3dCommandList->Reset(cmdListAlloc.Get(), nullptr));
 
 	//렌더타겟 상태 변환 (MSAA)
 	{
@@ -1958,7 +1982,9 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	//Update Constant Camera Buffer, Light Buffer
+	mpCamera->SetUploadBuffer(mCurrFrameResource->CameraCB.get());
 	mpCamera->Update(md3dCommandList, mTimer.DeltaTime());
+	mpLight->SetUploadBuffer(mCurrFrameResource->LightCB.get());
 	mpLight->Update(md3dCommandList);
 
 	//Draw Object.
@@ -1986,8 +2012,8 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-		mObjectCB->CopyData(0, objConstants);
-		md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+		mCurrFrameResource->ObjectCB->CopyData(0, objConstants);
+		md3dCommandList->SetGraphicsRootConstantBufferView((UINT)eRootParameter::OBJECT, mCurrFrameResource->ObjectCB->Resource()->GetGPUVirtualAddress());
 
 		MeshRenderer& meshRenderer = mSkybox->GetComponent<MeshRenderer>();
 
@@ -2150,7 +2176,12 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 
 	HR(mSwapChain->Present(0, 0));
 	mCurrBackBuffer = (mCurrBackBuffer + 1) % SwapChainBufferCount;
-	FlushCommandQueue();
+
+	mCurrFrameResource->Fence = ++mFenceValue;
+
+	HR(md3dCommandQueue->Signal(mFence, mFenceValue));
+
+	//FlushCommandQueue();
 }
 
 void D3D12App::UpdateShadowTransform()
@@ -2159,7 +2190,7 @@ void D3D12App::UpdateShadowTransform()
 	{
 		auto position = mpCamera->GetPosition();
 		auto direction = mpCamera->GetDirection();
-		mpShadow->UpdateShadowTransform(md3dCommandList, XMLoadFloat3(&position), XMLoadFloat3(&direction));
+		mpShadow->UpdateShadowTransform(md3dCommandList, XMLoadFloat3(&position), XMLoadFloat3(&direction), mCurrFrameResource->ShadowCB.get());
 	}
 }
 
@@ -2204,8 +2235,8 @@ void D3D12App::RenderObject(const float deltaTime)
 		ObjectConstants objConstants;
 		XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 		XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-		mObjectCB->CopyData(index, objConstants);
-		md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::OBJECT, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
+		mCurrFrameResource->ObjectCB->CopyData(index, objConstants);
+		md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::OBJECT, mCurrFrameResource->ObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
 		mMeshObject++;
 		MeshRenderer& meshRenderer = ComponentManager::Instance().GetComponent<MeshRenderer>(gameObjectID);
@@ -2262,8 +2293,8 @@ void D3D12App::RenderObjectForShadow()
 			ObjectConstants objConstants;
 			XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
 			XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-			mObjectCB->CopyData(index, objConstants);
-			md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
+			mCurrFrameResource->ObjectCB->CopyData(index, objConstants);
+			md3dCommandList->SetGraphicsRootConstantBufferView(0, mCurrFrameResource->ObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
 
 			MeshRenderer& meshRenderer = ComponentManager::Instance().GetComponent<MeshRenderer>(gameObjectID);
@@ -2832,6 +2863,9 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 
 void D3D12App::Finalize()
 {
+	if (md3dDevice != nullptr)
+		FlushCommandQueue();
+
 	for (auto gameObject : mGameObjects)
 	{
 		delete gameObject;

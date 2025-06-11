@@ -1,26 +1,14 @@
 #pragma once
 #include "pch.h"
-#include "UploadBuffer.h"
+#include "FrameResource.h"
 
 class Camera final {
 public:
-	struct CameraBuffer {
-		XMFLOAT4X4 View;
-		XMFLOAT4X4 Proj;
-		XMFLOAT4X4 ProjectionTex;
-		XMFLOAT4X4 ProjectionInv;
-		XMFLOAT3 CameraPos;
-		float ScreenWidth;
-		XMFLOAT3 CameraUpAxis;
-		float ScreenHeight;
-		float ElapsedTime;
-	};
 
 	Camera() = default;
 	~Camera() {}
 	Camera(const Camera&) = delete;
 
-	void Initialize(ID3D12Device* pDevice);
 
 	void Update(ID3D12GraphicsCommandList* pCommandList, const float deltaTime);
 	void UpdateForComputeShader(ID3D12GraphicsCommandList* pCommandList);
@@ -40,8 +28,9 @@ public:
 	void SetMatrix(const XMFLOAT4X4& view, const XMFLOAT4X4& proj);
 
 	void SetScreenSize(float width, float height);
+	void SetUploadBuffer(UploadBuffer* buffer);
 private:
-	std::unique_ptr<UploadBuffer> mCameraCB = nullptr;
+	UploadBuffer* mCameraCB = nullptr;
 
 	CameraBuffer mCameraBuffer = {};
 };

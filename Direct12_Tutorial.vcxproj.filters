@@ -103,6 +103,9 @@
     <ClCompile Include="Code\Component\ParticleGenerator.cpp">
       <Filter>Component</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Core\FrameResource.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Resource\Material.h">
@@ -195,6 +198,9 @@
     </ClInclude>
     <ClInclude Include="Code\Component\ParticleGenerator.h">
       <Filter>Component</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Core\FrameResource.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

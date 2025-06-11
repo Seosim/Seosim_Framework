@@ -2,6 +2,7 @@
 #include "Input/Input.h"
 #include "GameTimer.h";
 #include "UploadBuffer.h"
+#include "FrameResource.h"
 #include "d3dUtil.h"
 #include "GameObject.h"
 #include "Camera.h"
@@ -12,12 +13,6 @@
 class D3D12App final
 {
 public:
-	struct ObjectConstants
-	{
-		XMFLOAT4X4 World = {};
-		XMFLOAT4X4 WorldViewProj = {};
-	};
-
 	enum class eRenderTargetType {
 		FRAME0,
 		FRAME1,
@@ -44,6 +39,7 @@ public:
 	void OnResize();
 	void OnResizeUAVTexture();
 
+	void BuildFrameResource();
 	void BuildConstantBuffers();
 	void BuildRootSignature();
 	void BuildComputeRootSignature();
@@ -151,6 +147,13 @@ private:
 	static constexpr DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	std::unique_ptr<UploadBuffer> mObjectCB = nullptr;
+
+
+	//FrameResource
+	std::vector<std::unique_ptr<FrameResource>> mFrameResources = {};
+	FrameResource* mCurrFrameResource = nullptr;
+	int mCurrFrameResourceIndex = 0;
+
 	ID3D12RootSignature* mRootSignature = nullptr;
 	ID3D12RootSignature* mComputeRootSignature = nullptr;
 

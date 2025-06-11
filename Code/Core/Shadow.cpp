@@ -47,7 +47,7 @@ void Shadow::SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList* pCommandL
 	pCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
 }
 
-void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward)
+void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward, UploadBuffer* shadowCB)
 {
 	//float radius = 150.0f;
 	float focusDistance = 100.0f;
@@ -102,8 +102,8 @@ void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVE
 	XMStoreFloat4x4(&mShadowBuffer.ShadowTransform, XMMatrixTranspose(S));
 
 	// 상수 버퍼 업데이트 및 바인딩
-	mShadowCB->CopyData(0, mShadowBuffer);
-	pCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::SHADOW, mShadowCB->Resource()->GetGPUVirtualAddress());
+	shadowCB->CopyData(0, mShadowBuffer);
+	pCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::SHADOW, shadowCB->Resource()->GetGPUVirtualAddress());
 	mShadowShader->SetPipelineState(pCommandList);
 }
 

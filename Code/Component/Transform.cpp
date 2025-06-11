@@ -348,3 +348,8 @@ void Transform::MarkDirty() const
 	for (GameObject* child : mChildren)
 		child->GetComponent<Transform>().MarkDirty();
 }
+
+bool Transform::IsStatic() const
+{
+	return mIsStatic;
+}

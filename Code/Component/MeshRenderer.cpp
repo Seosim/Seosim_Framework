@@ -5,6 +5,16 @@ void MeshRenderer::Update(const float deltaTime)
 {
 }
 
+void MeshRenderer::SetOtherComponent(Mesh* mesh, Transform* transform)
+{
+	SetTransform(transform);
+	SetMesh(mesh);
+
+	auto worldMatrix = mTransform->GetWorldTransform();
+	mTranslatedCullingBox = mMesh->mFrustumCullingBox;
+	mTranslatedCullingBox.Transform(mTranslatedCullingBox, worldMatrix);
+}
+
 void MeshRenderer::SetMesh(Mesh* mesh)
 {
 	ASSERT(mMesh == nullptr);	//메쉬가 이미 등록되어 있을 시 사용 x
@@ -40,6 +50,11 @@ Mesh* MeshRenderer::GetMesh() const
 
 bool MeshRenderer::IsCulled(const BoundingFrustum& frustum) const
 {
+	if (mTransform->IsStatic())
+	{
+		return false == frustum.Intersects(mTranslatedCullingBox);
+	}
+
 	auto worldMatrix = mTransform->GetWorldTransform();
 	auto box = mMesh->mFrustumCullingBox;
 

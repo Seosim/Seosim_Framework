@@ -16,6 +16,7 @@ public:
 
 	virtual void Update(const float deltaTime);
 
+	void SetOtherComponent(Mesh* mesh, Transform* transform);
 	void SetMesh(Mesh* mesh);
 	void SetTransform(Transform* transform);
 
@@ -33,5 +34,7 @@ private:
 
 	std::vector<Material*> mMaterials = {};
 	int mSubMeshCount = 0;
+
+	BoundingOrientedBox mTranslatedCullingBox = {};
 };
 

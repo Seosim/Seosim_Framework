@@ -12,10 +12,15 @@ public:
 	~Material() {}
 	Material(const Material&) = delete;
 
+	static UINT FrameResourceCount;
+
 	template<typename T>
 	void Initialize(ID3D12Device* pDevice, ID3D12GraphicsCommandList* pCommandList, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, const T& data, Shader::eType shaderType)
 	{
-		mMaterialCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(T));
+		for (int i = 0; i < FRAME_RESOURCE_COUNT; ++i)
+		{
+			mMaterialCB[i] = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(T));
+		}
 		UpdateConstantBuffer(data);
 
 		//기존에 있는 쉐이더면 따로 생성하지 않고 재사용 합니다.
@@ -91,7 +96,10 @@ public:
 	template<typename T>
 	void UpdateConstantBuffer(const T& data)
 	{
-		mMaterialCB->CopyData(0, data);
+		for (int i = 0; i < FRAME_RESOURCE_COUNT; ++i)
+		{
+			mMaterialCB[i]->CopyData(0, data);
+		}
 	}
 
 	void SetConstantBufferView(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* srvHeap);
@@ -107,7 +115,7 @@ public:
 	static std::unordered_map<std::string, Material*> MaterialList;
 private:
 	Shader* mpShader = nullptr;
-	std::unique_ptr<UploadBuffer> mMaterialCB = nullptr;
+	std::unique_ptr<UploadBuffer> mMaterialCB[FRAME_RESOURCE_COUNT];
 	std::array<Texture*, MAX_TEXTURE_COUNT> mTextures = {};
 	static Material* mPrevUsedMaterial;
 };

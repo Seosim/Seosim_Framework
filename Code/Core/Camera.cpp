@@ -1,13 +1,6 @@
 #include "pch.h"
 #include "Camera.h"
 
-void Camera::Initialize(ID3D12Device* pDevice)
-{
-	mCameraCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(CameraBuffer));
-
-	mCameraCB->CopyData(0, mCameraBuffer);
-}
-
 void Camera::Update(ID3D12GraphicsCommandList* pCommandList, const float deltaTime)
 {
 	// Transform NDC space [-1,+1]^2 to texture space [0,1]^
@@ -108,4 +101,9 @@ void Camera::SetScreenSize(float width, float height)
 {
 	mCameraBuffer.ScreenWidth = width;
 	mCameraBuffer.ScreenHeight = height;
+}
+
+void Camera::SetUploadBuffer(UploadBuffer* buffer)
+{
+	mCameraCB = buffer;
 }

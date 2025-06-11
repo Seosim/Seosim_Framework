@@ -2,6 +2,8 @@
 #include "pch.h"
 #include "Resource/Shader/Shader.h"
 #include "Resource/Texture.h"
+#include "FrameResource.h"
+
 class Shadow final {
 public:
 	Shadow() = default;
@@ -10,17 +12,6 @@ public:
 
 	void Release();
 
-	struct ShadowConstants
-	{
-		XMFLOAT4X4 LightView;
-		XMFLOAT4X4 LightProj;
-		XMFLOAT4X4 ShadowTransform;
-		XMFLOAT3 LightDir;
-		float NearZ;
-		XMFLOAT3 LightPosW;
-		float FarZ;
-	};
-
 	void Initialize(ID3D12Device* pDevice, ID3D12RootSignature* pRootSignature, ID3D12DescriptorHeap* pSrvHeap, ID3D12Resource* pResource);
 
 	void ChangeResource(ID3D12Device* pDevice, ID3D12DescriptorHeap* pSrvHeap, ID3D12Resource* pResource);
@@ -28,7 +19,7 @@ public:
 	void SetViewPortAndScissorRect(ID3D12GraphicsCommandList* pCommandList);
 	void SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap);
 
-	void UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward);
+	void UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward, UploadBuffer* shadowCB);
 
 	void Render();
 
@@ -44,5 +35,4 @@ private:
 	Shader* mShadowShader = nullptr;
 	D3D12_VIEWPORT mShadowViewport = {};
 	tagRECT mShadowScissorRect = {};
-
 };
