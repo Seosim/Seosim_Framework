@@ -67,7 +67,7 @@ PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
 
-    float3 albedo = LinearizeColor(BaseColor).rgb;
+    float3 albedo = gDiffuseMap.Sample(gsamLinear, pin.UV).rgb;
 
     float3 N = normalize(pin.NormalW);
     float3 V = normalize(CameraPos - pin.PosW);
@@ -102,6 +102,7 @@ PixelOut PS(VertexOut pin)
     color += Emission.rgb;
 
     pixelOut.color = float4(color, 1.0f);
+    pixelOut.color = float4(albedo, 1.0f);
     pixelOut.position = float4(pin.PosV, 1.0f);
     pixelOut.normal = float4(mul(N, (float3x3) gView), 0.0f);
 

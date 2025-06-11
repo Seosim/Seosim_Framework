@@ -57,12 +57,12 @@ public:
 	void AddChild(GameObject* child);
 
  	XMMATRIX getLocalToWorldTransform() const;
+	void updateLocalToWorldTransform() const;
 
 	void SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale);
 
+	void MarkDirty() const;
 private:
-	XMFLOAT4X4 mLocalTransform = MATRIX::Identify4x4();
-
 	XMFLOAT3 mRight = { 1.0f, 0.0f, 0.0f };
 	XMFLOAT3 mUp = { 0.0f, 1.0f, 0.0f };
 	XMFLOAT3 mForward = { 0.0f, 0.0f, 1.0f };
@@ -71,4 +71,8 @@ private:
 
 	GameObject* mParent = nullptr;
 	std::vector<GameObject*> mChildren;
+private:
+	mutable XMMATRIX mLocalToWorldTransform = {};
+	mutable XMMATRIX mLocalTransform = {};
+	mutable bool mIsDirty = true;
 };

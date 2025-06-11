@@ -12,9 +12,9 @@ float GetBloomCurve(float x)
     return result * 0.5f;
 }
 
-static const float Threshold = 0.3f;
+static const float Threshold = 0.5f;
 static const float ThresholdKnee = 0.1f;
-static const float Intensity = 1.1f;
+static const float Intensity = 1.0f;
 
 [numthreads(32, 32, 1)]
 void CS(uint3 dispatchThreadID : SV_DispatchThreadID)

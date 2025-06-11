@@ -10,16 +10,20 @@ void Transform::Update(const float deltaTime)
 //Component Transform
 XMMATRIX Transform::GetLocalTransform() const
 {
-	XMFLOAT4X4 rotationTranslation =
+	if (mIsDirty)
 	{
-		mRight.x, mRight.y, mRight.z, 0.0f,
-		mUp.x, mUp.y, mUp.z, 0.0f,
-		mForward.x, mForward.y, mForward.z, 0.0f,
-		mPosition.x, mPosition.y, mPosition.z, 1.0f,
-	};
+		XMFLOAT4X4 rotationTranslation =
+		{
+			mRight.x, mRight.y, mRight.z, 0.0f,
+			mUp.x, mUp.y, mUp.z, 0.0f,
+			mForward.x, mForward.y, mForward.z, 0.0f,
+			mPosition.x, mPosition.y, mPosition.z, 1.0f,
+		};
 
-	XMMATRIX localTransform = XMMatrixScaling(mScale.x, mScale.y, mScale.z) * XMLoadFloat4x4(&rotationTranslation);
-	return localTransform;
+		mLocalTransform = XMMatrixScaling(mScale.x, mScale.y, mScale.z) * XMLoadFloat4x4(&rotationTranslation);
+	}
+
+	return mLocalTransform;
 }
 
 XMMATRIX Transform::GetWorldTransform() const
@@ -56,6 +60,10 @@ void Transform::SetPosition(const XMFLOAT3& position, Space space)
 
 		XMStoreFloat3(&mPosition, localPosition);
 	}
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 void Transform::Move(const XMFLOAT3& velocity, Space space)
@@ -85,11 +93,19 @@ void Transform::Move(const XMFLOAT3& velocity, Space space)
 
 		XMStoreFloat3(&mPosition, localPosition);
 	}
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 void Transform::SetScale(const XMFLOAT3& scale)
 {
 	mScale = scale;
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 void Transform::Rotate(const float angleX, const float angleY, const float angleZ)
@@ -127,6 +143,10 @@ void Transform::Rotate(const float angleX, const float angleY, const float angle
 
 	up = XMVector3Normalize(XMVector3Cross(forward, right));
 	XMStoreFloat3(&mUp, up);
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 void Transform::RotateByWorldAxis(const float angleX, const float angleY, const float angleZ)
@@ -168,6 +188,10 @@ void Transform::RotateByWorldAxis(const float angleX, const float angleY, const 
 	XMStoreFloat3(&mRight, right);
 	XMStoreFloat3(&mUp, up);
 	XMStoreFloat3(&mForward, forward);
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 XMFLOAT3 Transform::GetRight() const
@@ -230,6 +254,10 @@ void Transform::SetRotatiton(const XMFLOAT3& right, const XMFLOAT3& up, const XM
 	mRight = right;
 	mUp = up;
 	mForward = forward;
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 XMFLOAT4 Transform::GetRotationQuat() const
@@ -259,6 +287,10 @@ void Transform::SetRotationByQuat(const XMVECTOR quat)
 	mForward.x = rotation._31;
 	mForward.y = rotation._32;
 	mForward.z = rotation._33;
+
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }
 
 GameObject* Transform::GetParent() const
@@ -273,6 +305,7 @@ void Transform::SetParent(GameObject* parent)
 
 GameObject* Transform::GetChild(int index) const
 {
+	ASSERT(index < mChildren.size());
 	return mChildren[index];
 }
 
@@ -283,17 +316,23 @@ void Transform::AddChild(GameObject* child)
 
 XMMATRIX Transform::getLocalToWorldTransform() const
 {
-	XMMATRIX global = XMMatrixIdentity();
+	if (mIsDirty) {
+		updateLocalToWorldTransform();
+	}
+	return mLocalToWorldTransform;
+}
 
-	GameObject* parent = mParent;
+void Transform::updateLocalToWorldTransform() const
+{
+	mLocalToWorldTransform = XMMatrixIdentity();
+	XMMATRIX parentWorld = XMMatrixIdentity();
 
-	while (parent != nullptr)
-	{
-		global *= parent->GetComponent<Transform>().GetLocalTransform();
-		parent = parent->GetComponent<Transform>().GetParent();
+	if (mParent) {
+		parentWorld = mParent->GetComponent<Transform>().GetWorldTransform();
 	}
 
-	return global;
+	mLocalToWorldTransform *= parentWorld;
+	mIsDirty = false;
 }
 
 void Transform::SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotation, const XMFLOAT3& scale)
@@ -301,4 +340,11 @@ void Transform::SetTransformData(const XMFLOAT3& position, const XMFLOAT4 rotati
 	SetPosition(position);
 	SetRotationByQuat(XMVectorSet(rotation.x, rotation.y, rotation.z, rotation.w));
 	SetScale(scale);
+}
+
+void Transform::MarkDirty() const
+{
+	mIsDirty = true;
+	for (GameObject* child : mChildren)
+		child->GetComponent<Transform>().MarkDirty();
 }

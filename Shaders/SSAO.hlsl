@@ -48,9 +48,9 @@ Texture2D NoiseMap : register(t4);
 Texture2D PositionMap : register(t5);
 
 static const float gSurfaceEpsilon = 0.015f;
-static const float gOcclusionFadeEnd = 1.0f;
+static const float gOcclusionFadeEnd = 1.2f;
 static const float gOcclusionFadeStart = 0.1f;
-static const float gOcclusionRadius = 0.1f;
+static const float gOcclusionRadius = 0.05f;
 
 
 static const int NUM_SAMPLES = 16;

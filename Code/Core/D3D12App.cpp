@@ -573,9 +573,11 @@ void D3D12App::BuildSkybox()
 	mSkyboxMat->Initialize(md3dDevice, md3dCommandList, mRootSignature, mSrvHeap, NULL, Shader::eType::Skybox);
 	mesh->LoadMeshData(md3dDevice, md3dCommandList, "./Assets/Models/Cube.bin");
 
+	Transform& transform = skybox->GetComponent<Transform>();
 	MeshRenderer& meshRenderer = skybox->GetComponent<MeshRenderer>();
 	meshRenderer.SetMesh(mesh);
 	meshRenderer.AddMaterial(mSkyboxMat);
+	meshRenderer.SetTransform(&transform);
 
 	mSkybox = skybox;
 }
@@ -732,13 +734,13 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 	//TODO: 익스포터에서 RigidBody & BoxCollider 사용유무 체크해야함. 현재는 그냥 다 넣는 중
 	{
-		gameObject->AddComponent<RigidBody>();
-		RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
-		rigidBody.SetTransform(&transform);
+		//gameObject->AddComponent<RigidBody>();
+		//RigidBody& rigidBody = gameObject->GetComponent<RigidBody>();
+		//rigidBody.SetTransform(&transform);
 
-		gameObject->AddComponent<BoxCollider>();
-		BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
-		boxCollider.Initialize(&transform, { 1.0f, 1.0f, 1.0f }, &rigidBody);
+		//gameObject->AddComponent<BoxCollider>();
+		//BoxCollider& boxCollider = gameObject->GetComponent<BoxCollider>();
+		//boxCollider.Initialize(&transform, { 1.0f, 1.0f, 1.0f }, &rigidBody);
 	}
 
 	bool bHasMesh;
@@ -765,24 +767,39 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 		{
 			mesh = new Mesh;
 			mesh->LoadMeshData(md3dDevice, md3dCommandList, meshPath);
+		}
 
-			//HACK: TerrainMeshCollider Test.
+		//HACK: TerrainMeshCollider Test.
+		{
+			std::string test[] = { "ground_002", "ground_004", "ground_005", "road_006", "road_008", "road_009" };
+
+			bool bFind = false;
+			for (auto& str : test)
 			{
-				std::string test = "Environment_1";
-				if (name == test)
+				if (str == name)
 				{
-					gameObject->AddComponent<TerrainMeshCollider>();
-					TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
-
-					terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
-
-					//HACK: Particle Test.
-					gameObject->AddComponent<ParticleGenerator>();
-					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
-					particleGenerator.Initialize(md3dDevice, 1000, ParticleGenerator::Cone);
+					bFind = true;
+					break;
 				}
 			}
 
+			if (bFind)
+			{
+				gameObject->AddComponent<TerrainMeshCollider>();
+				TerrainMeshCollider& terrainMeshCollider = gameObject->GetComponent<TerrainMeshCollider>();
+
+				terrainMeshCollider.SetTriangles(mesh->GetTriangles(), transform.GetWorldTransform());
+
+				//HACK: Particle Test.
+				static bool bMake = false;
+				if (false == bMake)
+				{
+					gameObject->AddComponent<ParticleGenerator>();
+					auto& particleGenerator = gameObject->GetComponent<ParticleGenerator>();
+					particleGenerator.Initialize(md3dDevice, 1000, ParticleGenerator::Cone);
+					bMake = true;
+				}
+			}
 		}
 
 		gameObject->AddComponent<MeshRenderer>();
@@ -840,7 +857,7 @@ GameObject* D3D12App::LoadGameObjectData(std::ifstream& loader, GameObject* pare
 
 void D3D12App::BuildObjects()
 {
-	LoadHierarchyData("Assets/Hierarchies/0511Test.bin");
+	LoadHierarchyData("Assets/Hierarchies/Demonstration.bin");
 
 	{
 		Shader::Command command = Shader::DefaultCommand();
@@ -1625,23 +1642,6 @@ void D3D12App::CollisionCheck()
 			}
 		}
 	}
-
-	//for (int i = 0; i < mGameObjects.size() - 1; ++i)
-	//{
-	//	for (int j = i + 1; j < mGameObjects.size(); ++j)
-	//	{
-	//		if (mGameObjects[i]->HasComponent<BoxCollider>() && mGameObjects[j]->HasComponent<BoxCollider>())
-	//		{
-	//			BoxCollider& colliderA = mGameObjects[i]->GetComponent<BoxCollider>();
-	//			BoxCollider& colliderB = mGameObjects[j]->GetComponent<BoxCollider>();
-
-	//			if (colliderA.CollisionCheck(colliderB))
-	//			{
-
-	//			}
-	//		}
-	//	}
-	//}
 }
 
 void D3D12App::FlushCommandQueue()
@@ -1764,15 +1764,18 @@ void D3D12App::UpdateComponents()
 
 float D3D12App::UpdateTerrainDistance()
 {
+	Transform& transform = mCamera->GetComponent<Transform>();
+	constexpr float UP = 30.0f;
+	int cnt = 0;
+
+	float minDistance = std::numeric_limits<float>::max();
+
 	for (GameObject* gameObject : mGameObjects)
 	{
 		if (!gameObject->HasComponent<TerrainMeshCollider>())
 			continue;
 
-		Transform& transform = mCamera->GetComponent<Transform>();
-
 		XMFLOAT3 position = transform.GetPosition();
-		constexpr float UP = 30.0f;
 		position.y += UP;
 		XMVECTOR pivotPosition = XMLoadFloat3(&position);
 		XMVECTOR UP_VECTOR = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -1782,7 +1785,6 @@ float D3D12App::UpdateTerrainDistance()
 		auto node = terrainMeshCollider.FindNode(position);
 		if (nullptr == node) continue;
 
-		float minDistance = std::numeric_limits<float>::max();
 		float distance = 0.0f;
 
 		for (const Triangle& triangle : node->Triangles)
@@ -1792,24 +1794,35 @@ float D3D12App::UpdateTerrainDistance()
 			XMVECTOR v2 = XMLoadFloat3(&triangle.v2);
 
 			TriangleTests::Intersects(pivotPosition, -UP_VECTOR, v0, v1, v2, distance);
-
-			if (distance != 0.0f && minDistance >= distance)
+			if (distance != 0.0f) 
+				cnt++;
+			if (distance != 0.0f && minDistance > distance)
 			{
 				minDistance = distance;
 			}
 		}
-
-		constexpr float PIVOT = 0.5f;
-		if (transform.GetPosition().y < position.y - minDistance + PIVOT)
-		{
-			PlayerController& playerController = mCamera->GetComponent<PlayerController>();
-			playerController.mbJumping = false;
-			RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
-			rigidBody.mGravityAcceleration = { 0,0,0 };
-			transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
-		}
-		return minDistance;
 	}
+
+	constexpr float PIVOT = 1.0f;
+	XMFLOAT3 position = transform.GetPosition();
+	position.y += UP;
+
+	if (minDistance >= 0.0f && transform.GetPosition().y < position.y - minDistance + PIVOT)
+	{
+		PlayerController& playerController = mCamera->GetComponent<PlayerController>();
+		playerController.mbJumping = false;
+		RigidBody& rigidBody = mCamera->GetComponent<RigidBody>();
+		rigidBody.mGravityAcceleration = { 0,0,0 };
+		transform.SetPosition({ position.x, position.y - minDistance + PIVOT, position.z });
+	}
+
+	if (transform.GetPosition().y < 0.0f)
+	{
+		XMFLOAT3 position = transform.GetPosition();
+		transform.SetPosition({ position.x, 0.0f, position.z });
+	}
+
+	return 0.0f;
 }
 
 void D3D12App::OnMouseMove(WPARAM btnState, int x, int y)
@@ -1908,6 +1921,10 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 	md3dCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
 	mpShadow->SetViewPortAndScissorRect(md3dCommandList);
+
+	//TODO: LatedUpdate 만들자.
+	auto& cameraController = mCamera->GetComponent<CameraController>();
+	cameraController.Update(gameTimer.DeltaTime());
 
 	RenderObjectForShadow();
 
@@ -2099,12 +2116,6 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 			md3dCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::TEXTURE0, texHandle);
 		}
 
-		//{
-		//	D3D12_GPU_DESCRIPTOR_HANDLE texHandle = mSrvHeap->GetGPUDescriptorHandleForHeapStart();
-		//	texHandle.ptr += 32 * (mScreenTexture->GetID());
-		//	md3dCommandList->SetGraphicsRootDescriptorTable(5, texHandle);
-		//}
-
 		mScreenShader->SetPipelineState(md3dCommandList);
 		md3dCommandList->DrawInstanced(6, 1, 0, 0);
 	}
@@ -2145,7 +2156,11 @@ void D3D12App::Draw(const GameTimer& gameTimer)
 void D3D12App::UpdateShadowTransform()
 {
 	if (mpShadow)
-		mpShadow->UpdateShadowTransform(md3dCommandList);
+	{
+		auto position = mpCamera->GetPosition();
+		auto direction = mpCamera->GetDirection();
+		mpShadow->UpdateShadowTransform(md3dCommandList, XMLoadFloat3(&position), XMLoadFloat3(&direction));
+	}
 }
 
 void D3D12App::RenderObject(const float deltaTime)
@@ -2169,9 +2184,16 @@ void D3D12App::RenderObject(const float deltaTime)
 	auto boundingFrustum = mpCamera->GetBoundingFrustum();
 
 	int index = 1;
-	for (GameObject* gameObject : mGameObjects)
+	auto objectList = ComponentManager::Instance().Query<Transform, MeshRenderer>();
+
+	bool skybox = true;
+	for (UINT gameObjectID : objectList)
 	{
-		Transform& cTransform = gameObject->GetComponent<Transform>();
+		if (skybox) {
+			skybox = false;
+			continue;
+		}
+		Transform& cTransform = ComponentManager::Instance().GetComponent<Transform>(gameObjectID);
 
 		auto xmf4x4world = cTransform.GetWorldTransform();
 
@@ -2185,16 +2207,14 @@ void D3D12App::RenderObject(const float deltaTime)
 		mObjectCB->CopyData(index, objConstants);
 		md3dCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::OBJECT, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
-		if (gameObject->HasComponent<MeshRenderer>())
-		{
-			mMeshObject++;
-			MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
+		mMeshObject++;
+		MeshRenderer& meshRenderer = ComponentManager::Instance().GetComponent<MeshRenderer>(gameObjectID);
 
-			if (false == meshRenderer.IsCulled(boundingFrustum))
-				meshRenderer.Render(md3dCommandList, mSrvHeap);
-			else
-				mCullingObject++;
-		}
+		if (false == meshRenderer.IsCulled(boundingFrustum))
+			meshRenderer.Render(md3dCommandList, mSrvHeap);
+		else
+			mCullingObject++;
+		
 	}
 }
 
@@ -2213,21 +2233,21 @@ void D3D12App::RenderObjectForShadow()
 
 	UpdateShadowTransform();
 	{
-		//Draw Object.
-		// Convert Spherical to Cartesian coordinates.
-		float x = mRadius * sinf(mPhi) * cosf(mTheta);
-		float z = mRadius * sinf(mPhi) * sinf(mTheta);
-		float y = mRadius * cosf(mPhi);
-
-		// Build the view matrix.
-		//mpCamera->SetPosition({ x, y, z });
 		XMMATRIX view = mpCamera->GetViewMatrix();
 		XMStoreFloat4x4(&mView, view);
 
+		auto objectList = ComponentManager::Instance().Query<Transform, MeshRenderer>();
 		int index = 1;
-		for (GameObject* gameObject : mGameObjects)
+
+		bool skybox = true;
+		for (UINT gameObjectID : objectList)
 		{
-			Transform& cTransform = gameObject->GetComponent<Transform>();
+			if (skybox) {
+				skybox = false;
+				continue;
+			}
+
+			Transform& cTransform = ComponentManager::Instance().GetComponent<Transform>(gameObjectID);
 
 			auto xmf4x4world = cTransform.GetWorldTransform();
 
@@ -2245,15 +2265,14 @@ void D3D12App::RenderObjectForShadow()
 			mObjectCB->CopyData(index, objConstants);
 			md3dCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress() + index++ * ((sizeof(ObjectConstants) + 255) & ~255));
 
-			if (gameObject->HasComponent<MeshRenderer>())
-			{
-				MeshRenderer& meshRenderer = gameObject->GetComponent<MeshRenderer>();
 
-				Material* material = meshRenderer.GetMaterial();
-				Mesh* mesh = meshRenderer.GetMesh();
-				material->UpdateTextureOnSrv(md3dCommandList, mSrvHeap);
-				mesh->Render(md3dCommandList);
-			}
+			MeshRenderer& meshRenderer = ComponentManager::Instance().GetComponent<MeshRenderer>(gameObjectID);
+
+			Material* material = meshRenderer.GetMaterial();
+			Mesh* mesh = meshRenderer.GetMesh();
+			material->UpdateTextureOnSrv(md3dCommandList, mSrvHeap);
+			mesh->Render(md3dCommandList);
+			
 		}
 	}
 
@@ -2416,7 +2435,6 @@ void D3D12App::Bloom()
 	{
 		BlurTexture(mDownScaled16x16BloomTexture->GetID(), mBloom16x16VBlurTexture, mBloom16x16HBlurTexture, 16, 2);
 	}
-
 
 	//Up Scaling 4x4
 	{
@@ -2664,8 +2682,8 @@ void D3D12App::SSAO()
 	//Blur
 	{
 		md3dCommandList->SetComputeRootSignature(mComputeRootSignature);
-		//BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
-		BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1);
+		BlurSSAOTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture);
+		//BlurTexture(mSSAOTexture->GetID(), mSSAOVBlurTexture, mSSAOHBlurTexture, 1, 2);
 	}
 
 	//렌더타겟 상태 변환
@@ -2755,7 +2773,7 @@ void D3D12App::BlurSSAOTexture(const int originalID, Texture* vBlurTexture, Text
 		}
 	}
 
-	constexpr int BLUR_COUNT = 0;
+	constexpr int BLUR_COUNT = 1;
 	for (int i = 0; i < BLUR_COUNT; ++i)
 	{
 		//VBlur

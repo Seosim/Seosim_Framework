@@ -47,26 +47,34 @@ void Shadow::SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList* pCommandL
 	pCommandList->SetGraphicsRootDescriptorTable((int)eRootParameter::SHADOW_TEXTURE, texHandle);
 }
 
-void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList)
+void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward)
 {
-	//float radius = 20.0277557f;
-	float radius = 150.0f;
+	//float radius = 150.0f;
+	float focusDistance = 100.0f;
 
+	float halfFov = XMConvertToRadians(60.0f * 0.5f);
+	float halfHeight = tanf(halfFov) * focusDistance;
+	float halfWidth = halfHeight * (16.0f / 9);
 
-	// Only the first "main" light casts a shadow.
+	float radius = std::max(halfWidth, halfHeight) * 1.2f; // 여유 공간 포함
+
+	// 카메라 위치 기준 타겟 설정
 	XMVECTOR lightDir = XMLoadFloat3(&mShadowBuffer.LightDir);
-	XMVECTOR targetPos = XMVectorSet(0, 0, 0, 1);
-	XMVECTOR lightPos = (-2.0f * radius * lightDir);
+	
+	XMVECTOR targetPos = cameraPos + cameraForward * focusDistance;
 	XMVECTOR lightUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	// 이 스냅된 위치로 다시 lightPos, lightView 생성
+	XMVECTOR lightPos = targetPos - 2.0f * radius * lightDir;
 	XMMATRIX lightView = XMMatrixLookAtLH(lightPos, targetPos, lightUp);
 
 	XMStoreFloat3(&mShadowBuffer.LightPosW, lightPos);
 
-	// Transform bounding sphere to light space.
+	// 타겟 포지션을 기준으로 라이트 공간 중심 계산
 	XMFLOAT3 sphereCenterLS;
 	XMStoreFloat3(&sphereCenterLS, XMVector3TransformCoord(targetPos, lightView));
 
-	// Ortho frustum in light space encloses scene.
+	// Ortho frustum 설정
 	float l = sphereCenterLS.x - radius;
 	float b = sphereCenterLS.y - radius;
 	float n = sphereCenterLS.z - radius;
@@ -76,22 +84,25 @@ void Shadow::UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList)
 
 	mShadowBuffer.NearZ = n;
 	mShadowBuffer.FarZ = f;
+
 	XMMATRIX lightProj = XMMatrixOrthographicOffCenterLH(l, r, b, t, n, f);
 
-	// Transform NDC space [-1,+1]^2 to texture space [0,1]^2
+	// NDC → Texture space
 	XMMATRIX T(
 		0.5f, 0.0f, 0.0f, 0.0f,
 		0.0f, -0.5f, 0.0f, 0.0f,
 		0.0f, 0.0f, 1.0f, 0.0f,
 		0.5f, 0.5f, 0.0f, 1.0f);
 
+	// 최종 ShadowTransform 계산
 	XMMATRIX S = lightView * lightProj * T;
+
 	XMStoreFloat4x4(&mShadowBuffer.LightView, XMMatrixTranspose(lightView));
 	XMStoreFloat4x4(&mShadowBuffer.LightProj, XMMatrixTranspose(lightProj));
 	XMStoreFloat4x4(&mShadowBuffer.ShadowTransform, XMMatrixTranspose(S));
 
+	// 상수 버퍼 업데이트 및 바인딩
 	mShadowCB->CopyData(0, mShadowBuffer);
-
 	pCommandList->SetGraphicsRootConstantBufferView((int)eRootParameter::SHADOW, mShadowCB->Resource()->GetGPUVirtualAddress());
 	mShadowShader->SetPipelineState(pCommandList);
 }

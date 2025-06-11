@@ -9,6 +9,7 @@
 Texture2D gInput : register(t0);
 Texture2D gBloomMap : register(t1);
 Texture2D gSSAOMap : register(t2);
+Texture2D gMaskMap : register(t3);
 RWTexture2D<float4> gOutput : register(u0);
 
 //ACES TONE MAPPING
@@ -49,7 +50,6 @@ float3 ACESFitted(float3 v)
     return mul(aces_output_matrix, v);
 }
 
-
 [numthreads(32, 32, 1)]
 void CS(int3 dispatchThreadID : SV_DispatchThreadID)
 {        
@@ -60,9 +60,10 @@ void CS(int3 dispatchThreadID : SV_DispatchThreadID)
     float4 color = gInput[texCoord];
     float4 bloomColor = gBloomMap[texCoord];
     float ssao = gSSAOMap[texCoord];
+    float mask = gMaskMap[texCoord];
     
-    color *= ssao;
-    color += bloomColor * bloomColor.a;
+    color *= saturate(ssao + mask);
+    color += bloomColor;
     
     
     // ACES Åæ ¸ÅÇÎ Àû¿ë

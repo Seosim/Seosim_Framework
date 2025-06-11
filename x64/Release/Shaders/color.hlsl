@@ -57,6 +57,7 @@ VertexOut VS(VertexIn vin)
     vout.ShadowPosH = mul(posW, ShadowTransform);
 
     vout.UV = vin.UV;
+    vout.UV.y = 1.0f - vout.UV.y;
 
     return vout;
 }
@@ -67,10 +68,10 @@ PixelOut PS(VertexOut pin)
 {
     PixelOut pixelOut;
 
-    float3 albedo = LinearizeColor(BaseColor).rgb;
+    float3 albedo = LinearizeColor(gDiffuseMap.Sample(gsamLinear, pin.UV)).rgb;
 
     float3 N = normalize(pin.NormalW);
-    float3 V = normalize(cameraPos - pin.PosW);
+    float3 V = normalize(CameraPos - pin.PosW);
     float3 L = -normalize(lightDir);
     float3 H = normalize(L + V);
 
@@ -95,10 +96,11 @@ PixelOut PS(VertexOut pin)
 
     float shadowFac = CalcShadowFactor(pin.ShadowPosH);
 
-    float3 ambient = albedo * 0.5f;
+    float3 ambient = albedo * 0.15f;
 
     float3 color = ambient + (diffuse + specular) * NdotL * shadowFac + environment * 0.2f;
 
+    color *= 1.2f;
     color += Emission.rgb;
 
     pixelOut.color = float4(color, 1.0f);

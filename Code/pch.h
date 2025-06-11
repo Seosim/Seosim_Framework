@@ -8,12 +8,15 @@
 #include <xstring>
 #include <array>
 #include <vector>
+#include <set>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <fstream>
 #include <functional>
 #include <chrono>
 #include <random>
+#include <bitset>
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -223,7 +226,7 @@ constexpr UINT MAX_TEXTURE_COUNT = 8;
 
 constexpr UINT MSAA_SAMPLING_COUNT = 4;
 
-constexpr UINT SHADOW_MAP_SIZE = 2048;
+constexpr UINT SHADOW_MAP_SIZE = 4096;
 
 enum class eDescriptorRange {
 	CUBE_MAP,

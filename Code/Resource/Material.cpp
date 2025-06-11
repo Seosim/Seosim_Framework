@@ -41,6 +41,40 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 	mMaterialCB = std::make_unique<UploadBuffer>(pDevice, 1, true, sizeof(LitCBuffer));
 	UpdateConstantBuffer(cBuffer);
 
+	//텍스처가 있다면 로드 현재는 머티리얼 별 최대 텍스처 1개라고 가정
+	bool bHasBasedMap = false;
+	in.read(reinterpret_cast<char*>(&bHasBasedMap), sizeof(bool));
+
+	if (bHasBasedMap)
+	{
+		std::string texturePath;
+
+		//유니티는 바이너리로 문자열 저장할 때 맨 앞 1바이트에 크기도 자동으로 기록함
+		char pathLength;
+		in.read(reinterpret_cast<char*>(&pathLength), sizeof(char)); // 문자열 길이 먼저 읽기
+
+		texturePath.resize(pathLength);
+		in.read(&texturePath[0], pathLength);
+
+		std::wstring name(texturePath.begin(), texturePath.end());
+		std::wstring basePath = L"./Assets/Textures/";
+		std::wstring fullPath = basePath + std::wstring(name.begin(), name.end()) + L".dds";
+		Texture* texture = nullptr;
+
+		if (Texture::TextureList.find(name) == Texture::TextureList.end())
+		{
+			texture = new Texture();
+
+			texture->LoadTextureFromDDSFile(pDevice, pCommandList, fullPath.c_str(), RESOURCE_TEXTURE2D, 0);
+			texture->CreateSrv(pDevice, pSrvHeap, name);
+		}
+		else
+		{
+			texture = Texture::TextureList[name];
+		}
+		SetTexture(texture, 0);
+	}
+
 	//기존에 있는 쉐이더면 따로 생성하지 않고 재사용 합니다.
 	if (Shader::ShaderList.find(shaderType) != Shader::ShaderList.end())
 	{
@@ -52,42 +86,8 @@ void Material::LoadMaterialData(ID3D12Device* pDevice, ID3D12GraphicsCommandList
 
 		switch (shaderType)
 		{
-		case Shader::eType::Default: {
-			bool bHasBasedMap = false;
-
-
-			in.read(reinterpret_cast<char*>(&bHasBasedMap), sizeof(bool));
-
-			if (bHasBasedMap)
-			{
-				std::string texturePath;
-
-				//유니티는 바이너리로 문자열 저장할 때 맨 앞 1바이트에 크기도 자동으로 기록함
-				char pathLength;
-				in.read(reinterpret_cast<char*>(&pathLength), sizeof(char)); // 문자열 길이 먼저 읽기
-
-				texturePath.resize(pathLength);
-				in.read(&texturePath[0], pathLength);
-
-				std::wstring name(texturePath.begin(), texturePath.end());
-				std::wstring basePath = L"./Assets/Textures/";
-				std::wstring fullPath = basePath + std::wstring(name.begin(), name.end()) + L".dds";
-				Texture* texture = nullptr;
-
-				if (Texture::TextureList.find(name) == Texture::TextureList.end())
-				{
-					texture = new Texture();
-
-					texture->LoadTextureFromDDSFile(pDevice, pCommandList, fullPath.c_str(), RESOURCE_TEXTURE2D, 0);
-					texture->CreateSrv(pDevice, pSrvHeap, name);
-				}
-				else
-				{
-					texture = Texture::TextureList[name];
-				}
-				SetTexture(texture, 0);
-			}
-
+		case Shader::eType::Default: 
+		{
 			mpShader->Initialize(pDevice, pRootSignature, "color", Shader::DefaultCommand());
 			break;
 		}

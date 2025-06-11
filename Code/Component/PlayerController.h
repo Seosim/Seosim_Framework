@@ -15,7 +15,7 @@ public:
 	void SetRigidBody(RigidBody* rigidBody);
 private:
 	RigidBody* mRigidBody = nullptr;
-	float mSpeed = 50.0f;
+	float mSpeed = 25.0f;
 
 	//Mouse
 	float mYaw = 0.0f;

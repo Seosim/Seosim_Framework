@@ -63,7 +63,7 @@ void PlayerController::Update(const float deltaTime)
 	if (!mbJumping && Input::Instance().GetKey(VK_SPACE))
 	{
 		XMFLOAT3 upVector;
-		constexpr float JUMP_POWER = 30.0f;
+		constexpr float JUMP_POWER = 20.0f;
 		XMStoreFloat3(&upVector, XMVectorSet(0, 1, 0, 0) * JUMP_POWER);
 		mRigidBody->AddImpulse(upVector);
 		mRigidBody->IsGround = false;

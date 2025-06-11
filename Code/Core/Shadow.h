@@ -28,7 +28,7 @@ public:
 	void SetViewPortAndScissorRect(ID3D12GraphicsCommandList* pCommandList);
 	void SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList* pCommandList, ID3D12DescriptorHeap* pSrvHeap);
 
-	void UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList);
+	void UpdateShadowTransform(ID3D12GraphicsCommandList* pCommandList, XMVECTOR cameraPos, XMVECTOR cameraForward);
 
 	void Render();
 
